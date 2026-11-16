@@ -69,6 +69,31 @@ El proyecto vive en **otra cuenta de Supabase**, distinta de la de oficina y nac
 
 **Red de la oficina:** bloquea los puertos 5432/6543 de Postgres. Antes de `db push`, compruebe la conexión con `Test-NetConnection db.kpufmrodkwkvaljxhewj.supabase.co -Port 5432`. Si falla, use el hotspot del teléfono y desconecte el Ethernet.
 
+## Usuarios
+
+- Se inicia sesión con **usuario y contraseña**. Internamente cada usuario es `usuario@calendariogem.local`, un correo ficticio que nunca recibe mensajes.
+- El administrador crea usuarios desde **Usuarios > Nuevo usuario**, con una contraseña temporal y un color identificador. El usuario debe cambiar la contraseña en su primer ingreso.
+- **Color identificador:** el admin lo elige con el selector visual, el código HEX o los valores R/G/B. Hay colores sugeridos y no hay límite. No se puede repetir el color de otro usuario, y la app advierte si es muy parecido.
+- Si alguien olvida su contraseña, el admin usa **Restablecer contraseña** y le entrega la nueva contraseña temporal.
+- Desactivar un usuario bloquea su acceso de inmediato y conserva toda su información.
+- El admin no puede cambiar su propio rol ni desactivarse, así que siempre queda al menos un administrador.
+
+Edge Function `supabase/functions/admin-users`: crea usuarios, los activa o desactiva y restablece contraseñas. Es la única pieza que usa la clave secreta, que Supabase inyecta en el servidor, así que no hay que configurarla. Para desplegarla: `npm run remoto -- functions deploy admin-users --use-api`.
+
+### Crear el primer administrador (una sola vez)
+
+1. En el panel de Supabase, vaya a **Authentication > Users > Add user > Create new user**.
+   - Email: `SU_USUARIO@calendariogem.local`, por ejemplo `luis@calendariogem.local`, en minúsculas y sin espacios ni tildes.
+   - Password: una contraseña segura, de mínimo 8 caracteres con letras y números.
+   - Marque **Auto Confirm User**.
+2. En el panel de Supabase, abra **SQL Editor** y ejecute esto, reemplazando el usuario y el nombre:
+   ```sql
+   update public.profiles
+      set role = 'admin', active = true, full_name = 'Nombre Completo', must_change_password = false
+    where username = 'luis';
+   ```
+3. Inicie sesión en la app con el usuario (`luis`) y esa contraseña.
+
 ## Despliegue
 
 ### Cloudflare Pages (frontend)

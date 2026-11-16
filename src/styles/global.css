@@ -1,29 +1,76 @@
-/* Tokens base. En la Fase 1 se amplía el sistema de diseño (menú, formularios, tema). */
 :root {
-  --bg: #f6f7f9;
-  --surface: #ffffff;
-  --text: #111827;
-  --text-muted: #6b7280;
-  --border: #e5e7eb;
-  --primary: #2563eb;
-  --ok: #16a34a;
-  --error: #dc2626;
-  --warn: #d97706;
-  --radius: 14px;
+  --color-bg: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-border: #e2e5ea;
+  --color-text: #1c2430;
+  --color-muted: #5f6b7a;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-soft: #e8f0fe;
+  --color-success: #1a7f37;
+  --color-success-soft: #e6f4ea;
+  --color-danger: #c62828;
+  --color-danger-soft: #fdecea;
+  --color-warning: #9a6700;
+  --color-warning-soft: #fff4d6;
+  /* Fondo de botones principales (texto blanco encima) */
+  --color-primary-solid: #2563eb;
+  --color-primary-solid-hover: #1d4ed8;
+  --color-danger-border: #f5c2c0;
+  --color-danger-text: #8e1b1b;
+  --color-success-border: #b7dfc3;
+  --color-success-text: #14532d;
+  --color-info-border: #c6d8fb;
+  --color-info-text: #123a7a;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  --radius: 10px;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
   color-scheme: light;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1115;
-    --surface: #181b21;
-    --text: #f3f4f6;
-    --text-muted: #9ca3af;
-    --border: #2a2f38;
-    --primary: #3b82f6;
-    color-scheme: dark;
-  }
+/* Modo oscuro: lo activa src/lib/theme.ts con data-theme="dark" */
+:root[data-theme='dark'] {
+  --color-bg: #0f1419;
+  --color-surface: #182029;
+  --color-border: #2c3642;
+  --color-text: #e3e8ee;
+  --color-muted: #9aa6b4;
+  --color-primary: #6aa6ff;
+  --color-primary-hover: #8cbaff;
+  --color-primary-soft: #17304f;
+  --color-success: #57c27a;
+  --color-success-soft: #13301e;
+  --color-danger: #f47272;
+  --color-danger-soft: #3a1919;
+  --color-warning: #e3ac42;
+  --color-warning-soft: #352a10;
+  --color-primary-solid: #2563eb;
+  --color-primary-solid-hover: #3b82f0;
+  --color-danger-border: #6b2a2a;
+  --color-danger-text: #ffbaba;
+  --color-success-border: #285e3a;
+  --color-success-text: #a9e4bc;
+  --color-info-border: #24497a;
+  --color-info-text: #bcd6ff;
+
+  color-scheme: dark;
 }
 
 *,
@@ -34,55 +81,569 @@
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--color-bg);
 }
 
-.splash {
-  min-height: 100dvh;
+h1 {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  margin: 0 0 var(--space-2);
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+h2 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin: 0;
+}
+
+.muted {
+  color: var(--color-muted);
+}
+
+/* Visible solo para lectores de pantalla */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+small {
+  font-size: var(--text-sm);
+}
+
+/* Layout */
+.stack {
   display: grid;
-  place-items: center;
-  padding: 16px;
+  gap: var(--space-4);
 }
 
-.splash-card {
-  width: min(100%, 380px);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 32px 24px;
-  text-align: center;
+.narrow {
+  max-width: 480px;
 }
 
-.splash-card h1 {
-  margin: 12px 0 4px;
-  font-size: 1.5rem;
+.narrow-wide {
+  max-width: 720px;
 }
 
-.splash-sub {
-  margin: 0 0 20px;
-  color: var(--text-muted);
+/* La tabla se desliza dentro de su recuadro sin ensanchar la página: min-width: 0 dentro de .stack,
+   y position: relative para que lo posicionado en absoluto (p. ej. .sr-only) quede recortado aquí. */
+.table-wrap {
+  position: relative;
+  min-width: 0;
+  overflow-x: auto;
 }
 
-.status {
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+th,
+td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+td.num,
+th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Grupo de opciones tipo botones (radio) */
+.segmented {
+  display: flex;
+  min-width: 0; /* un fieldset no se encoge por defecto */
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.segmented legend {
+  font-weight: 500;
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-1);
+  padding: 0;
+}
+
+.segmented label {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.segmented label + label {
+  border-left: 0;
+}
+
+.segmented label:first-of-type {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.segmented label:last-of-type {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+/* El radio queda oculto dentro de su botón; sin tamaño propio para no ensanchar la página en celular. */
+.segmented input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   margin: 0;
-  font-size: 0.95rem;
+  opacity: 0;
+  pointer-events: none;
 }
 
-.status-dot {
-  width: 10px;
-  height: 10px;
+.segmented label:has(input:focus-visible) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.segmented .is-selected {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* En celular las opciones ocupan el ancho disponible en partes iguales. */
+@media (max-width: 600px) {
+  .segmented label {
+    flex: 1;
+    justify-content: center;
+    padding: 0 var(--space-2);
+  }
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.page-header h1 {
+  margin: 0;
+}
+
+.page-loading {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Botones */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn.btn-sm {
+  min-height: 32px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  background: var(--color-primary-solid);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-solid-hover);
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-bg);
+}
+
+.btn-danger {
+  background: var(--color-surface);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: var(--color-danger-soft);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-muted);
+}
+
+.btn-ghost:hover {
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* Botón de icono y menús desplegables del encabezado */
+.menu {
+  position: relative;
+}
+
+.icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
   border-radius: 50%;
-  background: var(--warn);
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
 }
 
-.status-ok .status-dot {
-  background: var(--ok);
+.icon-btn:hover,
+.icon-btn[aria-expanded='true'] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
 }
 
-.status-error .status-dot {
-  background: var(--error);
+.icon-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 20;
+  width: min(380px, calc(100vw - 2 * var(--space-4)));
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+
+.popover-small {
+  width: 200px;
+  padding: var(--space-3);
+}
+
+/* En celular el botón queda a media pantalla: el menú ocupa el ancho del encabezado. */
+@media (max-width: 600px) {
+  .menu {
+    position: static;
+  }
+
+  .popover {
+    top: calc(100% + var(--space-1));
+    left: var(--space-4);
+    right: var(--space-4);
+    width: auto;
+  }
+}
+
+.popover .alert {
+  margin: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.menu-options {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.menu-options legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.menu-options label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.menu-options label:hover {
+  background: var(--color-bg);
+}
+
+.menu-options input {
+  width: auto;
+  min-height: 0;
+  accent-color: var(--color-primary-solid);
+}
+
+/* Formularios */
+.field {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.field > span {
+  font-weight: 500;
+  font-size: var(--text-sm);
+}
+
+input,
+select {
+  width: 100%;
+  min-height: 40px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 16px; /* evita el zoom automático en iOS */
+}
+
+select:disabled {
+  background: var(--color-bg);
+}
+
+.input-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.input-row {
+  align-items: end;
+}
+
+.input-row > .field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Contraseña con botón para mostrarla */
+.password-input {
+  position: relative;
+}
+
+.password-input input {
+  padding-right: 44px;
+}
+
+/* Edge agrega su propio ojo; se oculta para que haya uno solo en todos los navegadores. */
+.password-input input::-ms-reveal,
+.password-input input::-ms-clear {
+  display: none;
+}
+
+.password-input button {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 100%;
+  border: 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.password-input button:hover {
+  color: var(--color-text);
+}
+
+.password-input button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* Mensajes */
+.alert {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+}
+
+.alert-error {
+  background: var(--color-danger-soft);
+  border-color: var(--color-danger-border);
+  color: var(--color-danger-text);
+}
+
+.alert-success {
+  background: var(--color-success-soft);
+  border-color: var(--color-success-border);
+  color: var(--color-success-text);
+}
+
+.alert-info {
+  background: var(--color-primary-soft);
+  border-color: var(--color-info-border);
+  color: var(--color-info-text);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px var(--space-2);
+  border-radius: 999px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-success {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.badge-muted {
+  background: var(--color-bg);
+  color: var(--color-muted);
+}
+
+.badge-danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.badge-warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+/* Inicio de sesión */
+.auth-page {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+}
+
+.alert-warning {
+  background: var(--color-warning-soft);
+  border-color: var(--color-warning);
+  color: var(--color-text);
+}
+
+/* Círculo con iniciales sobre el color identificador del usuario */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  color: var(--color-muted);
+}
+
+.empty-state h2 {
+  color: var(--color-text);
+}
+
+.auth-logo {
+  display: block;
+  margin-bottom: var(--space-3);
+}
+
+.card {
+  box-shadow: 0 1px 2px rgb(16 24 40 / 0.04);
 }

@@ -1,10 +1,19 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { HomePage } from './app/HomePage'
+import { createBrowserRouter, RouterProvider } from 'react-router'
+import { routes } from './app/routes'
+import { AuthProvider } from './features/auth/AuthProvider'
+import { applyTheme, readCachedTheme } from './lib/theme'
 import './styles/global.css'
+
+applyTheme(readCachedTheme())
+
+const router = createBrowserRouter(routes)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <HomePage />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </StrictMode>,
 )

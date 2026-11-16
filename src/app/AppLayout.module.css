@@ -1,0 +1,218 @@
+/* Escritorio: menú lateral fijo a la izquierda. Celular (≤ 900px): panel que se abre con ☰. */
+.shell {
+  min-height: 100svh;
+  display: flex;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 248px;
+  height: 100svh;
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-3);
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  overflow-y: auto;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.nav {
+  display: grid;
+  gap: 2px;
+}
+
+.navSection {
+  margin: var(--space-4) 0 var(--space-1);
+  padding: 0 var(--space-3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius);
+  color: var(--color-muted);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.navItem:hover {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.navItem[aria-current='page'] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.navItem:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.accountLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-1);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.accountLink:hover {
+  background: var(--color-bg);
+}
+
+.accountText {
+  display: grid;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.accountText strong,
+.accountText small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountText strong {
+  font-size: var(--text-sm);
+}
+
+.accountText small {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* En escritorio la barra superior solo aparece si no hay menú lateral (p. ej. cambio de contraseña obligatorio). */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.topbar[data-nav='true'] {
+  display: none;
+}
+
+.topbarBrand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-right: auto;
+  font-weight: 700;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.topbar .menuButton {
+  display: none;
+}
+
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
+}
+
+.notice {
+  margin-bottom: var(--space-4);
+}
+
+.backdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .topbar[data-nav='true'] {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .topbar .menuButton {
+    display: inline-flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 30;
+    width: min(280px, 85vw);
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: none;
+  }
+
+  .sidebar[data-open='true'] {
+    transform: none;
+    box-shadow: 0 0 40px rgb(0 0 0 / 0.25);
+  }
+
+  .backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: rgb(0 0 0 / 0.35);
+  }
+
+  .main {
+    padding: var(--space-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar {
+    transition: none;
+  }
+}
