@@ -55,6 +55,7 @@ export function AppLayout() {
                 <>
                   <p className={styles.navSection}>Administración</p>
                   <NavItem to="/usuarios" icon="users" label="Usuarios" />
+                  <NavItem to="/categorias" icon="tag" label="Categorías" />
                 </>
               )}
             </nav>

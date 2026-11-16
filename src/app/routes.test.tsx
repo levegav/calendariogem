@@ -5,6 +5,8 @@ import { fakeAuth, fakeProfile, renderWithAuth } from '../test/fakeAuth'
 import { routes } from './routes'
 
 vi.mock('../features/preferences/api', () => ({ saveMyTheme: vi.fn() }))
+vi.mock('../features/calendar/api', () => ({ listMyReminders: vi.fn(() => Promise.resolve([])) }))
+vi.mock('../features/categories/api', () => ({ listCategories: vi.fn(() => Promise.resolve([])) }))
 
 const listedUsers = [
   fakeProfile(),
@@ -51,7 +53,7 @@ describe('rutas protegidas', () => {
       '/usuarios',
       fakeAuth({ status: 'signedIn', profile: fakeProfile({ role: 'user', full_name: 'Carlos Mora' }) }),
     )
-    expect(await screen.findByRole('heading', { name: 'Hola, Carlos' })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Calendario', current: 'page' })).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Usuarios' })).not.toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/')
   })
@@ -82,5 +84,22 @@ describe('rutas protegidas', () => {
     renderWithAuth(routes, '/no-existe', fakeAuth({ status: 'signedIn', profile: fakeProfile() }))
     expect(await screen.findByRole('heading', { name: 'Página no encontrada' })).toBeInTheDocument()
     cleanup()
+  })
+})
+
+describe('administración', () => {
+  it('el admin ve Categorías en el menú; un usuario no', async () => {
+    renderWithAuth(routes, '/categorias', fakeAuth({ status: 'signedIn', profile: fakeProfile() }))
+    expect(await screen.findByRole('heading', { name: 'Categorías' })).toBeInTheDocument()
+    cleanup()
+
+    const router = renderWithAuth(
+      routes,
+      '/categorias',
+      fakeAuth({ status: 'signedIn', profile: fakeProfile({ role: 'user' }) }),
+    )
+    expect(await screen.findByRole('link', { name: 'Calendario', current: 'page' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Categorías' })).not.toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/')
   })
 })

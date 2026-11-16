@@ -22,7 +22,7 @@ select ok(
   'El perfil nace con un color válido'
 );
 select is(
-  (select count(distinct color)::int from public.profiles),
+  (select count(distinct color)::int from public.profiles where id in ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', '33333333-3333-3333-3333-333333333333')),
   3,
   'Cada usuario nuevo recibe un color distinto'
 );
@@ -57,7 +57,7 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","role":"authenticated"}', true);
 
-select is((select count(*)::int from public.profiles), 3, 'Un usuario activo ve todos los perfiles (nombres y colores)');
+select is((select count(*)::int from public.profiles where id in ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', '33333333-3333-3333-3333-333333333333')), 3, 'Un usuario activo ve todos los perfiles (nombres y colores)');
 select throws_ok(
   $$update public.profiles set role = 'admin' where id = '22222222-2222-2222-2222-222222222222'$$,
   '42501', null, 'Nadie escribe directamente en profiles'

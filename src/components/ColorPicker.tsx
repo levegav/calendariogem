@@ -14,11 +14,13 @@ export function ColorPicker({
   onChange,
   users,
   excludeId,
+  legend = 'Color identificador',
 }: {
   value: string
   onChange: (color: string) => void
   users: ColorOwner[]
   excludeId?: string
+  legend?: string
 }) {
   const [customOpen, setCustomOpen] = useState(false)
   const owners = new Map(users.filter((u) => u.id !== excludeId).map((u) => [u.color, u.full_name]))
@@ -26,7 +28,7 @@ export function ColorPicker({
 
   return (
     <fieldset className={styles.picker}>
-      <legend>Color identificador</legend>
+      <legend>{legend}</legend>
 
       <div className={styles.selected}>
         <span className={styles.selectedSwatch} style={{ background: value }} aria-hidden="true" />

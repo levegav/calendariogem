@@ -1,0 +1,635 @@
+/* =========================================================================
+   Página y barra de herramientas
+   ========================================================================= */
+.page {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  margin: 0 0 0 var(--space-2);
+  font-size: var(--text-xl);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toolbarEnd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.views label {
+  min-height: 36px;
+  font-size: var(--text-sm);
+}
+
+.viewArea {
+  min-width: 0;
+}
+
+.empty {
+  text-align: center;
+  font-size: var(--text-sm);
+}
+
+/* Botón flotante: solo en celular. */
+.fab {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .title {
+    font-size: var(--text-lg);
+  }
+
+  .toolbarEnd {
+    justify-content: stretch;
+  }
+
+  .views {
+    flex: 1;
+  }
+
+  /* Más específico que .btn (estilos globales): en celular se usa el botón flotante. */
+  .toolbarEnd .newButton {
+    display: none;
+  }
+
+  .fab {
+    position: fixed;
+    right: var(--space-4);
+    bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
+    z-index: 15;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-primary-solid);
+    color: #fff;
+    box-shadow: 0 8px 24px rgb(37 99 235 / 0.4);
+    cursor: pointer;
+  }
+}
+
+/* =========================================================================
+   Pastilla de recordatorio: línea lateral = creador, punto = categoría
+   ========================================================================= */
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+  min-height: 22px;
+  padding: 1px 6px 1px 6px;
+  border: 0;
+  border-left: 4px solid var(--owner-color);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--owner-color) 10%, var(--color-surface));
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: color-mix(in srgb, var(--owner-color) 20%, var(--color-surface));
+}
+
+.chip:focus-visible,
+.block:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.chipDot {
+  width: 7px;
+  height: 7px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--category-color);
+}
+
+.chipTime {
+  flex-shrink: 0;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chipTitle {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.chipCreator {
+  margin-left: auto;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+/* =========================================================================
+   Vista por horas (Día y Semana)
+   ========================================================================= */
+.timeGrid {
+  --gutter: 56px;
+  display: grid;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.dayHeaders,
+.bannerRow,
+.grid {
+  display: grid;
+  grid-template-columns: var(--gutter) repeat(var(--days), minmax(0, 1fr));
+}
+
+.dayHeaders {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.gutter {
+  border-right: 1px solid var(--color-border);
+}
+
+.dayHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2) 0;
+  border: 0;
+  border-left: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+button.dayHeader {
+  cursor: pointer;
+}
+
+button.dayHeader:hover .dayHeaderNumber {
+  background: var(--color-bg);
+}
+
+.dayHeaders > .dayHeader:nth-child(2) {
+  border-left: 0;
+}
+
+.dayHeaderNumber {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  text-transform: none;
+}
+
+.dayHeaderNumber[data-today='true'] {
+  background: var(--color-primary-solid);
+  color: #fff;
+}
+
+button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
+  background: var(--color-primary-solid-hover);
+}
+
+.bannerRow {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bannerLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+  color: var(--color-muted);
+  font-size: 0.65rem;
+  text-align: center;
+}
+
+.bannerCell {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  min-width: 0;
+  padding: 3px;
+  border-left: 1px solid var(--color-border);
+}
+
+.bannerRow > .bannerCell:nth-child(2) {
+  border-left: 0;
+}
+
+.gridScroll {
+  max-height: calc(100svh - 260px);
+  min-height: 360px;
+  overflow-y: auto;
+}
+
+.grid {
+  position: relative;
+}
+
+.hourLabels {
+  position: relative;
+  border-right: 1px solid var(--color-border);
+}
+
+.hourLabels span {
+  position: absolute;
+  right: 6px;
+  transform: translateY(-50%);
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+/* Cada columna dibuja las líneas de las horas con un degradado repetido. */
+.dayColumn {
+  position: relative;
+  border-left: 1px solid var(--color-border);
+  background-image: linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+  background-size: 100% 48px;
+  cursor: copy;
+}
+
+.grid > .dayColumn:nth-child(2) {
+  border-left: 0;
+}
+
+.dayColumn[data-today='true'] {
+  background-color: color-mix(in srgb, var(--color-primary) 4%, transparent);
+}
+
+.block {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  overflow: hidden;
+  padding: 2px 6px;
+  border: 0;
+  border-left: 4px solid var(--owner-color);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--owner-color) 16%, var(--color-surface));
+  box-shadow: 0 0 0 1px var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+
+.block:hover {
+  background: color-mix(in srgb, var(--owner-color) 26%, var(--color-surface));
+}
+
+.blockTitle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.blockTime,
+.blockCreator {
+  color: var(--color-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nowLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 2px;
+  background: var(--color-danger);
+  pointer-events: none;
+}
+
+.nowLine::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-danger);
+}
+
+@media (max-width: 700px) {
+  .timeGrid {
+    --gutter: 44px;
+  }
+
+  .gridScroll {
+    max-height: calc(100svh - 230px);
+  }
+
+  .timeGrid:not([data-single='true']) .block {
+    padding: 1px 3px;
+    font-size: 0.68rem;
+  }
+
+  .timeGrid:not([data-single='true']) .chip {
+    padding-inline: 3px;
+    font-size: 0.68rem;
+  }
+}
+
+/* =========================================================================
+   Vista mensual
+   ========================================================================= */
+.month {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.monthHeader {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  border-bottom: 1px solid var(--color-border);
+}
+
+.monthHeader span {
+  padding: var(--space-2);
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-rows: minmax(112px, 1fr);
+}
+
+.monthCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 4px;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  cursor: copy;
+}
+
+.monthCell:nth-child(7n) {
+  border-right: 0;
+}
+
+.monthCell:nth-last-child(-n + 7) {
+  border-bottom: 0;
+}
+
+.monthCell[data-outside='true'] {
+  background: var(--color-bg);
+}
+
+.monthCell[data-outside='true'] .monthDay {
+  color: var(--color-muted);
+}
+
+.monthDay {
+  align-self: flex-start;
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.monthDay:hover {
+  background: var(--color-bg);
+}
+
+.monthDay[data-today='true'] {
+  background: var(--color-primary-solid);
+  color: #fff;
+}
+
+.more {
+  align-self: flex-start;
+  padding: 0 6px;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.more:hover {
+  color: var(--color-text);
+}
+
+.dots {
+  display: none;
+}
+
+/* En celular: casillas compactas con puntos del color del creador. */
+@media (max-width: 700px) {
+  .monthGrid {
+    grid-auto-rows: minmax(64px, 1fr);
+  }
+
+  .monthCell {
+    align-items: center;
+    padding: 4px 2px;
+  }
+
+  .monthDay {
+    align-self: center;
+  }
+
+  .monthCell .chip,
+  .monthCell .more {
+    display: none;
+  }
+
+  .dots {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 3px;
+    pointer-events: none;
+  }
+
+  .dots span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+}
+
+/* =========================================================================
+   Vista anual
+   ========================================================================= */
+.year {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-4);
+}
+
+.miniMonth {
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+.miniTitle {
+  margin-bottom: var(--space-2);
+  padding: 2px var(--space-2);
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.miniTitle:hover {
+  background: var(--color-bg);
+}
+
+.miniGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+
+.miniWeekday {
+  color: var(--color-muted);
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.miniDay {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.miniDay:hover {
+  background: var(--color-bg);
+}
+
+/* Día con recordatorios: fondo suave y punto debajo. */
+.miniDay[data-busy='true'] {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.miniDay[data-busy='true']::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  transform: translateX(-50%);
+}
+
+.miniDay[data-today='true'] {
+  background: var(--color-primary-solid);
+  color: #fff;
+}
+
+.miniDay:focus-visible,
+.miniTitle:focus-visible,
+.monthDay:focus-visible,
+.more:focus-visible,
+.dayHeader:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+@media (max-width: 480px) {
+  .year {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+  }
+
+  .miniMonth {
+    padding: var(--space-2);
+  }
+
+  .miniDay {
+    font-size: 0.68rem;
+  }
+}

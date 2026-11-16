@@ -5,8 +5,8 @@
 | Fase | Contenido | Estado |
 |---|---|---|
 | 0 | Base: proyecto, Supabase, pruebas, primer despliegue | Terminada (aprobada) |
-| 1 | Usuarios: login, panel admin, colores RGB, perfil, menú, responsive | En curso |
-| 2 | Categorías, CRUD de recordatorios, vistas día/semana/mes/año | Pendiente |
+| 1 | Usuarios: login, panel admin, colores RGB, perfil, menú, responsive | Terminada (aprobada) |
+| 2 | Categorías, CRUD de recordatorios, vistas día/semana/mes/año | En curso |
 | 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Pendiente |
 | 4 | Notificaciones en tiempo real y avisos previos por participante | Pendiente |
 | 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Pendiente |
@@ -124,3 +124,53 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - Cloudflare publicó el build. `/login`, `/perfil` y `/usuarios` responden 200.
 - Pendiente: crear el primer administrador (ver README) y la prueba del usuario.
 - Ajuste pedido por el usuario: color personalizado visual al estilo de Office, en lugar de escribir valores RGB. Se revisó en Edge (claro, oscuro y un ancho de 340 px). 73 pruebas unitarias correctas.
+
+## Fase 2: categorías, recordatorios y vistas
+
+**Base de datos**
+- `20261117110000_color_sin_carrera.sql`: corrige una condición de carrera. Si se creaban dos usuarios a la vez, podían recibir el mismo color inicial y la segunda creación fallaba. Ahora la elección de color se hace de a uno (bloqueo de transacción). La encontraron las pruebas de integración.
+- `20261117120000_categorias_recordatorios.sql`:
+  - `categories`: nombre único sin importar mayúsculas, color `#rrggbb` y `active`. Iniciales: Reunión, Vencimiento, Tarea, Personal y Feriado.
+  - `reminders`: un único registro original con `owner_id`, título, descripción, `start_at`, `end_at` (opcional, no anterior al inicio), `all_day`, categoría, ubicación o enlace, y nota.
+  - Reglas:
+    - Solo se asignan categorías activas; uno que ya usa una categoría desactivada la conserva.
+    - El dueño no cambia nunca: la columna no tiene permiso de escritura y además un trigger lo impide.
+  - RLS:
+    - Todos los usuarios activos **ven** los recordatorios, porque se acordó que los calendarios son visibles.
+    - Solo el dueño los modifica o elimina.
+    - Solo el admin administra las categorías.
+  - `admin_delete_category`: si la categoría está en uso, la desactiva; si no, la borra. Queda auditado.
+
+**Frontend**
+- **Calendario** (pantalla de inicio):
+  - Vistas Día, Semana, Mes y Año, con navegación ‹ › y "Hoy".
+  - La vista y la fecha quedan en la dirección (`?vista=semana&fecha=…`), y se recuerda la última vista usada.
+- **Hora de Costa Rica (UTC−6)** en toda la app, sin importar la zona del dispositivo (`src/lib/dates.ts`). Las fechas se manejan como "AAAA-MM-DD". La semana empieza el lunes.
+- **Día y Semana:**
+  - Cuadrícula por horas, con una franja de "Todo el día" (también para eventos de varios días).
+  - Los eventos que se cruzan se reparten en columnas.
+  - Una línea roja marca la hora actual.
+  - Al hacer clic en una hora vacía se crea un recordatorio a esa hora (redondeada a 30 min). Al abrir, la vista muestra desde las 7 a. m.
+- **Mes:**
+  - Hasta 3 recordatorios por día, más "+N más".
+  - Al tocar el número del día se abre la vista Día; al tocar un espacio vacío se crea un recordatorio en ese día.
+  - En celular: puntos con el color del creador.
+- **Año:** los 12 meses; los días con recordatorios van resaltados y con un punto. Al tocar un día se abre la vista Día, y al tocar un mes, la vista Mes.
+- **Identificación visual:** línea lateral con el color del **creador**, punto con el color de la **categoría** y "Creado por: Nombre" en los detalles. En la vista Día también aparece en el bloque, si cabe.
+- **Nuevo / Editar recordatorio** (ventana emergente; en celular, pantalla completa):
+  - Campos: título, categoría (pastillas de color), "Todo el día", fecha y hora de inicio (lista cada 15 min, como al agendar una reunión), finalización opcional ("Dura varios días" si es de todo el día), descripción, ubicación o enlace, y nota.
+  - Validación: título y categoría obligatorios, y la finalización no puede ser anterior al inicio.
+- **Detalles:** cuándo, ubicación (si es un enlace, se abre en otra pestaña), descripción, nota y "Creado por". Editar y Eliminar solo para el creador.
+- **Categorías** (admin): crear, editar nombre y color (mismo selector visual), eliminar o desactivar y reactivar.
+- En celular, botón flotante **+** para crear.
+- Pendiente para la Fase 3: etiquetar usuarios y "Ver calendario de…". Por ahora, el calendario muestra los recordatorios propios.
+
+**Pruebas (2026-11-16)**
+- `npm run check`: lint, tipos, 124 pruebas unitarias y build, todo correcto.
+- `npm run test:db`: 61 pruebas pgTAP, todas correctas. Las pruebas cuentan solo sus propios datos, para no depender de los que dejan otras pruebas.
+- `npm run test:integration`: 13 pruebas contra el Supabase local, correctas en ejecuciones repetidas. Incluyen la consulta por rango (eventos que cruzan el rango) y la propiedad (otro usuario ve, pero no modifica ni elimina).
+- Revisión visual en Edge con datos de demostración:
+  - Vistas Mes, Semana, Día y Año en escritorio.
+  - Mes y Semana en celular.
+  - El formulario de nuevo recordatorio.
+- Corregido en la revisión: en celular aparecían el botón "Nuevo recordatorio" y el botón flotante a la vez, y la etiqueta "7 a. m." quedaba cortada.

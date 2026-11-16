@@ -43,6 +43,20 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"categories": {
+                  Row: {
+                    "active": boolean,"color": string,"created_at": string,"id": number,"name": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"color": string,"created_at"?: string,"id"?: never,"name": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"color"?: string,"created_at"?: string,"id"?: never,"name"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 },"profiles": {
                   Row: {
                     "active": boolean,"color": string,"created_at": string,"full_name": string,"id": string,"must_change_password": boolean,"role": Database["public"]['Enums']["user_role"],"theme": string,"updated_at": string,"username": string
@@ -57,13 +71,42 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"reminders": {
+                  Row: {
+                    "all_day": boolean,"category_id": number,"created_at": string,"description": string | null,"end_at": string | null,"id": number,"location": string | null,"note": string | null,"owner_id": string,"start_at": string,"title": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "all_day"?: boolean,"category_id": number,"created_at"?: string,"description"?: string | null,"end_at"?: string | null,"id"?: never,"location"?: string | null,"note"?: string | null,"owner_id"?: string,"start_at": string,"title": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "all_day"?: boolean,"category_id"?: number,"created_at"?: string,"description"?: string | null,"end_at"?: string | null,"id"?: never,"location"?: string | null,"note"?: string | null,"owner_id"?: string,"start_at"?: string,"title"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "reminders_category_id_fkey"
+      columns: ["category_id"]
+isOneToOne: false
+      referencedRelation: "categories"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reminders_owner_id_fkey"
+      columns: ["owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            "admin_flag_password_reset":
+            "admin_delete_category":
+{ Args: { "p_category_id": number }; Returns: string
+                           },
+"admin_flag_password_reset":
 { Args: { "p_user_id": string }; Returns: undefined
                            },
 "admin_update_user":

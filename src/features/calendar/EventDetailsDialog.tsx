@@ -1,0 +1,116 @@
+import { useState } from 'react'
+import { Modal } from '../../components/Modal'
+import { toSpanishMessage } from '../../lib/errors'
+import { describeWhen } from './eventText'
+import styles from './EventDetailsDialog.module.css'
+import { asLink } from './reminderForm'
+import type { CalendarEvent } from './types'
+
+/** Detalles de un recordatorio. Solo su creador ve Editar y Eliminar. */
+export function EventDetailsDialog({
+  event,
+  currentUserId,
+  onEdit,
+  onDelete,
+  onClose,
+}: {
+  event: CalendarEvent
+  currentUserId: string
+  onEdit: () => void
+  onDelete: () => Promise<void>
+  onClose: () => void
+}) {
+  const [error, setError] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const isOwner = event.owner.id === currentUserId
+  const link = event.location ? asLink(event.location) : null
+
+  async function remove() {
+    if (!window.confirm(`¿Eliminar el recordatorio "${event.title}"? Esta acción no se puede deshacer.`)) return
+    setError(null)
+    setDeleting(true)
+    try {
+      await onDelete()
+    } catch (err) {
+      setError(toSpanishMessage(err))
+      setDeleting(false)
+    }
+  }
+
+  return (
+    <Modal
+      title={event.title}
+      onClose={onClose}
+      accentColor={event.owner.color}
+      footer={
+        isOwner ? (
+          <>
+            <button type="button" className="btn btn-danger" onClick={() => void remove()} disabled={deleting}>
+              {deleting ? 'Eliminando…' : 'Eliminar'}
+            </button>
+            <button type="button" className="btn btn-primary" onClick={onEdit} disabled={deleting}>
+              Editar
+            </button>
+          </>
+        ) : undefined
+      }
+    >
+      <div className="stack">
+        {error && (
+          <p className="alert alert-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        <div className={styles.meta}>
+          <span className={styles.category} style={{ borderColor: event.category.color }}>
+            <span className={styles.dot} style={{ background: event.category.color }} aria-hidden="true" />
+            {event.category.name}
+          </span>
+          <span className={styles.creator}>
+            <span className={styles.creatorLine} style={{ background: event.owner.color }} aria-hidden="true" />
+            Creado por: {event.owner.full_name}
+          </span>
+        </div>
+
+        <dl className={styles.details}>
+          <dt>Cuándo</dt>
+          <dd>{describeWhen(event)}</dd>
+
+          {event.location && (
+            <>
+              <dt>Ubicación</dt>
+              <dd>
+                {link ? (
+                  <a href={link} target="_blank" rel="noopener noreferrer">
+                    {event.location}
+                  </a>
+                ) : (
+                  event.location
+                )}
+              </dd>
+            </>
+          )}
+
+          {event.description && (
+            <>
+              <dt>Descripción</dt>
+              <dd className={styles.multiline}>{event.description}</dd>
+            </>
+          )}
+
+          {event.note && (
+            <>
+              <dt>Nota</dt>
+              <dd className={styles.multiline}>{event.note}</dd>
+            </>
+          )}
+        </dl>
+
+        {!isOwner && (
+          <p className="muted">Solo {event.owner.full_name} puede modificar o eliminar este recordatorio.</p>
+        )}
+      </div>
+    </Modal>
+  )
+}

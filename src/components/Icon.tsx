@@ -7,6 +7,10 @@ const PATHS = {
   close: 'M6 6l12 12M18 6L6 18',
   logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
   key: 'M21 2l-2 2m-7.6 7.6a5.5 5.5 0 1 1-7.8 7.8 5.5 5.5 0 0 1 7.8-7.8zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4',
+  plus: 'M12 5v14M5 12h14',
+  chevronLeft: 'M15 18l-6-6 6-6',
+  chevronRight: 'M9 18l6-6-6-6',
+  tag: 'M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8zM7 7h.01',
 } as const
 
 export type IconName = keyof typeof PATHS
