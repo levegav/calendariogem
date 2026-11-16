@@ -10,6 +10,7 @@
 #   SUPABASE_DB_PASSWORD=...             (contraseña de la base de datos)
 
 $ErrorActionPreference = 'Stop'
+$cliArgs = @($args)
 $root = Split-Path -Parent $PSScriptRoot
 $envFile = Join-Path $root '.env.supabase'
 
@@ -27,7 +28,7 @@ if (-not $env:SUPABASE_ACCESS_TOKEN) { Write-Error 'Falta SUPABASE_ACCESS_TOKEN 
 
 Push-Location $root
 try {
-  npx supabase @args
+  & npx.cmd supabase @cliArgs
   exit $LASTEXITCODE
 } finally {
   Pop-Location
