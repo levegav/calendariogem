@@ -4,7 +4,7 @@
 
 | Fase | Contenido | Estado |
 |---|---|---|
-| 0 | Base: proyecto, Supabase, pruebas, primer despliegue | En curso |
+| 0 | Base: proyecto, Supabase, pruebas, primer despliegue | Terminada (pendiente de aprobación) |
 | 1 | Usuarios: login, panel admin, colores RGB, perfil, menú, responsive | Pendiente |
 | 2 | Categorías, CRUD de recordatorios, vistas día/semana/mes/año | Pendiente |
 | 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Pendiente |
@@ -72,3 +72,12 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 
 **Página temporal**
 - Muestra "Calendario GEM · En construcción" y comprueba la conexión con el servidor.
+
+### Pruebas de la Fase 0 (2026-11-16)
+
+- `npm run check`: lint, tipos, 10 pruebas unitarias y build, todo correcto.
+- Supabase real: `/auth/v1/health` responde 200. Registro público bloqueado (`disable_signup: true`) y confirmación de correo apagada.
+- Supabase local: `npx supabase start` levanta en los puertos `5642x`.
+- Cloudflare Pages: https://calendariogem.pages.dev responde 200 con las cabeceras de seguridad (CSP, `X-Frame-Options: DENY`). El build incluye la URL y la clave pública del proyecto.
+- CORS: Supabase acepta peticiones desde `https://calendariogem.pages.dev`.
+- Nota: el primer despliegue falló porque el proyecto de Cloudflare quedó desconectado de GitHub. Se resolvió dando acceso al repositorio en la app de Cloudflare en GitHub.
