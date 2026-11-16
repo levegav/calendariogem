@@ -1,0 +1,10 @@
+# Cabeceras de seguridad para Cloudflare Pages (se aplican a todas las páginas).
+# connect-src: solo el proyecto de Supabase de la app (API, Auth, Edge Functions y,
+# por wss://, Realtime para las notificaciones en vivo).
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://kpufmrodkwkvaljxhewj.supabase.co wss://kpufmrodkwkvaljxhewj.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Strict-Transport-Security: max-age=31536000

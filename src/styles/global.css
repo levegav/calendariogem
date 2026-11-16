@@ -1,0 +1,88 @@
+/* Tokens base. En la Fase 1 se amplía el sistema de diseño (menú, formularios, tema). */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #111827;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --primary: #2563eb;
+  --ok: #16a34a;
+  --error: #dc2626;
+  --warn: #d97706;
+  --radius: 14px;
+  color-scheme: light;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --surface: #181b21;
+    --text: #f3f4f6;
+    --text-muted: #9ca3af;
+    --border: #2a2f38;
+    --primary: #3b82f6;
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.splash {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.splash-card {
+  width: min(100%, 380px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.splash-card h1 {
+  margin: 12px 0 4px;
+  font-size: 1.5rem;
+}
+
+.splash-sub {
+  margin: 0 0 20px;
+  color: var(--text-muted);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--warn);
+}
+
+.status-ok .status-dot {
+  background: var(--ok);
+}
+
+.status-error .status-dot {
+  background: var(--error);
+}
