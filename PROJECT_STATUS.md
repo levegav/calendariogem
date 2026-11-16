@@ -113,3 +113,13 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - `npm run test:db`: 31 pruebas pgTAP de permisos, colores y reglas del admin, todas correctas.
 - `npm run test:integration`: 9 pruebas contra el Supabase local (Edge Function, colores duplicados, permisos, desactivación, cuenta externa sin acceso), todas correctas.
 - Hallazgo corregido: en la paleta sugerida, `#7c3aed` era casi igual a `#9333ea`. Se reemplazó por `#475569`.
+
+**Despliegue de la Fase 1 (2026-11-16)**
+- `db push`: migración `20261116120000_usuarios.sql` aplicada en el proyecto real. `migration list` muestra el local y el remoto iguales.
+- Edge Function `admin-users` desplegada.
+- Verificación remota:
+  - Un anónimo no lee `profiles` (401) ni ejecuta `admin_update_user` (401).
+  - La función sin sesión responde 401, y desde otro sitio responde 403.
+  - El preflight CORS de `calendariogem.pages.dev` responde OK.
+- Cloudflare publicó el build. `/login`, `/perfil` y `/usuarios` responden 200.
+- Pendiente: crear el primer administrador (ver README) y la prueba del usuario.
