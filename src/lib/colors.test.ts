@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   checkColor,
   colorDistance,
+  hexToHsv,
   hexToRgb,
+  hsvToHex,
   normalizeHex,
   readableTextOn,
   rgbToHex,
@@ -89,5 +91,24 @@ describe('readableTextOn', () => {
   it('elige texto oscuro en fondos claros y blanco en oscuros', () => {
     expect(readableTextOn('#ffff00')).toBe('#111827')
     expect(readableTextOn('#1e3a8a')).toBe('#ffffff')
+  })
+})
+
+describe('conversión HSV', () => {
+  it('convierte colores puros', () => {
+    expect(hexToHsv('#ff0000')).toEqual({ h: 0, s: 1, v: 1 })
+    expect(hexToHsv('#00ff00')).toEqual({ h: 120, s: 1, v: 1 })
+    expect(hsvToHex({ h: 240, s: 1, v: 1 })).toBe('#0000ff')
+  })
+
+  it('el blanco y el negro no tienen saturación', () => {
+    expect(hexToHsv('#ffffff')).toEqual({ h: 0, s: 0, v: 1 })
+    expect(hexToHsv('#000000')).toEqual({ h: 0, s: 0, v: 0 })
+  })
+
+  it('ida y vuelta conserva el color', () => {
+    for (const color of [...SUGGESTED_COLORS, '#123456', '#abcdef', '#808080']) {
+      expect(hsvToHex(hexToHsv(color))).toBe(color)
+    }
   })
 })

@@ -1,0 +1,165 @@
+.panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-bg);
+}
+
+.picker {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* Recuadro: el matiz de fondo, blanco hacia la izquierda (menos intensidad) y negro hacia abajo (menos brillo). */
+.area {
+  position: relative;
+  height: 200px;
+  border-radius: var(--radius);
+  background-image:
+    linear-gradient(to top, #000, transparent),
+    linear-gradient(to right, #fff, transparent);
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+}
+
+.area:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.areaThumb {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4), 0 2px 6px rgb(0 0 0 / 0.3);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* Barra de matices con el control deslizante nativo encima. */
+.hue input {
+  width: 100%;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+  appearance: none;
+  cursor: pointer;
+}
+
+.hue input::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4), 0 2px 6px rgb(0 0 0 / 0.3);
+}
+
+.hue input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.4), 0 2px 6px rgb(0 0 0 / 0.3);
+}
+
+.side {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+.preview {
+  display: grid;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.previewHalf {
+  display: flex;
+  align-items: flex-end;
+  height: 56px;
+  padding: var(--space-1) var(--space-2);
+}
+
+.previewHalf span {
+  padding: 0 var(--space-1);
+  border-radius: 4px;
+  background: rgb(255 255 255 / 0.85);
+  color: #111827;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.code {
+  font-family: ui-monospace, Consolas, monospace;
+  text-align: center;
+}
+
+.exact summary {
+  font-size: var(--text-sm);
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.exactFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.hexField {
+  width: 100%;
+}
+
+.hexField input {
+  font-family: ui-monospace, Consolas, monospace;
+}
+
+.channel {
+  flex: 1;
+  min-width: 0;
+}
+
+.channel input {
+  padding-inline: var(--space-1);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.footer {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* En celular el panel va en una sola columna. */
+@media (max-width: 600px) {
+  .panel {
+    grid-template-columns: 1fr;
+    padding: var(--space-3);
+  }
+
+  .area {
+    height: 180px;
+  }
+
+  .preview {
+    grid-template-columns: 1fr 1fr;
+  }
+}

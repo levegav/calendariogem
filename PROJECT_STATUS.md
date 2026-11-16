@@ -104,7 +104,7 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - Inicio de sesión con usuario, y cambio obligatorio de la contraseña temporal.
 - Menú lateral con Calendario, Mi perfil y, para el admin, Administración > Usuarios. En celular se abre como panel con ☰.
 - **Usuarios** (admin): lista con avatar, línea del color y código HEX. Permite crear, editar, desactivar y restablecer la contraseña.
-- **Selector de color:** selector visual, campo HEX, campos R/G/B (0–255) y 16 colores sugeridos, que aparecen deshabilitados si ya están en uso. Bloquea un color repetido y advierte si se parece mucho a otro (ΔE < 15).
+- **Selector de color:** 16 colores sugeridos (deshabilitados si ya están en uso) y el botón **+ Color personalizado**, que abre un panel visual al estilo de Office: un recuadro de intensidad y brillo, una barra de matices, la vista previa Nuevo / Actual y los botones "Usar este color" y "Cancelar". Los valores exactos (HEX y R/G/B) están en una sección plegable. Bloquea un color repetido y advierte si se parece mucho a otro (ΔE < 15).
 - **Mi perfil:** datos, color identificador con vista previa de "Creado por", apariencia (claro, oscuro o automático) y cambio de contraseña.
 - El inicio es provisional ("Su calendario estará aquí muy pronto"). El calendario llega en la Fase 2.
 
@@ -123,3 +123,4 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
   - El preflight CORS de `calendariogem.pages.dev` responde OK.
 - Cloudflare publicó el build. `/login`, `/perfil` y `/usuarios` responden 200.
 - Pendiente: crear el primer administrador (ver README) y la prueba del usuario.
+- Ajuste pedido por el usuario: color personalizado visual al estilo de Office, en lugar de escribir valores RGB. Se revisó en Edge (claro, oscuro y un ancho de 340 px). 73 pruebas unitarias correctas.

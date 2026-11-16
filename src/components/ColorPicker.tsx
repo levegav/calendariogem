@@ -1,18 +1,13 @@
-import { useId, useState } from 'react'
-import { checkColor, hexToRgb, normalizeHex, rgbToHex, SUGGESTED_COLORS, type ColorOwner } from '../lib/colors'
+import { useState } from 'react'
+import { SUGGESTED_COLORS, type ColorOwner } from '../lib/colors'
 import styles from './ColorPicker.module.css'
-
-type Channel = 'r' | 'g' | 'b'
-const CHANNELS: { key: Channel; label: string }[] = [
-  { key: 'r', label: 'R' },
-  { key: 'g', label: 'G' },
-  { key: 'b', label: 'B' },
-]
+import { ColorStatus } from './ColorStatus'
+import { CustomColorPanel } from './CustomColorPanel'
 
 /**
- * Selector de color libre: selector visual, código HEX, valores R/G/B (0–255)
- * y colores sugeridos. Avisa si el color ya lo usa otro usuario (no se puede
- * guardar) o si se parece mucho al de otro (solo advertencia).
+ * Selector del color identificador: colores sugeridos y "Color personalizado"
+ * (panel visual al estilo de Office). Avisa si el color ya lo usa otro usuario
+ * (no se puede guardar) o si se parece mucho al de otro (solo advertencia).
  */
 export function ColorPicker({
   value,
@@ -25,74 +20,20 @@ export function ColorPicker({
   users: ColorOwner[]
   excludeId?: string
 }) {
-  const id = useId()
-  // Texto que el usuario está escribiendo; se valida antes de aplicarlo.
-  const [hexDraft, setHexDraft] = useState<string | null>(null)
-  const [rgbDraft, setRgbDraft] = useState<Partial<Record<Channel, string>>>({})
-  const rgb = hexToRgb(value)
-  const { taken, similar } = checkColor(value, users, excludeId)
+  const [customOpen, setCustomOpen] = useState(false)
   const owners = new Map(users.filter((u) => u.id !== excludeId).map((u) => [u.color, u.full_name]))
-
-  function apply(color: string) {
-    setHexDraft(null)
-    setRgbDraft({})
-    onChange(color)
-  }
-
-  function changeHex(text: string) {
-    setHexDraft(text)
-    const normalized = normalizeHex(text)
-    if (normalized) onChange(normalized)
-  }
-
-  function changeChannel(channel: Channel, text: string) {
-    if (!/^\d{1,3}$/.test(text)) {
-      setRgbDraft((draft) => ({ ...draft, [channel]: text }))
-      return
-    }
-    // Más de 255 no existe: se ajusta al máximo para que lo escrito y el color coincidan.
-    const number = Math.min(Number(text), 255)
-    setRgbDraft((draft) => ({ ...draft, [channel]: String(number) }))
-    setHexDraft(null)
-    onChange(rgbToHex({ ...rgb, [channel]: number }))
-  }
+  const isCustom = !SUGGESTED_COLORS.includes(value)
 
   return (
     <fieldset className={styles.picker}>
       <legend>Color identificador</legend>
 
-      <div className={styles.row}>
-        <label className={styles.native} style={{ background: value }}>
-          <span className="sr-only">Elegir color</span>
-          <input type="color" value={value} onChange={(e) => apply(e.target.value)} />
-        </label>
-
-        <label className={`field ${styles.hex}`}>
-          <span>HEX</span>
-          <input
-            value={hexDraft ?? value.toUpperCase()}
-            onChange={(e) => changeHex(e.target.value)}
-            onBlur={() => setHexDraft(null)}
-            spellCheck={false}
-            autoComplete="off"
-            maxLength={7}
-            aria-describedby={`${id}-status`}
-          />
-        </label>
-
-        {CHANNELS.map(({ key, label }) => (
-          <label key={key} className={`field ${styles.channel}`}>
-            <span>{label}</span>
-            <input
-              inputMode="numeric"
-              value={rgbDraft[key] ?? String(rgb[key])}
-              onChange={(e) => changeChannel(key, e.target.value.trim())}
-              onBlur={() => setRgbDraft({})}
-              maxLength={3}
-              aria-label={`${label} (0 a 255)`}
-            />
-          </label>
-        ))}
+      <div className={styles.selected}>
+        <span className={styles.selectedSwatch} style={{ background: value }} aria-hidden="true" />
+        <div>
+          <strong className={styles.hex}>{value.toUpperCase()}</strong>
+          <small className="muted">{isCustom ? 'Color personalizado' : 'Color sugerido'}</small>
+        </div>
       </div>
 
       <div className={styles.suggested}>
@@ -110,23 +51,41 @@ export function ColorPicker({
                 disabled={Boolean(owner)}
                 title={owner ? `En uso por ${owner}` : color.toUpperCase()}
                 aria-label={owner ? `${color.toUpperCase()}, en uso por ${owner}` : color.toUpperCase()}
-                onClick={() => apply(color)}
+                onClick={() => {
+                  setCustomOpen(false)
+                  onChange(color)
+                }}
               />
             )
           })}
+          <button
+            type="button"
+            className={`${styles.swatch} ${styles.customSwatch}`}
+            aria-pressed={isCustom}
+            aria-expanded={customOpen}
+            title="Color personalizado"
+            aria-label="Color personalizado"
+            onClick={() => setCustomOpen((open) => !open)}
+          >
+            +
+          </button>
         </div>
       </div>
 
-      <div id={`${id}-status`} aria-live="polite">
-        {taken ? (
-          <p className="alert alert-error">Este color ya lo usa {taken.full_name}. Elija uno distinto.</p>
-        ) : similar.length > 0 ? (
-          <p className="alert alert-warning">
-            Se parece mucho al color de {similar.map((u) => u.full_name).join(', ')}. Puede usarlo, pero
-            será difícil distinguirlos en el calendario.
-          </p>
-        ) : null}
-      </div>
+      {customOpen ? (
+        <CustomColorPanel
+          current={value}
+          users={users}
+          excludeId={excludeId}
+          onAccept={(color) => {
+            onChange(color)
+            setCustomOpen(false)
+          }}
+          onCancel={() => setCustomOpen(false)}
+        />
+      ) : (
+        <ColorStatus color={value} users={users} excludeId={excludeId} />
+      )}
     </fieldset>
   )
 }

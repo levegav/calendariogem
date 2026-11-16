@@ -14,56 +14,27 @@
   font-size: var(--text-sm);
 }
 
-.row {
+.selected {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--space-3);
 }
 
-/* El selector nativo queda invisible encima de una muestra grande del color. */
-.native {
-  position: relative;
-  width: 56px;
-  height: 40px;
+.selected div {
+  display: grid;
+  line-height: 1.3;
+}
+
+.selectedSwatch {
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
   border-radius: var(--radius);
   border: 1px solid var(--color-border);
-  cursor: pointer;
-}
-
-.native input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-  padding: 0;
-  border: 0;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.native:has(input:focus-visible) {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
 }
 
 .hex {
-  width: 110px;
-}
-
-.hex input {
   font-family: ui-monospace, Consolas, monospace;
-}
-
-.channel {
-  width: 64px;
-}
-
-.channel input {
-  text-align: center;
-  font-variant-numeric: tabular-nums;
 }
 
 .suggested {
@@ -100,4 +71,16 @@
 .swatch:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+/* Botón "+" de color personalizado: un círculo con el arcoíris de matices. */
+.customSwatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: conic-gradient(#f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-shadow: 0 0 3px rgb(0 0 0 / 0.7);
 }

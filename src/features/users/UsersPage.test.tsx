@@ -52,18 +52,24 @@ describe('UsersPage', () => {
     expect(screen.getByText('Contraseña temporal')).toBeInTheDocument()
   })
 
-  it('no deja crear un usuario con un color ya usado', async () => {
+  it('no deja elegir un color que ya usa otro usuario', async () => {
     renderPage()
     await userEvent.click(await screen.findByRole('button', { name: 'Nuevo usuario' }))
     await userEvent.type(screen.getByLabelText('Usuario'), 'maria')
     await userEvent.type(screen.getByLabelText('Nombre completo'), 'María Pérez')
+    // El color sugerido en uso está deshabilitado; el panel personalizado tampoco deja usarlo.
+    expect(screen.getByRole('button', { name: '#16A34A, en uso por Carlos Mora' })).toBeDisabled()
+    await userEvent.click(screen.getByRole('button', { name: 'Color personalizado' }))
+    await userEvent.click(screen.getByText('Valores exactos (HEX / RGB)'))
     const hex = screen.getByRole('textbox', { name: 'HEX' })
     await userEvent.clear(hex)
     await userEvent.type(hex, '#16A34A')
+    expect(screen.getByRole('button', { name: 'Usar este color' })).toBeDisabled()
+    await userEvent.click(within(screen.getByRole('group', { name: 'Color personalizado' })).getByRole('button', { name: 'Cancelar' }))
     await userEvent.click(screen.getByRole('button', { name: 'Crear usuario' }))
 
-    expect(screen.getByRole('alert')).toHaveTextContent('Elija un color que no use otro usuario.')
-    expect(createUser).not.toHaveBeenCalled()
+    // Se crea con el color libre que ya tenía, nunca con el de Carlos.
+    expect(createUser).toHaveBeenCalledWith(expect.objectContaining({ color: '#ea580c' }))
   })
 
   it('edita el color de un usuario', async () => {

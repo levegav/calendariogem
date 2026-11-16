@@ -19,36 +19,18 @@ function Harness({ initial = '#ea580c', excludeId }: { initial?: string; exclude
   )
 }
 
+async function openCustom() {
+  await userEvent.click(screen.getByRole('button', { name: 'Color personalizado' }))
+  return screen.getByRole('group', { name: 'Color personalizado' })
+}
+
 describe('ColorPicker', () => {
-  it('cambia el color escribiendo el código HEX', async () => {
+  it('elige un color sugerido; los que están en uso aparecen deshabilitados', async () => {
     render(<Harness />)
-    const hex = screen.getByRole('textbox', { name: 'HEX' })
-    await userEvent.clear(hex)
-    await userEvent.type(hex, '#A1B2C3')
-    expect(screen.getByTestId('valor')).toHaveTextContent('#a1b2c3')
-  })
-
-  it('cambia el color con los valores R, G y B', async () => {
-    render(<Harness initial="#000000" />)
-    const red = screen.getByRole('textbox', { name: 'R (0 a 255)' })
-    await userEvent.clear(red)
-    await userEvent.type(red, '255')
-    expect(screen.getByTestId('valor')).toHaveTextContent('#ff0000')
-  })
-
-  it('ajusta a 255 los valores RGB mayores', async () => {
-    render(<Harness initial="#000000" />)
-    const green = screen.getByRole('textbox', { name: 'G (0 a 255)' })
-    await userEvent.clear(green)
-    await userEvent.type(green, '300')
-    expect(green).toHaveValue('255')
-    expect(screen.getByTestId('valor')).toHaveTextContent('#00ff00')
-  })
-
-  it('acepta el selector visual de color', () => {
-    render(<Harness />)
-    fireEvent.change(screen.getByLabelText('Elegir color'), { target: { value: '#123456' } })
-    expect(screen.getByTestId('valor')).toHaveTextContent('#123456')
+    expect(screen.getByRole('button', { name: '#2563EB, en uso por Luis' })).toBeDisabled()
+    await userEvent.click(screen.getByRole('button', { name: '#9333EA' }))
+    expect(screen.getByTestId('valor')).toHaveTextContent('#9333ea')
+    expect(screen.getByText('Color sugerido')).toBeInTheDocument()
   })
 
   it('avisa si el color ya lo usa otro usuario', () => {
@@ -66,10 +48,68 @@ describe('ColorPicker', () => {
     expect(screen.getByText(/Se parece mucho al color de Luis/)).toBeInTheDocument()
   })
 
-  it('los colores sugeridos en uso aparecen deshabilitados', async () => {
-    render(<Harness />)
-    expect(screen.getByRole('button', { name: '#2563EB, en uso por Luis' })).toBeDisabled()
-    await userEvent.click(screen.getByRole('button', { name: '#9333EA' }))
-    expect(screen.getByTestId('valor')).toHaveTextContent('#9333ea')
+  describe('color personalizado', () => {
+    it('cambia el matiz con la barra y solo aplica al pulsar "Usar este color"', async () => {
+      render(<Harness initial="#ff0000" />)
+      await openCustom()
+      fireEvent.change(screen.getByRole('slider', { name: 'Matiz' }), { target: { value: '240' } })
+
+      expect(screen.getByText('#0000FF')).toBeInTheDocument()
+      expect(screen.getByTestId('valor')).toHaveTextContent('#ff0000')
+
+      await userEvent.click(screen.getByRole('button', { name: 'Usar este color' }))
+      expect(screen.getByTestId('valor')).toHaveTextContent('#0000ff')
+      expect(screen.getByText('Color personalizado', { selector: 'small' })).toBeInTheDocument()
+      expect(screen.queryByRole('group', { name: 'Color personalizado' })).not.toBeInTheDocument()
+    })
+
+    it('ajusta intensidad y brillo con el teclado en el recuadro', async () => {
+      render(<Harness initial="#ff0000" />)
+      await openCustom()
+      const area = screen.getByRole('slider', { name: 'Intensidad y brillo' })
+      area.focus()
+      await userEvent.keyboard('{Shift>}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{/Shift}')
+      expect(area).toHaveAttribute('aria-valuetext', 'Intensidad 100 %, brillo 50 %')
+      await userEvent.click(screen.getByRole('button', { name: 'Usar este color' }))
+      expect(screen.getByTestId('valor')).toHaveTextContent('#800000')
+    })
+
+    it('"Cancelar" conserva el color anterior', async () => {
+      render(<Harness initial="#ff0000" />)
+      await openCustom()
+      fireEvent.change(screen.getByRole('slider', { name: 'Matiz' }), { target: { value: '120' } })
+      await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+      expect(screen.getByTestId('valor')).toHaveTextContent('#ff0000')
+    })
+
+    it('muestra la vista previa Nuevo / Actual', async () => {
+      render(<Harness />)
+      await openCustom()
+      expect(screen.getByText('Nuevo')).toBeInTheDocument()
+      expect(screen.getByText('Actual')).toBeInTheDocument()
+    })
+
+    it('no deja usar un color de otro usuario', async () => {
+      render(<Harness />)
+      await openCustom()
+      await userEvent.click(screen.getByText('Valores exactos (HEX / RGB)'))
+      const hex = screen.getByRole('textbox', { name: 'HEX' })
+      await userEvent.clear(hex)
+      await userEvent.type(hex, '#16A34A')
+      expect(screen.getByText('Este color ya lo usa Carlos. Elija uno distinto.')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Usar este color' })).toBeDisabled()
+    })
+
+    it('los valores exactos siguen disponibles (HEX y RGB)', async () => {
+      render(<Harness initial="#000000" />)
+      await openCustom()
+      await userEvent.click(screen.getByText('Valores exactos (HEX / RGB)'))
+      const red = screen.getByRole('textbox', { name: 'R (0 a 255)' })
+      await userEvent.clear(red)
+      await userEvent.type(red, '300')
+      expect(red).toHaveValue('255')
+      await userEvent.click(screen.getByRole('button', { name: 'Usar este color' }))
+      expect(screen.getByTestId('valor')).toHaveTextContent('#ff0000')
+    })
   })
 })
