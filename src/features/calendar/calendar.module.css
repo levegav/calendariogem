@@ -334,8 +334,9 @@
     justify-content: stretch;
   }
 
+  /* Las vistas en su propia fila: junto a Filtros y "Mi calendario" no caben. */
   .views {
-    flex: 1;
+    flex: 1 1 100%;
   }
 
   .search {

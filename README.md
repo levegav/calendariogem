@@ -58,6 +58,24 @@ Los puertos son `5642x`, distintos de los de `nacente` (`5532x`), para poder cor
 - Si la conexión en tiempo real se corta, la app vuelve a consultar al reconectar, al volver a la pestaña y cada 2 minutos.
 - Para revisar la tarea en el proyecto real: Supabase > Integrations > Cron (o la tabla `cron.job_run_details`).
 
+## Instalar la app (teléfono o computadora)
+
+La app es una PWA: se puede instalar y abre en su propia ventana, con su ícono.
+- **Android (Chrome o Edge):** menú ⋮ > **Instalar aplicación** (o "Agregar a pantalla principal").
+- **iPhone (Safari):** botón Compartir > **Agregar a inicio**.
+- **Computadora (Chrome o Edge):** ícono de instalar en la barra de direcciones.
+
+No usa service worker: cada vez que se abre carga la última versión publicada. Los avisos y notificaciones llegan mientras la app está abierta (aunque esté en segundo plano). Si estaba cerrada, aparecen en la campana como "Perdido".
+
+Archivos: `public/manifest.webmanifest` y `public/icons/`. Los PNG se generaron a partir de `public/favicon.svg`.
+
+## Seguridad
+
+- **RLS en todas las tablas.** `anon` no tiene permisos sobre ninguna tabla ni función.
+- **Funciones SECURITY DEFINER:** todas tienen `search_path` fijo. Las de `public` que puede llamar un usuario con sesión validan por dentro quién llama. Son `admin_*`, `complete_password_change`, `set_my_theme` y `resolve_reminder_decision`. El asesor de Supabase las marca como aviso, pero es intencional, y las pruebas pgTAP lo cubren.
+- El esquema `private` no está expuesto en la API.
+- **Pendiente opcional:** la protección contra contraseñas filtradas (HaveIBeenPwned) es de los planes de pago de Supabase.
+
 ## Supabase remoto (proyecto real)
 
 El proyecto vive en **otra cuenta de Supabase**, distinta de la de oficina y nacente. Para no cambiar la sesión global de la CLI, los comandos remotos usan un token propio:

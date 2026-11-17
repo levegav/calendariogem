@@ -324,7 +324,7 @@ describe('CalendarPage', () => {
 
       const results = await screen.findByRole('region', { name: 'Resultados de la búsqueda' })
       expect(searchReminders).toHaveBeenCalledWith(['yo'], 'comite')
-      expect(within(results).getByRole('heading', { name: '2 resultados para «comite»' })).toBeInTheDocument()
+      expect(await within(results).findByRole('heading', { name: '2 resultados para «comite»' })).toBeInTheDocument()
       expect(within(results).getByText('Próximos')).toBeInTheDocument()
       expect(within(results).getByText('Anteriores')).toBeInTheDocument()
       expect(within(results).getByText('Miércoles 10 de marzo de 2027')).toBeInTheDocument()

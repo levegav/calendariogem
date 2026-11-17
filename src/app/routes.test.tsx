@@ -81,8 +81,9 @@ describe('rutas protegidas', () => {
     const router = renderWithAuth(routes, '/', fakeAuth({ status: 'signedIn', profile: fakeProfile() }))
     expect(screen.getByRole('link', { name: 'Calendario', current: 'page' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('link', { name: 'Mi perfil' }))
-    expect(router.state.location.pathname).toBe('/perfil')
+    // La página del perfil se descarga al abrirla: la dirección cambia al terminar.
     expect(await screen.findByRole('heading', { name: 'Mi perfil' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/perfil')
   })
 
   it('el botón de salir cierra la sesión', async () => {

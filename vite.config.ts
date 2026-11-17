@@ -4,6 +4,20 @@ import { defineConfig } from 'vitest/config'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rolldownOptions: {
+      output: {
+        // Librerías en archivos aparte: cambian poco, así el navegador las
+        // conserva en caché entre versiones de la app.
+        codeSplitting: {
+          groups: [
+            { name: 'react', test: /node_modules[\\/](react|react-dom|react-router|scheduler)[\\/]/ },
+            { name: 'supabase', test: /node_modules[\\/]@supabase[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],

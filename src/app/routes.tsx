@@ -1,14 +1,12 @@
 import type { RouteObject } from 'react-router'
-import { ChangePasswordPage } from '../features/auth/ChangePasswordPage'
 import { LoginPage } from '../features/auth/LoginPage'
 import { CHANGE_PASSWORD_PATH, RequireAuth, RequireRole } from '../features/auth/RequireAuth'
-import { ProfilePage } from '../features/profile/ProfilePage'
-import { UsersPage } from '../features/users/UsersPage'
-import { AppLayout } from './AppLayout'
 import { CalendarPage } from '../features/calendar/CalendarPage'
-import { CategoriesPage } from '../features/categories/CategoriesPage'
+import { AppLayout } from './AppLayout'
 import { NotFoundPage } from './NotFoundPage'
 
+// El calendario y el inicio de sesión van en el paquete principal; las demás
+// páginas se descargan la primera vez que se abren.
 export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
   {
@@ -18,13 +16,25 @@ export const routes: RouteObject[] = [
         element: <AppLayout />,
         children: [
           { index: true, element: <CalendarPage /> },
-          { path: 'perfil', element: <ProfilePage /> },
-          { path: CHANGE_PASSWORD_PATH, element: <ChangePasswordPage /> },
+          {
+            path: 'perfil',
+            lazy: async () => ({ Component: (await import('../features/profile/ProfilePage')).ProfilePage }),
+          },
+          {
+            path: CHANGE_PASSWORD_PATH,
+            lazy: async () => ({ Component: (await import('../features/auth/ChangePasswordPage')).ChangePasswordPage }),
+          },
           {
             element: <RequireRole roles={['admin']} />,
             children: [
-              { path: 'usuarios', element: <UsersPage /> },
-              { path: 'categorias', element: <CategoriesPage /> },
+              {
+                path: 'usuarios',
+                lazy: async () => ({ Component: (await import('../features/users/UsersPage')).UsersPage }),
+              },
+              {
+                path: 'categorias',
+                lazy: async () => ({ Component: (await import('../features/categories/CategoriesPage')).CategoriesPage }),
+              },
             ],
           },
           { path: '*', element: <NotFoundPage /> },

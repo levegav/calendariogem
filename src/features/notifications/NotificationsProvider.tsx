@@ -85,6 +85,8 @@ export function NotificationsProvider({ userId, children }: { userId: string; ch
   }, [refreshDecisions])
 
   useEffect(() => {
+    // refresh es asíncrona: solo cambia el estado después de recibir la respuesta.
+    // oxlint-disable-next-line react/set-state-in-effect
     void refresh()
     const unsubscribe = subscribeToNotifications(
       userId,

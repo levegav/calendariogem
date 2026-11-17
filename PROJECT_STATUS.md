@@ -10,8 +10,8 @@
 | 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Terminada (aprobada) |
 | 4 | Notificaciones en tiempo real y avisos previos por participante | Terminada (aprobada) |
 | 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Terminada (aprobada) |
-| 6 | Búsqueda y filtros | Desplegada, pendiente de aprobación |
-| 7 | Pulido y entrega final | Pendiente |
+| 6 | Búsqueda y filtros | Terminada (aprobada) |
+| 7 | Pulido y entrega final | Desplegada, pendiente de aprobación |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización Google/Outlook | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
@@ -425,3 +425,65 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
   - Escritorio: barra con buscador y filtros, menú de filtros con el aviso, y resultados.
   - Celular: buscador a todo el ancho y resultados.
   - Ajuste: con 0 coincidencias el encabezado dice "Sin resultados para «…»".
+
+## Fase 7: pulido y entrega final
+
+**Decisiones (2026-11-17)**
+- **Extras elegidos:** que la app se pueda instalar en el teléfono (PWA) y limpiar los datos de prueba del proyecto real.
+- Sin manual de uso ni página de error especial.
+
+**Datos de prueba (proyecto real)**
+- Se borraron, con autorización: 5 recordatorios "Test…", 7 notificaciones y 1 decisión ya resuelta.
+- Se conservaron las cuentas `luis` (admin) y `luisb` (Luis Benavides, cuenta real), las 5 categorías y la bitácora de auditoría.
+
+**Rendimiento**
+- El paquete principal bajó de 635 KB a 83 KB.
+  - React (314 KB) y Supabase (216 KB) van en archivos aparte que el navegador guarda en caché entre versiones.
+  - Perfil, cambio de contraseña, Usuarios y Categorías se descargan al abrirlos (2 a 10 KB cada una).
+- Ya no aparece la advertencia de tamaño del build.
+- Migración `20261122120000_pulido.sql`: índices para las 4 llaves foráneas que el asesor de Supabase marcó sin índice.
+
+**Calidad**
+- El lint queda sin advertencias:
+  - `Modal` ya no toca referencias durante el render.
+  - En el calendario, "cargando" y "buscando" se calculan en vez de activarse dentro de efectos.
+  - La advertencia de `NotificationsProvider` es un falso positivo (la función es asíncrona) y quedó documentada.
+- Se corrigió una prueba de búsqueda intermitente.
+
+**Instalable (PWA)**
+- `manifest.webmanifest` con nombre, colores e íconos de 192 y 512, la versión adaptable de Android y el ícono para iPhone (180).
+- Edge confirma que es instalable, sin errores (`Page.getInstallabilityErrors`).
+- Sin service worker, a propósito: así nunca queda una versión vieja en caché. Las instrucciones para instalar están en el README.
+
+**Seguridad (proyecto real)**
+- Todas las tablas tienen RLS.
+- `anon` no tiene permisos sobre ninguna tabla ni función.
+- Todas las funciones SECURITY DEFINER tienen `search_path` fijo.
+- El esquema `private` no está expuesto.
+- Asesor de Supabase:
+  - 6 avisos por funciones que valida cada una por dentro (intencional y documentado en el README).
+  - 1 sugerencia de un plan de pago: la protección contra contraseñas filtradas.
+- La tarea `avisos-previos` (pg_cron) corre en el proyecto real: 179 ejecuciones correctas y 0 fallidas al revisarla.
+- Las cabeceras de seguridad (CSP, HSTS, X-Frame-Options, etc.) se revisaron sin cambios.
+
+**Revisión visual final** (Edge, modo oscuro en escritorio; oscuro y claro en celular)
+- Revisado: inicio de sesión, Semana, detalles, edición, campana, Usuarios, Categorías, Perfil, Mes y menú en celular.
+- Ajuste: en celular, con "Mi calendario" visible (admin), los botones de vista no cabían. Ahora van en su propia fila.
+
+**Pruebas (2026-11-17)**
+- `npm run check`: lint sin advertencias, tipos, 166 pruebas unitarias y build sin advertencias.
+- `npm run test:db`: 160 pruebas pgTAP, todas correctas.
+- `npm run test:integration`: 28 pruebas, todas correctas.
+
+## Lista de verificación de la entrega
+
+- [x] Fases 0 a 6 aprobadas. La 7 está desplegada y pendiente de aprobación.
+- [x] App publicada en https://calendariogem.pages.dev, con despliegue automático al hacer push a `main`.
+- [x] Base de datos real con las 9 migraciones aplicadas (local y remoto iguales).
+- [x] Datos de prueba eliminados del proyecto real.
+- [x] Seguridad revisada: RLS, permisos, funciones, cabeceras y CSP.
+- [x] Pruebas automáticas: unitarias, pgTAP e integración.
+- [x] Instalable en teléfono y computadora.
+- [x] README (configuración, scripts, Supabase local y remoto, despliegue, notificaciones, PWA, seguridad) y este documento al día.
+- [ ] Opcional: protección contra contraseñas filtradas (plan de pago de Supabase).
+- [ ] Posteriores (fuera del alcance acordado): recurrencia, exportar a Excel, feriados, sincronización con Google u Outlook.

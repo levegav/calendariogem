@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Icon } from './Icon'
 import styles from './Modal.module.css'
@@ -28,8 +28,11 @@ export function Modal({
 }) {
   const titleId = useId()
   const dialogRef = useRef<HTMLDivElement>(null)
+  // Siempre la última función de cierre, sin volver a montar los escuchadores.
   const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null

@@ -147,7 +147,8 @@ export function CalendarPage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [people, setPeople] = useState<Person[]>([])
   const [savedVisible, setSavedVisible] = useState<string[]>(() => readVisible(userId))
-  const [loading, setLoading] = useState(true)
+  /** Última consulta del calendario ya respondida; mientras no sea la actual, se está cargando. */
+  const [loadedKey, setLoadedKey] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [dialog, setDialog] = useState<Dialog>(null)
@@ -157,8 +158,9 @@ export function CalendarPage() {
   // Búsqueda en todas las fechas; se consulta al dejar de escribir.
   const [searchText, setSearchText] = useState('')
   const [query, setQuery] = useState('')
-  const [search, setSearch] = useState<{ query: string; results: CalendarEvent[]; truncated: boolean } | null>(null)
-  const [searching, setSearching] = useState(false)
+  const [search, setSearch] = useState<{ key: string; query: string; results: CalendarEvent[]; truncated: boolean } | null>(
+    null,
+  )
 
   const range = useMemo(() => visibleRange(view, date), [view, date])
 
@@ -198,27 +200,28 @@ export function CalendarPage() {
     }
   }, [])
 
+  const requestKey = [userId, visibleKey, range.from, range.to, reloadKey, notificationsVersion].join('|')
+  const loading = loadedKey !== requestKey
   useEffect(() => {
     if (!userId) return
     let cancelled = false
-    setLoading(true)
     listCalendarReminders(visibleKey.split(','), fromCostaRica(range.from), fromCostaRica(range.to)).then(
       (data) => {
         if (cancelled) return
         setEvents(data)
         setError(null)
-        setLoading(false)
+        setLoadedKey(requestKey)
       },
       (err) => {
         if (cancelled) return
         setError(toSpanishMessage(err))
-        setLoading(false)
+        setLoadedKey(requestKey)
       },
     )
     return () => {
       cancelled = true
     }
-  }, [userId, visibleKey, range.from, range.to, reloadKey, notificationsVersion])
+  }, [userId, visibleKey, range.from, range.to, requestKey])
 
   useEffect(() => {
     const timer = window.setTimeout(() => setQuery(searchText.trim()), SEARCH_DELAY_MS)
@@ -226,27 +229,27 @@ export function CalendarPage() {
   }, [searchText])
 
   const searchActive = query.length >= MIN_SEARCH_LENGTH
+  const searchKey = [query, visibleKey, reloadKey, notificationsVersion].join('|')
+  const searching = searchActive && search?.key !== searchKey
   useEffect(() => {
     if (!userId || query.length < MIN_SEARCH_LENGTH) return
     let cancelled = false
-    setSearching(true)
     searchReminders(visibleKey.split(','), query).then(
       ({ results, truncated }) => {
         if (cancelled) return
-        setSearch({ query, results, truncated })
+        setSearch({ key: searchKey, query, results, truncated })
         setError(null)
-        setSearching(false)
       },
       (err) => {
         if (cancelled) return
         setError(toSpanishMessage(err))
-        setSearching(false)
+        setSearch({ key: searchKey, query, results: [], truncated: false })
       },
     )
     return () => {
       cancelled = true
     }
-  }, [userId, query, visibleKey, reloadKey, notificationsVersion])
+  }, [userId, query, visibleKey, searchKey])
 
   function clearSearch() {
     setSearchText('')
@@ -372,7 +375,7 @@ export function CalendarPage() {
         <SearchResults
           query={query}
           results={search?.query === query ? searchResults : []}
-          loading={searching || search?.query !== query}
+          loading={searching}
           truncated={search?.query === query && search.truncated}
           filtered={search?.query === query ? search.results.length - searchResults.length : 0}
           onOpen={openResult}
