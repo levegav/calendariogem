@@ -129,6 +129,50 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"reminder_decisions": {
+                  Row: {
+                    "alerts": (number)[],"all_day": boolean,"category_id": number | null,"created_at": string,"decision": string | null,"description": string | null,"end_at": string | null,"former_owner_id": string | null,"id": number,"kept_reminder_id": number | null,"location": string | null,"note": string | null,"reason": string,"reminder_id": number | null,"resolved_at": string | null,"start_at": string,"title": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "alerts"?: (number)[],"all_day": boolean,"category_id"?: number | null,"created_at"?: string,"decision"?: string | null,"description"?: string | null,"end_at"?: string | null,"former_owner_id"?: string | null,"id"?: never,"kept_reminder_id"?: number | null,"location"?: string | null,"note"?: string | null,"reason": string,"reminder_id"?: number | null,"resolved_at"?: string | null,"start_at": string,"title": string,"user_id": string
+                  }
+                  Update: {
+                    "alerts"?: (number)[],"all_day"?: boolean,"category_id"?: number | null,"created_at"?: string,"decision"?: string | null,"description"?: string | null,"end_at"?: string | null,"former_owner_id"?: string | null,"id"?: never,"kept_reminder_id"?: number | null,"location"?: string | null,"note"?: string | null,"reason"?: string,"reminder_id"?: number | null,"resolved_at"?: string | null,"start_at"?: string,"title"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "reminder_decisions_category_id_fkey"
+      columns: ["category_id"]
+isOneToOne: false
+      referencedRelation: "categories"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reminder_decisions_former_owner_id_fkey"
+      columns: ["former_owner_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reminder_decisions_kept_reminder_id_fkey"
+      columns: ["kept_reminder_id"]
+isOneToOne: false
+      referencedRelation: "reminders"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reminder_decisions_reminder_id_fkey"
+      columns: ["reminder_id"]
+isOneToOne: false
+      referencedRelation: "reminders"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reminder_decisions_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"reminder_participants": {
                   Row: {
                     "added_at": string,"reminder_id": number,"user_id": string
@@ -219,6 +263,9 @@ isOneToOne: false
       } },
 "complete_password_change":
 { Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"resolve_reminder_decision":
+{ Args: { "p_id": number,"p_keep": boolean }; Returns: number
                            },
 "save_reminder":
 { Args: { "p_alerts"?: (number)[],"p_all_day": boolean,"p_category_id": number,"p_description": string,"p_end_at": string,"p_id": number,"p_location": string,"p_note": string,"p_participants": (string)[],"p_start_at": string,"p_title": string }; Returns: number

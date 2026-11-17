@@ -8,8 +8,8 @@
 | 1 | Usuarios: login, panel admin, colores RGB, perfil, menú, responsive | Terminada (aprobada) |
 | 2 | Categorías, CRUD de recordatorios, vistas día/semana/mes/año | Terminada (aprobada) |
 | 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Terminada (aprobada) |
-| 4 | Notificaciones en tiempo real y avisos previos por participante | Desplegada, pendiente de aprobación |
-| 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Pendiente |
+| 4 | Notificaciones en tiempo real y avisos previos por participante | Terminada (aprobada) |
+| 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Desplegada, pendiente de aprobación |
 | 6 | Búsqueda y filtros | Pendiente |
 | 7 | Pulido y entrega final | Pendiente |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización Google/Outlook | — |
@@ -274,7 +274,7 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
   - Al modificar: los etiquetados reciben "modificado" con lo que cambió (título, fecha y hora, categoría, ubicación, descripción, nota) y el título y horario anteriores.
     - Es un trigger diferido, para que quien fue quitado o recién agregado en el mismo guardado no reciba también "modificado".
   - Al mover la fecha u hora, los avisos se vuelven a armar. Si cambia "todo el día", todos vuelven al aviso por defecto.
-  - Al eliminar un recordatorio no se notifica todavía: eso es la Fase 5.
+  - Al eliminar un recordatorio no se notifica: lo reemplaza la ventana Conservar / Eliminar de la Fase 5.
 - **pg_cron** `avisos-previos`: cada 30 segundos convierte en notificación los avisos que ya tocan.
   - Cada aviso se dispara una sola vez.
   - No se disparan avisos cuya hora ya había pasado cuando se configuraron.
@@ -327,3 +327,54 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - `npm run check`: 153 pruebas unitarias y build, todo correcto. Las 7 nuevas cubren la lectura de horas escritas, el campo de hora (lista, escrita, inválida, flechas) y en qué momentos suena el timbre.
 - `npm run test:integration`: 25 pruebas, todas correctas.
 - Revisión visual en Edge, en escritorio y en celular: lista de horas dentro del formulario y 10:03 escrita a mano.
+
+## Fase 5: ventana Conservar / Eliminar
+
+**Cómo funciona**
+- **Cuándo aparece:**
+  - Cuando el creador elimina un recordatorio con etiquetados: cada etiquetado decide.
+  - Cuando el admin desactiva a un usuario: deciden los etiquetados de sus recordatorios que **aún no terminan**. Uno de todo el día de hoy cuenta como futuro; los que ya pasaron no se tocan. Los recordatorios del usuario desactivado no se borran.
+- **Cómo se presenta:**
+  - Sale de inmediato si la persona está conectada (por Realtime y con sonido), o al entrar si no lo está.
+  - No se puede cerrar sin decidir: no tiene X y Escape no la cierra.
+  - Si hay varias, salen una por una, de la más vieja a la más nueva, e indica cuántas faltan.
+  - Si hay un aviso previo en pantalla, la decisión sale después de "Entendido".
+  - Sale aunque el evento ya haya pasado.
+- **Conservar una copia:** crea un recordatorio nuevo a nombre de la persona.
+  - Tiene los mismos datos (título, descripción, fecha y hora, todo el día, categoría, ubicación y nota) y los avisos previos que tenía la persona.
+  - La copia no incluye a los demás etiquetados.
+  - Mantiene la categoría aunque se haya desactivado; si se eliminó, usa la primera activa.
+- **Eliminar de mi calendario:** solo quita su participación.
+- En los dos casos, si el original sigue existiendo (creador desactivado), la persona deja de estar etiquetada en él.
+- Las decisiones de cada persona son independientes.
+- **Confirmaciones:**
+  - Al eliminar un recordatorio con etiquetados se avisa que podrán conservar una copia.
+  - Al desactivar a un usuario se avisa que sus etiquetados decidirán.
+- Los recordatorios eliminados antes de esta fase no generan ventana: no quedó registro para preguntar.
+
+**Base de datos** (`20261120120000_conservar_eliminar.sql`)
+- `reminder_decisions`: decisión por persona, con la copia de los datos del recordatorio y sus avisos.
+  - RLS: cada quien solo ve las suyas y no las puede cambiar directamente.
+  - Está publicada en Realtime.
+- Trigger antes de eliminar un recordatorio: crea una decisión por etiquetado. Si ya había una pendiente por desactivación de ese mismo recordatorio, se reemplaza.
+- Trigger al desactivar un perfil: crea las decisiones de sus recordatorios que aún no terminan. Si se reactiva y se vuelve a desactivar, no se duplican.
+- `resolve_reminder_decision(id, conservar)`:
+  - Solo resuelve decisiones propias y pendientes.
+  - Crea la copia si corresponde y quita la participación en el original.
+  - Marca la decisión con lo que se eligió.
+- Las notificaciones ya no se envían a usuarios desactivados (por ejemplo, "salida" al creador desactivado).
+
+**Pruebas (2026-11-17)**
+- `npm run check`: lint, tipos, 156 pruebas unitarias (3 nuevas) y build, todo correcto.
+  - Presentación una por una, que no se pueda cerrar, error al guardar, y llegada en vivo con sonido.
+- `npm run test:db`: 149 pruebas pgTAP (30 nuevas), todas correctas.
+  - Decisiones por etiquetado y copia de datos y avisos.
+  - Que nadie resuelva las de otro ni decida dos veces.
+  - Recordatorios futuros, pasados y de todo el día de hoy al desactivar, sin duplicar.
+  - La copia con categoría desactivada.
+  - Que no se notifique a desactivados, y el acceso sin sesión.
+- `npm run test:integration`: 27 pruebas (2 nuevas).
+  - La decisión llega por Realtime.
+  - La copia aparece en el calendario de quien la conservó.
+  - Desactivar al creador genera la decisión.
+- **Revisión visual en Edge:** ventana "Recordatorio eliminado" (escritorio) y "Creador desactivado" (celular), con "Conservar" y "Eliminar" de punta a punta.

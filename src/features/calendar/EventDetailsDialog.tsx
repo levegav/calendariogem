@@ -61,7 +61,9 @@ export function EventDetailsDialog({
   }
 
   function remove() {
-    if (!window.confirm(`¿Eliminar el recordatorio "${event.title}"? Esta acción no se puede deshacer.`)) return
+    const tagged =
+      event.participants.length > 0 ? ' Las personas etiquetadas podrán conservar una copia en su calendario.' : ''
+    if (!window.confirm(`¿Eliminar el recordatorio "${event.title}"?${tagged} Esta acción no se puede deshacer.`)) return
     void run(onDelete)
   }
 

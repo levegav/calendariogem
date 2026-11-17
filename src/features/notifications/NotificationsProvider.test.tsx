@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppLayout } from '../../app/AppLayout'
 import { fakeAuth, fakeProfile, renderWithAuth } from '../../test/fakeAuth'
 import { listNotifications, markNotificationsRead, subscribeToNotifications } from './api'
+import { listPendingDecisions, resolveDecision, type PendingDecision } from './decisions'
 import { playChime } from './sound'
 import type { AppNotification } from './types'
 
@@ -11,6 +12,10 @@ vi.mock('./api', () => ({
   listNotifications: vi.fn(),
   markNotificationsRead: vi.fn(() => Promise.resolve()),
   subscribeToNotifications: vi.fn(),
+}))
+vi.mock('./decisions', () => ({
+  listPendingDecisions: vi.fn(),
+  resolveDecision: vi.fn(),
 }))
 vi.mock('./sound', () => ({
   playChime: vi.fn(),
@@ -54,6 +59,8 @@ const bell = () => screen.getAllByRole('button', { name: /^Notificaciones/ })[0]
 beforeEach(() => {
   vi.mocked(markNotificationsRead).mockClear()
   vi.mocked(playChime).mockClear()
+  vi.mocked(listPendingDecisions).mockResolvedValue([])
+  vi.mocked(resolveDecision).mockReset().mockResolvedValue(undefined)
   vi.mocked(subscribeToNotifications).mockImplementation((_userId, onInsert) => {
     pushInsert = onInsert
     return () => {}
@@ -124,5 +131,69 @@ describe('NotificationsProvider y campana', () => {
     await screen.findAllByRole('button', { name: 'Notificaciones' })
     await userEvent.click(bell())
     expect(screen.getByText('No tiene notificaciones.')).toBeInTheDocument()
+  })
+
+  describe('ventana Conservar / Eliminar', () => {
+    const decision = (overrides: Partial<PendingDecision>): PendingDecision => ({
+      id: 1,
+      reason: 'eliminado',
+      title: 'Comité de compras',
+      start_at: '2026-11-20T14:00:00-06:00',
+      end_at: null,
+      all_day: false,
+      location: 'Sala 2',
+      created_at: '2026-11-17T10:00:00Z',
+      former_owner: carlos,
+      ...overrides,
+    })
+
+    it('al entrar presenta las pendientes una por una y no se puede cerrar sin decidir', async () => {
+      vi.mocked(listNotifications).mockResolvedValue([])
+      vi.mocked(listPendingDecisions).mockResolvedValue([
+        decision({ id: 1 }),
+        decision({ id: 2, reason: 'creador_desactivado', title: 'Visita a planta' }),
+      ])
+      renderApp()
+
+      const first = await screen.findByRole('dialog', { name: 'Recordatorio eliminado' })
+      expect(within(first).getByText('Comité de compras')).toBeInTheDocument()
+      expect(within(first).getByText('vie 20 nov, 2:00 p. m.')).toBeInTheDocument()
+      expect(within(first).getByText('Queda 1 más por decidir después de este.')).toBeInTheDocument()
+      expect(within(first).queryByRole('button', { name: 'Cerrar' })).not.toBeInTheDocument()
+      await userEvent.keyboard('{Escape}')
+      expect(screen.getByRole('dialog', { name: 'Recordatorio eliminado' })).toBeInTheDocument()
+
+      await userEvent.click(within(first).getByRole('button', { name: 'Conservar una copia' }))
+      expect(resolveDecision).toHaveBeenCalledWith(1, true)
+
+      const second = await screen.findByRole('dialog', { name: 'Creador desactivado' })
+      expect(within(second).getByText('Visita a planta')).toBeInTheDocument()
+      await userEvent.click(within(second).getByRole('button', { name: 'Eliminar de mi calendario' }))
+      expect(resolveDecision).toHaveBeenLastCalledWith(2, false)
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+      // Las que ya estaban al entrar no suenan.
+      expect(playChime).not.toHaveBeenCalled()
+    })
+
+    it('si no se puede guardar la decisión, lo indica y la ventana sigue', async () => {
+      vi.mocked(listNotifications).mockResolvedValue([])
+      vi.mocked(listPendingDecisions).mockResolvedValue([decision({})])
+      vi.mocked(resolveDecision).mockRejectedValue(new Error('sin conexión'))
+      renderApp()
+      const dialog = await screen.findByRole('dialog', { name: 'Recordatorio eliminado' })
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Conservar una copia' }))
+      expect(await within(dialog).findByRole('alert')).toBeInTheDocument()
+      expect(within(dialog).getByRole('button', { name: 'Conservar una copia' })).toBeEnabled()
+    })
+
+    it('una decisión nueva con la app abierta sale de inmediato, con sonido', async () => {
+      vi.mocked(listNotifications).mockResolvedValue([])
+      renderApp()
+      await screen.findAllByRole('button', { name: 'Notificaciones' })
+      vi.mocked(listPendingDecisions).mockResolvedValue([decision({ id: 5 })])
+      await act(async () => pushInsert())
+      expect(await screen.findByRole('dialog', { name: 'Recordatorio eliminado' })).toBeInTheDocument()
+      expect(playChime).toHaveBeenCalledWith('aviso')
+    })
   })
 })

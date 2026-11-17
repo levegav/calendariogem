@@ -14,6 +14,10 @@ vi.mock('../features/notifications/api', () => ({
   markNotificationsRead: vi.fn(() => Promise.resolve()),
   subscribeToNotifications: vi.fn(() => () => {}),
 }))
+vi.mock('../features/notifications/decisions', () => ({
+  listPendingDecisions: vi.fn(() => Promise.resolve([])),
+  resolveDecision: vi.fn(),
+}))
 vi.mock('../features/categories/api', () => ({ listCategories: vi.fn(() => Promise.resolve([])) }))
 
 const listedUsers = [

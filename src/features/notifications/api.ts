@@ -30,7 +30,7 @@ export async function markNotificationsRead(ids: number[]): Promise<void> {
 }
 
 /**
- * Escucha en tiempo real las notificaciones nuevas del usuario. `onSubscribed`
+ * Escucha en tiempo real las notificaciones y decisiones nuevas del usuario. `onSubscribed`
  * se llama al conectar y al reconectar (para recuperar lo que llegó mientras tanto).
  */
 export function subscribeToNotifications(userId: string, onInsert: () => void, onSubscribed: () => void): () => void {
@@ -40,6 +40,12 @@ export function subscribeToNotifications(userId: string, onInsert: () => void, o
     .on(
       'postgres_changes',
       { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+      () => onInsert(),
+    )
+    // Decisiones Conservar / Eliminar (Fase 5).
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'reminder_decisions', filter: `user_id=eq.${userId}` },
       () => onInsert(),
     )
     .subscribe((status) => {

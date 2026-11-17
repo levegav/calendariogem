@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { useNavigate } from 'react-router'
 import { listNotifications, markNotificationsRead, subscribeToNotifications } from './api'
 import { AlertDialog } from './AlertDialog'
+import { DecisionDialog } from './DecisionDialog'
+import { listPendingDecisions, resolveDecision, type PendingDecision } from './decisions'
 import { notificationDate } from './messages'
 import { playChime, unlockSound } from './sound'
 import { NotificationsContext, type NotificationsValue } from './NotificationsContext'
@@ -25,12 +27,33 @@ export function NotificationsProvider({ userId, children }: { userId: string; ch
   const [version, setVersion] = useState(0)
   const [alerts, setAlerts] = useState<AppNotification[]>([])
   const [toasts, setToasts] = useState<AppNotification[]>([])
+  const [decisions, setDecisions] = useState<PendingDecision[]>([])
+  /** Decisiones ya vistas; null hasta la primera carga. */
+  const knownDecisions = useRef<Set<number> | null>(null)
   /** Ids ya vistos; null hasta la primera carga. */
   const known = useRef<Set<number> | null>(null)
   const requestSeq = useRef(0)
   const appliedSeq = useRef(0)
 
+  /** Decisiones Conservar / Eliminar pendientes: se presentan una por una. */
+  const refreshDecisions = useCallback(async () => {
+    let list: PendingDecision[]
+    try {
+      list = await listPendingDecisions()
+    } catch {
+      return
+    }
+    setDecisions(list)
+    const seen = knownDecisions.current
+    knownDecisions.current = new Set(list.map((d) => d.id))
+    if (seen && list.some((d) => !seen.has(d.id))) {
+      playChime('aviso')
+      setVersion((v) => v + 1) // el recordatorio pudo desaparecer del calendario
+    }
+  }, [])
+
   const refresh = useCallback(async () => {
+    void refreshDecisions()
     const seq = ++requestSeq.current
     let list: AppNotification[]
     try {
@@ -59,7 +82,7 @@ export function NotificationsProvider({ userId, children }: { userId: string; ch
     if (newAlerts.length) playChime('aviso')
     else if (newOthers.length) playChime('notificacion')
     setVersion((v) => v + 1)
-  }, [])
+  }, [refreshDecisions])
 
   useEffect(() => {
     void refresh()
@@ -134,6 +157,12 @@ export function NotificationsProvider({ userId, children }: { userId: string; ch
     [items, unread, missed, version, markRead, unreadKey, open],
   )
 
+  async function resolve(decision: PendingDecision, keep: boolean) {
+    await resolveDecision(decision.id, keep)
+    setDecisions((prev) => prev.filter((d) => d.id !== decision.id))
+    setVersion((v) => v + 1) // recarga el calendario (aparece la copia o se quita el original)
+  }
+
   function acknowledgeAlerts() {
     markRead(alerts.map((n) => n.id))
     setAlerts([])
@@ -150,6 +179,15 @@ export function NotificationsProvider({ userId, children }: { userId: string; ch
             acknowledgeAlerts()
             open(n)
           }}
+        />
+      )}
+      {/* Primero los avisos (se cierran con Entendido); después, las decisiones pendientes. */}
+      {alerts.length === 0 && decisions.length > 0 && (
+        <DecisionDialog
+          key={decisions[0].id}
+          decision={decisions[0]}
+          remaining={decisions.length}
+          onResolve={(keep) => resolve(decisions[0], keep)}
         />
       )}
       <Toasts

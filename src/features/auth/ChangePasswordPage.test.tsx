@@ -15,6 +15,10 @@ vi.mock('../notifications/api', () => ({
   markNotificationsRead: vi.fn(() => Promise.resolve()),
   subscribeToNotifications: vi.fn(() => () => {}),
 }))
+vi.mock('../notifications/decisions', () => ({
+  listPendingDecisions: vi.fn(() => Promise.resolve([])),
+  resolveDecision: vi.fn(),
+}))
 vi.mock('../preferences/api', () => ({ saveMyTheme: vi.fn() }))
 
 const routes = [

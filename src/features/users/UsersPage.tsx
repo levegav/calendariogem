@@ -56,7 +56,8 @@ export function UsersPage() {
 
   function toggleActive(user: Profile) {
     const question = user.active
-      ? `¿Desactivar a ${user.full_name}? No podrá iniciar sesión, pero su información y recordatorios se conservan.`
+      ? `¿Desactivar a ${user.full_name}? No podrá iniciar sesión, pero su información y recordatorios se conservan. ` +
+        'Quienes estén etiquetados en sus recordatorios que aún no pasan decidirán si conservan una copia.'
       : `¿Activar a ${user.full_name}?`
     if (!window.confirm(question)) return
     void runAction(user, async () => {
