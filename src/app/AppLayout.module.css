@@ -19,6 +19,13 @@
   overflow-y: auto;
 }
 
+.brandRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -155,6 +162,11 @@
   display: none;
 }
 
+/* La campana va en el menú lateral (escritorio) o en el encabezado (celular). */
+.topbarBell {
+  display: none;
+}
+
 .main {
   flex: 1;
   width: 100%;
@@ -181,6 +193,14 @@
 
   .topbar .menuButton {
     display: inline-flex;
+  }
+
+  .topbarBell {
+    display: block;
+  }
+
+  .sidebarBell {
+    display: none;
   }
 
   .sidebar {

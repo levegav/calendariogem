@@ -34,4 +34,6 @@ export interface CalendarEvent {
   owner: Person
   /** Usuarios etiquetados (sin el creador), por nombre. */
   participants: Person[]
+  /** Avisos previos del usuario en sesión (minutos antes); vacío si no participa. */
+  my_alerts: number[]
 }

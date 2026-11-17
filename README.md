@@ -50,6 +50,13 @@ npx supabase stop
 
 Los puertos son `5642x`, distintos de los de `nacente` (`5532x`), para poder correr los dos proyectos a la vez.
 
+## Notificaciones y avisos previos
+
+- Las **notificaciones** (etiquetado, quitado, salida, modificación) las crean triggers de la base de datos en la tabla `notifications`. La app las recibe por **Supabase Realtime**: la tabla está en la publicación `supabase_realtime`, y RLS hace que cada usuario reciba solo las suyas.
+- Los **avisos previos** de cada participante están en `reminder_alerts`. Los dispara en el servidor la tarea de **pg_cron** `avisos-previos`, cada 30 segundos, con la función `private.fire_due_alerts()`. Por eso llegan aunque la app esté cerrada: al entrar aparecen en la campana como "Perdido".
+- Si la conexión en tiempo real se corta, la app vuelve a consultar al reconectar, al volver a la pestaña y cada 2 minutos.
+- Para revisar la tarea en el proyecto real: Supabase > Integrations > Cron (o la tabla `cron.job_run_details`).
+
 ## Supabase remoto (proyecto real)
 
 El proyecto vive en **otra cuenta de Supabase**, distinta de la de oficina y nacente. Para no cambiar la sesión global de la CLI, los comandos remotos usan un token propio:

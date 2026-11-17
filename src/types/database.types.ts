@@ -57,6 +57,38 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"notifications": {
+                  Row: {
+                    "actor_id": string | null,"created_at": string,"data": NonNullable<Json>,"id": number,"kind": string,"read_at": string | null,"reminder_id": number | null,"reminder_title": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "actor_id"?: string | null,"created_at"?: string,"data"?: NonNullable<Json>,"id"?: never,"kind": string,"read_at"?: string | null,"reminder_id"?: number | null,"reminder_title": string,"user_id": string
+                  }
+                  Update: {
+                    "actor_id"?: string | null,"created_at"?: string,"data"?: NonNullable<Json>,"id"?: never,"kind"?: string,"read_at"?: string | null,"reminder_id"?: number | null,"reminder_title"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notifications_actor_id_fkey"
+      columns: ["actor_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notifications_reminder_id_fkey"
+      columns: ["reminder_id"]
+isOneToOne: false
+      referencedRelation: "reminders"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notifications_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "active": boolean,"color": string,"created_at": string,"full_name": string,"id": string,"must_change_password": boolean,"role": Database["public"]['Enums']["user_role"],"theme": string,"updated_at": string,"username": string
@@ -70,6 +102,32 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },"reminder_alerts": {
+                  Row: {
+                    "armed_at": string,"fired_for": string | null,"minutes_before": number,"reminder_id": number,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "armed_at"?: string,"fired_for"?: string | null,"minutes_before": number,"reminder_id": number,"user_id": string
+                  }
+                  Update: {
+                    "armed_at"?: string,"fired_for"?: string | null,"minutes_before"?: number,"reminder_id"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "reminder_alerts_reminder_id_fkey"
+      columns: ["reminder_id"]
+isOneToOne: false
+      referencedRelation: "reminders"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reminder_alerts_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"reminder_participants": {
                   Row: {
@@ -163,10 +221,13 @@ isOneToOne: false
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
 "save_reminder":
-{ Args: { "p_all_day": boolean,"p_category_id": number,"p_description": string,"p_end_at": string,"p_id": number,"p_location": string,"p_note": string,"p_participants": (string)[],"p_start_at": string,"p_title": string }; Returns: number
+{ Args: { "p_alerts"?: (number)[],"p_all_day": boolean,"p_category_id": number,"p_description": string,"p_end_at": string,"p_id": number,"p_location": string,"p_note": string,"p_participants": (string)[],"p_start_at": string,"p_title": string }; Returns: number
                            },
 "set_my_theme":
 { Args: { "p_theme": string }; Returns: undefined
+                           },
+"set_reminder_alerts":
+{ Args: { "p_minutes": (number)[],"p_reminder_id": number }; Returns: undefined
                            }
           }
           Enums: {

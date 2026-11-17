@@ -3,6 +3,8 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { Icon, type IconName } from '../components/Icon'
 import { UserAvatar } from '../components/UserAvatar'
 import { useAuth } from '../features/auth/AuthContext'
+import { NotificationBell } from '../features/notifications/NotificationBell'
+import { NotificationsProvider } from '../features/notifications/NotificationsProvider'
 import { isAdmin, ROLE_LABELS } from '../lib/auth'
 import { isThemePreference, watchTheme } from '../lib/theme'
 import styles from './AppLayout.module.css'
@@ -38,15 +40,20 @@ export function AppLayout() {
     return () => document.removeEventListener('keydown', onKeyDown)
   }, [menuOpen])
 
-  return (
+  const shell = (
     <div className={styles.shell}>
       {showNav && profile && (
         <>
           <aside id="menu-principal" className={styles.sidebar} data-open={menuOpen}>
-            <Link to="/" className={styles.brand} onClick={() => setMenuOpen(false)}>
-              <img src="/favicon.svg" alt="" width={28} height={28} />
-              Calendario GEM
-            </Link>
+            <div className={styles.brandRow}>
+              <Link to="/" className={styles.brand} onClick={() => setMenuOpen(false)}>
+                <img src="/favicon.svg" alt="" width={28} height={28} />
+                Calendario GEM
+              </Link>
+              <span className={styles.sidebarBell}>
+                <NotificationBell align="start" />
+              </span>
+            </div>
 
             <nav className={styles.nav} aria-label="Principal" onClick={() => setMenuOpen(false)}>
               <NavItem to="/" end icon="calendar" label="Calendario" />
@@ -101,6 +108,11 @@ export function AppLayout() {
             <img src="/favicon.svg" alt="" width={24} height={24} />
             Calendario GEM
           </Link>
+          {showNav && (
+            <span className={styles.topbarBell}>
+              <NotificationBell align="end" />
+            </span>
+          )}
           {!showNav && profile && (
             <button type="button" className="btn btn-ghost" onClick={() => void signOut()}>
               Salir
@@ -118,5 +130,14 @@ export function AppLayout() {
         </main>
       </div>
     </div>
+  )
+
+  // Las notificaciones solo corren con sesión completa (no durante el cambio de contraseña).
+  return showNav && profile ? (
+    <NotificationsProvider key={profile.id} userId={profile.id}>
+      {shell}
+    </NotificationsProvider>
+  ) : (
+    shell
   )
 }

@@ -1,0 +1,299 @@
+/* ---------------------------------------------------------------------------
+   Campana
+   --------------------------------------------------------------------------- */
+.bell {
+  position: relative;
+}
+
+.bellButton {
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+/* El panel es fijo: el menú lateral tiene desplazamiento propio y lo recortaría. */
+.panel {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  width: min(400px, calc(100vw - 2 * var(--space-4)));
+  max-height: min(560px, calc(100svh - 96px));
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.2);
+}
+
+/* Escritorio: a la derecha del menú lateral. */
+.panel[data-align='start'] {
+  top: var(--space-3);
+  left: calc(248px + var(--space-2));
+}
+
+/* Celular: debajo del encabezado. */
+.panel[data-align='end'] {
+  top: 60px;
+  right: var(--space-4);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.panelHeader h2 {
+  margin: 0;
+  font-size: var(--text-base);
+}
+
+.empty {
+  margin: 0;
+  padding: var(--space-5) var(--space-4);
+  text-align: center;
+}
+
+.list {
+  margin: 0;
+  padding: var(--space-1);
+  overflow-y: auto;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.item:hover,
+.item:focus-visible {
+  background: var(--color-bg);
+  outline: none;
+}
+
+.item[data-unread='true'] {
+  background: var(--color-primary-soft);
+}
+
+.item[data-unread='true']:hover {
+  background: color-mix(in srgb, var(--color-primary) 18%, var(--color-surface));
+}
+
+.itemText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.time {
+  color: var(--color-muted);
+  font-size: 0.72rem;
+}
+
+.alertIcon {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.missed {
+  display: inline-block;
+  margin-right: var(--space-1);
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--color-danger-soft);
+  color: var(--color-danger-text);
+  font-size: 0.7rem;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+/* ---------------------------------------------------------------------------
+   Ventana de avisos
+   --------------------------------------------------------------------------- */
+.alertList {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.alertItem {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3);
+  border-left: 4px solid var(--color-warning);
+  border-radius: 6px;
+  background: var(--color-bg);
+}
+
+.alertTitle {
+  font-size: var(--text-lg);
+}
+
+.alertOpen {
+  justify-self: start;
+  margin-top: var(--space-1);
+}
+
+/* ---------------------------------------------------------------------------
+   Mensajes breves
+   --------------------------------------------------------------------------- */
+.toasts {
+  position: fixed;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 45;
+  display: grid;
+  gap: var(--space-2);
+  width: min(380px, calc(100vw - 2 * var(--space-4)));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-primary);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  pointer-events: auto;
+  animation: toast-in 0.18s ease-out;
+}
+
+.toastBody {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  padding: var(--space-1);
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* En celular, encima del botón flotante +. */
+@media (max-width: 900px) {
+  .toasts {
+    bottom: 88px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Selector de avisos previos (formulario y detalles)
+   --------------------------------------------------------------------------- */
+.picker {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.picker legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  font-weight: 500;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.option {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  user-select: none;
+}
+
+.option:hover {
+  background: var(--color-bg);
+}
+
+.option:has(input:focus-visible) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.option[data-checked='true'] {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pickerHint {
+  display: block;
+  margin-top: var(--space-1);
+}

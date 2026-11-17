@@ -4,6 +4,8 @@ import { Modal } from '../../components/Modal'
 import { formatTime, isDateKey } from '../../lib/dates'
 import { toSpanishMessage } from '../../lib/errors'
 import type { Category } from '../categories/api'
+import { defaultAlerts } from '../notifications/alerts'
+import { AlertsPicker } from '../notifications/AlertsPicker'
 import type { ReminderPayload } from './api'
 import {
   TIME_OPTIONS,
@@ -182,6 +184,8 @@ export function ReminderFormDialog({
   function set<K extends keyof ReminderFormValues>(key: K, value: ReminderFormValues[K]) {
     setValues((prev) => {
       const next = { ...prev, [key]: value }
+      // Las opciones de aviso cambian entre "todo el día" y con hora: vuelve al de por defecto.
+      if (key === 'allDay' && next.allDay !== prev.allDay) next.alerts = defaultAlerts(next.allDay)
       // Al mover el inicio, la finalización se mueve con él si quedaba antes.
       if (key === 'startDate' && next.endDate < next.startDate) next.endDate = next.startDate
       if (key === 'startTime' && next.endDate === next.startDate && next.endTime <= next.startTime) {
@@ -314,6 +318,8 @@ export function ReminderFormDialog({
             <FieldError id={`${id}-end`} message={errors.end} />
           </div>
         )}
+
+        <AlertsPicker allDay={values.allDay} selected={values.alerts} onChange={(m) => set('alerts', m)} legend="Mis avisos" />
 
         <ParticipantsPicker people={people} selected={values.participantIds} onChange={(ids) => set('participantIds', ids)} />
 

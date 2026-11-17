@@ -9,6 +9,11 @@ vi.mock('../features/calendar/api', () => ({
   listCalendarReminders: vi.fn(() => Promise.resolve([])),
   listPeople: vi.fn(() => Promise.resolve([])),
 }))
+vi.mock('../features/notifications/api', () => ({
+  listNotifications: vi.fn(() => Promise.resolve([])),
+  markNotificationsRead: vi.fn(() => Promise.resolve()),
+  subscribeToNotifications: vi.fn(() => () => {}),
+}))
 vi.mock('../features/categories/api', () => ({ listCategories: vi.fn(() => Promise.resolve([])) }))
 
 const listedUsers = [

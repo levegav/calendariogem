@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeAuth, fakeProfile, renderWithAuth } from '../../test/fakeAuth'
 import { listCategories } from '../categories/api'
-import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder } from './api'
+import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder, setMyAlerts } from './api'
 import { CalendarPage } from './CalendarPage'
 import { fakeEvent } from './testEvents'
 
@@ -13,6 +13,7 @@ vi.mock('./api', () => ({
   saveReminder: vi.fn(),
   deleteReminder: vi.fn(),
   leaveReminder: vi.fn(),
+  setMyAlerts: vi.fn(),
 }))
 vi.mock('../categories/api', () => ({ listCategories: vi.fn() }))
 
@@ -49,6 +50,7 @@ beforeEach(() => {
   vi.mocked(saveReminder).mockResolvedValue(1)
   vi.mocked(deleteReminder).mockResolvedValue(undefined)
   vi.mocked(leaveReminder).mockResolvedValue(undefined)
+  vi.mocked(setMyAlerts).mockResolvedValue(undefined)
   vi.spyOn(window, 'confirm').mockReturnValue(true)
 })
 
@@ -118,6 +120,7 @@ describe('CalendarPage', () => {
       location: null,
       note: 'Llevar copias',
       participant_ids: ['carlos'],
+      alerts: [15],
     })
     expect(await screen.findByText('Recordatorio "Entrega de informe" creado.')).toBeInTheDocument()
   })
@@ -208,6 +211,42 @@ describe('CalendarPage', () => {
     expect(within(dialog).getByText('Etiquetados')).toBeInTheDocument()
     expect(within(dialog).getByText('Ana Rodríguez')).toBeInTheDocument()
     expect(within(dialog).getByText('Carlos Mora')).toBeInTheDocument()
+  })
+
+  it('en los detalles, cada participante cambia sus avisos y se guardan al marcarlos', async () => {
+    vi.mocked(listCalendarReminders).mockResolvedValue([
+      { ...meeting, owner: carlos, participants: [{ id: 'yo', full_name: 'Luis Vega', color: '#2563eb' }], my_alerts: [15] },
+    ])
+    renderAt('/')
+    await userEvent.click(await screen.findByRole('button', { name: /Reunión de equipo/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Reunión de equipo' })
+    const avisos = within(dialog).getByRole('group', { name: 'Mis avisos' })
+    expect(within(avisos).getByRole('checkbox', { name: '15 min antes' })).toBeChecked()
+    await userEvent.click(within(avisos).getByRole('checkbox', { name: '1 día antes' }))
+    expect(setMyAlerts).toHaveBeenCalledWith(1, [15, 1440])
+    expect(await within(dialog).findByText('Avisos guardados.')).toBeInTheDocument()
+    expect(within(avisos).getByRole('checkbox', { name: '1 día antes' })).toBeChecked()
+  })
+
+  it('si no se pueden guardar los avisos, vuelven a como estaban', async () => {
+    vi.mocked(setMyAlerts).mockRejectedValue(new Error('sin conexión'))
+    renderAt('/')
+    await userEvent.click(await screen.findByRole('button', { name: /Reunión de equipo/ }))
+    const avisos = screen.getByRole('group', { name: 'Mis avisos' })
+    await userEvent.click(within(avisos).getByRole('checkbox', { name: '15 min antes' }))
+    expect(await screen.findByText('No se pudieron guardar los avisos. Intente de nuevo.')).toBeInTheDocument()
+    expect(within(avisos).getByRole('checkbox', { name: '15 min antes' })).toBeChecked()
+  })
+
+  it('al crear, "Todo el día" cambia las opciones de aviso y pone el del día anterior', async () => {
+    renderAt('/')
+    await userEvent.click(screen.getAllByRole('button', { name: 'Nuevo recordatorio' })[0])
+    const dialog = screen.getByRole('dialog', { name: 'Nuevo recordatorio' })
+    const avisos = within(dialog).getByRole('group', { name: 'Mis avisos' })
+    expect(within(avisos).getByRole('checkbox', { name: '15 min antes' })).toBeChecked()
+    await userEvent.click(within(dialog).getByLabelText('Todo el día'))
+    expect(within(avisos).getByRole('checkbox', { name: 'El día anterior' })).toBeChecked()
+    expect(within(avisos).queryByRole('checkbox', { name: '15 min antes' })).not.toBeInTheDocument()
   })
 
   it('un etiquetado puede salirse del recordatorio', async () => {

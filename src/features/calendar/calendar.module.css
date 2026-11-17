@@ -3,6 +3,8 @@
    ========================================================================= */
 .page {
   display: grid;
+  /* Sin esto la columna crece hasta el ancho del título y en celular la página se desborda. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
 }
 
@@ -22,6 +24,7 @@
 }
 
 .title {
+  min-width: 0;
   margin: 0 0 0 var(--space-2);
   font-size: var(--text-xl);
   white-space: nowrap;
@@ -147,8 +150,10 @@
 }
 
 @media (max-width: 700px) {
+  /* nowrap: en columna con wrap, la línea toma el ancho del título largo y desborda. */
   .toolbar {
     flex-direction: column;
+    flex-wrap: nowrap;
     align-items: stretch;
   }
 

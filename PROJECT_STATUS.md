@@ -7,8 +7,8 @@
 | 0 | Base: proyecto, Supabase, pruebas, primer despliegue | Terminada (aprobada) |
 | 1 | Usuarios: login, panel admin, colores RGB, perfil, menú, responsive | Terminada (aprobada) |
 | 2 | Categorías, CRUD de recordatorios, vistas día/semana/mes/año | Terminada (aprobada) |
-| 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Desplegada, pendiente de aprobación |
-| 4 | Notificaciones en tiempo real y avisos previos por participante | Pendiente |
+| 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Terminada (aprobada) |
+| 4 | Notificaciones en tiempo real y avisos previos por participante | Desplegada, pendiente de aprobación |
 | 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Pendiente |
 | 6 | Búsqueda y filtros | Pendiente |
 | 7 | Pulido y entrega final | Pendiente |
@@ -245,3 +245,68 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - **Día y Semana:** se oscurece la franja de media hora bajo el mouse, que es la misma que se usa al hacer clic para crear un recordatorio. Sobre un recordatorio no se resalta, porque ese clic lo abre.
 - En modo oscuro el resaltado aclara en vez de oscurecer. En pantallas táctiles no se muestra.
 - `npm run check`: 131 pruebas unitarias (1 nueva: la franja aparece en la posición correcta y desaparece al salir) y build, todo correcto.
+
+## Fase 4: notificaciones en tiempo real y avisos previos
+
+**Decisiones (2026-11-17)**
+- **Avisos previos:** cada participante puede marcar uno o varios de una lista fija: a la hora, 5, 15 o 30 min, 1 o 2 horas, 1 o 2 días y 1 semana antes.
+  - En los de todo el día, la referencia son las 8:00 a. m. Las opciones son: el mismo día, el día anterior, 2 días antes y 1 semana antes.
+- **Aviso por defecto:** 15 min antes. En los de todo el día, el día anterior a las 8:00 a. m. Se pone al crear el recordatorio y al etiquetar a alguien.
+- **Presentación:**
+  - Hay una campana con contador.
+  - Los avisos previos que llegan con la app abierta salen en una ventana con el botón **Entendido**.
+  - Las demás notificaciones salen como mensaje breve en una esquina.
+  - Los avisos que llegaron con la app cerrada quedan solo en la campana, marcados **Perdido**.
+
+**Base de datos** (`20261119120000_notificaciones.sql`)
+- `reminder_alerts`: avisos previos de cada participante.
+  - RLS: cada quien ve, crea y quita solo los suyos, y solo en recordatorios que creó o en los que está etiquetado.
+  - `set_reminder_alerts(recordatorio, minutos[])` los reemplaza.
+  - `save_reminder` recibe `p_alerts` con los avisos del creador.
+- `notifications`: tipos `etiquetado`, `quitado`, `salida`, `modificado` y `aviso`.
+  - Guarda una copia del título, porque quien fue quitado ya no puede leer el recordatorio.
+  - RLS: cada quien lee las suyas y solo puede marcarlas como leídas. Nadie las crea directamente.
+  - Está publicada en Realtime.
+- Triggers:
+  - Al etiquetar: notificación "etiquetado" y aviso por defecto.
+  - Al quitar a alguien: solo esa persona recibe "quitado", y se borran sus avisos.
+  - Al salirse: el creador recibe "salida".
+  - Al modificar: los etiquetados reciben "modificado" con lo que cambió (título, fecha y hora, categoría, ubicación, descripción, nota) y el título y horario anteriores.
+    - Es un trigger diferido, para que quien fue quitado o recién agregado en el mismo guardado no reciba también "modificado".
+  - Al mover la fecha u hora, los avisos se vuelven a armar. Si cambia "todo el día", todos vuelven al aviso por defecto.
+  - Al eliminar un recordatorio no se notifica todavía: eso es la Fase 5.
+- **pg_cron** `avisos-previos`: cada 30 segundos convierte en notificación los avisos que ya tocan.
+  - Cada aviso se dispara una sola vez.
+  - No se disparan avisos cuya hora ya había pasado cuando se configuraron.
+  - Si el recordatorio se mueve, vuelve a avisar con la nueva hora.
+
+**Frontend**
+- **Campana** en el menú lateral (escritorio) y en el encabezado (celular).
+  - Muestra el contador de no leídas, que también aparece en el título de la pestaña: "(3) Calendario GEM".
+  - Lista las últimas 50 notificaciones, con la persona que hizo el cambio, el detalle y hace cuánto llegaron.
+  - Tiene la opción "Marcar todas como leídas".
+  - Al tocar una notificación se abre el día del recordatorio.
+- **Ventana de aviso:** "Empieza en 15 min" con el título y la hora. Tiene los botones "Ver en el calendario" y "Entendido".
+- **Mensajes breves:** salen 8 segundos en la esquina, con la línea del color de quien hizo el cambio.
+- **Mis avisos:**
+  - En el formulario de nuevo y editar recordatorio, para el creador.
+  - En los detalles del recordatorio, para el creador y los etiquetados. Se guardan al marcarlos; si falla, vuelven a como estaban.
+- Al llegar una notificación, el calendario se recarga.
+- **Ajustes encontrados en la revisión visual:**
+  - El panel de la campana quedaba debajo de la barra del calendario: ahora se dibuja sobre toda la página.
+  - En celular, el título largo de la vista Día desbordaba la página (problema que venía de la Fase 2): ahora se recorta con "…".
+
+**Pruebas (2026-11-17)**
+- `npm run check`: lint, tipos, 146 pruebas unitarias (15 nuevas) y build, todo correcto.
+  - Cubren los textos de cada tipo de notificación, las opciones de aviso, la campana y los perdidos, la ventana de aviso en vivo, el mensaje breve, y "Mis avisos" en los detalles y en el formulario.
+- `npm run test:db`: 119 pruebas pgTAP (31 nuevas), todas correctas.
+  - Hora de disparo (también en los de todo el día).
+  - Avisos por defecto y propios.
+  - Que nadie toque los avisos ni las notificaciones de otros.
+  - Qué notificación recibe cada quien al modificar, quitar o salirse.
+  - Disparo único y nuevo disparo al mover el recordatorio.
+  - Que la tarea programada exista y que la tabla esté publicada en Realtime.
+- `npm run test:integration`: 25 pruebas (5 nuevas) contra el Supabase local.
+  - La notificación llega por Realtime solo a su destinatario.
+  - pg_cron dispara un aviso real y llega en tiempo real.
+- **Revisión visual en Edge** con datos de demostración, en escritorio y en celular (390 px): campana con perdidos, día del recordatorio, "Mis avisos" en los detalles, mensaje breve en vivo y ventana de aviso disparada por pg_cron.

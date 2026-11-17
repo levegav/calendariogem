@@ -11,7 +11,8 @@ const { updateUser, rpc } = vi.hoisted(() => ({
 }))
 vi.mock('../../lib/supabase', () => ({ supabase: { auth: { updateUser }, rpc } }))
 vi.mock('../notifications/api', () => ({
-  listNotifications: vi.fn(() => Promise.resolve({ items: [], unread: 0 })),
+  listNotifications: vi.fn(() => Promise.resolve([])),
+  markNotificationsRead: vi.fn(() => Promise.resolve()),
   subscribeToNotifications: vi.fn(() => () => {}),
 }))
 vi.mock('../preferences/api', () => ({ saveMyTheme: vi.fn() }))

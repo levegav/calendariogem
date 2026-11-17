@@ -52,6 +52,7 @@ describe('toPayload', () => {
       description: '  ',
       location: ' Sala 2 ',
       participantIds: ['u2', 'u1', 'u2'],
+      alerts: [60, 15, 60],
     }
     expect(toPayload(values)).toEqual({
       title: 'Reunión',
@@ -63,6 +64,7 @@ describe('toPayload', () => {
       location: 'Sala 2',
       note: null,
       participant_ids: ['u2', 'u1'],
+      alerts: [15, 60],
     })
   })
 
@@ -78,12 +80,18 @@ describe('toPayload', () => {
       title: 'Reunión',
       location: 'Sala 2',
       participants: [{ id: 'u1', full_name: 'Carlos Mora', color: '#16a34a' }],
+      my_alerts: [30, 1440],
     })
     const payload = toPayload(valuesFromEvent(event))
     expect(new Date(payload.start_at).getTime()).toBe(new Date(event.start_at).getTime())
     expect(new Date(payload.end_at!).getTime()).toBe(new Date(event.end_at!).getTime())
     expect(payload.location).toBe('Sala 2')
     expect(payload.participant_ids).toEqual(['u1'])
+    expect(payload.alerts).toEqual([30, 1440])
+  })
+
+  it('un recordatorio nuevo trae el aviso por defecto de 15 min', () => {
+    expect(newReminderValues({ date: '2026-11-20' }, now).alerts).toEqual([15])
   })
 })
 

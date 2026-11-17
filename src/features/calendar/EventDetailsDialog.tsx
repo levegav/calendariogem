@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Modal } from '../../components/Modal'
 import { UserAvatar } from '../../components/UserAvatar'
 import { toSpanishMessage } from '../../lib/errors'
+import { AlertsPicker } from '../notifications/AlertsPicker'
 import { describeWhen } from './eventText'
 import styles from './EventDetailsDialog.module.css'
 import { asLink } from './reminderForm'
@@ -14,6 +15,7 @@ export function EventDetailsDialog({
   onEdit,
   onDelete,
   onLeave,
+  onAlertsChange,
   onClose,
 }: {
   event: CalendarEvent
@@ -21,10 +23,14 @@ export function EventDetailsDialog({
   onEdit: () => void
   onDelete: () => Promise<void>
   onLeave: () => Promise<void>
+  /** Guarda los avisos previos del usuario en sesión. */
+  onAlertsChange: (minutes: number[]) => Promise<void>
   onClose: () => void
 }) {
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [alerts, setAlerts] = useState(event.my_alerts)
+  const [alertsStatus, setAlertsStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const isOwner = event.owner.id === currentUserId
   const isParticipant = event.participants.some((p) => p.id === currentUserId)
   const link = event.location ? asLink(event.location) : null
@@ -37,6 +43,20 @@ export function EventDetailsDialog({
     } catch (err) {
       setError(toSpanishMessage(err))
       setBusy(false)
+    }
+  }
+
+  /** Los avisos se guardan al marcarlos; si falla, se vuelve a lo anterior. */
+  async function changeAlerts(minutes: number[]) {
+    const previous = alerts
+    setAlerts(minutes)
+    setAlertsStatus('saving')
+    try {
+      await onAlertsChange(minutes)
+      setAlertsStatus('saved')
+    } catch {
+      setAlerts(previous)
+      setAlertsStatus('error')
     }
   }
 
@@ -141,6 +161,25 @@ export function EventDetailsDialog({
             </>
           )}
         </dl>
+
+        {(isOwner || isParticipant) && (
+          <div>
+            <AlertsPicker
+              allDay={event.all_day}
+              selected={alerts}
+              onChange={(minutes) => void changeAlerts(minutes)}
+              legend="Mis avisos"
+              disabled={alertsStatus === 'saving'}
+            />
+            <p className={styles.alertsStatus} role="status">
+              {alertsStatus === 'saving' && 'Guardando…'}
+              {alertsStatus === 'saved' && 'Avisos guardados.'}
+              {alertsStatus === 'error' && (
+                <span className={styles.alertsError}>No se pudieron guardar los avisos. Intente de nuevo.</span>
+              )}
+            </p>
+          </div>
+        )}
 
         {!isOwner && (
           <p className="muted">

@@ -7,14 +7,23 @@ const COLUMNS =
   'id, title, description, start_at, end_at, all_day, location, note, ' +
   'category:categories!reminders_category_id_fkey(id, name, color, active), ' +
   'owner:profiles!reminders_owner_id_fkey(id, full_name, color), ' +
-  'participants:reminder_participants(user:profiles!reminder_participants_user_id_fkey(id, full_name, color))'
+  'participants:reminder_participants(user:profiles!reminder_participants_user_id_fkey(id, full_name, color)), ' +
+  // Por RLS, cada quien recibe solo sus propios avisos.
+  'alerts:reminder_alerts(minutes_before)'
 
-type ReminderRow = Omit<CalendarEvent, 'participants'> & { participants: { user: Person }[] }
+type ReminderRow = Omit<CalendarEvent, 'participants' | 'my_alerts'> & {
+  participants: { user: Person }[]
+  alerts: { minutes_before: number }[]
+}
 
 const byName = (a: Person, b: Person) => a.full_name.localeCompare(b.full_name, 'es')
 
-function toEvent({ participants, ...row }: ReminderRow): CalendarEvent {
-  return { ...row, participants: participants.map((p) => p.user).sort(byName) }
+function toEvent({ participants, alerts, ...row }: ReminderRow): CalendarEvent {
+  return {
+    ...row,
+    participants: participants.map((p) => p.user).sort(byName),
+    my_alerts: alerts.map((a) => a.minutes_before).sort((a, b) => a - b),
+  }
 }
 
 /**
@@ -48,6 +57,8 @@ export interface ReminderPayload {
   note: string | null
   /** Usuarios etiquetados (sin el creador). */
   participant_ids: string[]
+  /** Avisos previos del creador (minutos antes). */
+  alerts: number[]
 }
 
 type SaveArgs = Database['public']['Functions']['save_reminder']['Args']
@@ -65,6 +76,7 @@ export async function saveReminder(id: number | null, payload: ReminderPayload):
     p_location: payload.location,
     p_note: payload.note,
     p_participants: payload.participant_ids,
+    p_alerts: payload.alerts,
   } as SaveArgs
   const { data, error } = await supabase.rpc('save_reminder', args)
   if (error) throw error
@@ -87,4 +99,10 @@ export async function leaveReminder(reminderId: number, userId: string): Promise
     .select('reminder_id')
   if (error) throw error
   if (data.length === 0) throw new AppError('Ya no está etiquetado en este recordatorio.')
+}
+
+/** Cambia los avisos previos del usuario en sesión (creador o etiquetado) en un recordatorio. */
+export async function setMyAlerts(reminderId: number, minutes: number[]): Promise<void> {
+  const { error } = await supabase.rpc('set_reminder_alerts', { p_reminder_id: reminderId, p_minutes: minutes })
+  if (error) throw error
 }

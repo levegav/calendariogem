@@ -13,6 +13,7 @@ export function fakeEvent(overrides: Partial<CalendarEvent> & { start_at: string
     category: { id: 1, name: 'Reunión', color: '#2563eb', active: true },
     owner: { id: '00000000-0000-0000-0000-000000000001', full_name: 'Ana Rodríguez', color: '#ea580c' },
     participants: [],
+    my_alerts: [15],
     ...overrides,
   }
 }

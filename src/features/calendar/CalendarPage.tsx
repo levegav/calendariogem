@@ -17,7 +17,8 @@ import {
 import { toSpanishMessage } from '../../lib/errors'
 import { useAuth } from '../auth/AuthContext'
 import { listCategories, type Category } from '../categories/api'
-import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder } from './api'
+import { useNotifications } from '../notifications/NotificationsContext'
+import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder, setMyAlerts } from './api'
 import styles from './calendar.module.css'
 import { CalendarSelector } from './CalendarSelector'
 import { EventDetailsDialog } from './EventDetailsDialog'
@@ -112,6 +113,8 @@ export function CalendarPage() {
   const { state } = useAuth()
   const profile = state.status === 'signedIn' ? state.profile : null
   const userId = profile?.id ?? ''
+  // Al llegar una notificación (etiquetado, cambios…) se recarga el calendario.
+  const { version: notificationsVersion } = useNotifications()
   // Solo el admin puede ver los calendarios de otros (el servidor lo impone con RLS).
   const canViewOthers = profile?.role === 'admin'
   const me: Person = useMemo(
@@ -193,7 +196,7 @@ export function CalendarPage() {
     return () => {
       cancelled = true
     }
-  }, [userId, visibleKey, range.from, range.to, reloadKey])
+  }, [userId, visibleKey, range.from, range.to, reloadKey, notificationsVersion])
 
   const reload = () => setReloadKey((key) => key + 1)
   const activeCategories = categories.filter((c) => c.active)
@@ -324,6 +327,12 @@ export function CalendarPage() {
             setDialog(null)
             setNotice(`Recordatorio "${dialog.event.title}" eliminado.`)
             reload()
+          }}
+          onAlertsChange={async (minutes) => {
+            await setMyAlerts(dialog.event.id, minutes)
+            const updated = { ...dialog.event, my_alerts: minutes }
+            setEvents((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
+            setDialog({ type: 'details', event: updated })
           }}
           onLeave={async () => {
             await leaveReminder(dialog.event.id, userId)

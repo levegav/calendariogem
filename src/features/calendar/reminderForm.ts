@@ -1,4 +1,5 @@
 import { fromCostaRica, MINUTES_PER_DAY, toCostaRica, todayKey, type DateKey } from '../../lib/dates'
+import { defaultAlerts } from '../notifications/alerts'
 import type { ReminderPayload } from './api'
 import { eventSpan } from './layout'
 import type { CalendarEvent } from './types'
@@ -18,6 +19,8 @@ export interface ReminderFormValues {
   note: string
   /** Usuarios etiquetados (sin el creador). */
   participantIds: string[]
+  /** Avisos previos del creador (minutos antes). */
+  alerts: number[]
 }
 
 export type ReminderFormErrors = Partial<Record<'title' | 'categoryId' | 'end' | 'description' | 'location' | 'note', string>>
@@ -56,6 +59,7 @@ export function newReminderValues(
     location: '',
     note: '',
     participantIds: [],
+    alerts: defaultAlerts(false),
   }
 }
 
@@ -75,6 +79,7 @@ export function valuesFromEvent(event: CalendarEvent): ReminderFormValues {
     location: event.location ?? '',
     note: event.note ?? '',
     participantIds: event.participants.map((p) => p.id),
+    alerts: event.my_alerts,
   }
 }
 
@@ -124,6 +129,7 @@ export function toPayload(values: ReminderFormValues): ReminderPayload {
     location: optional(values.location),
     note: optional(values.note),
     participant_ids: [...new Set(values.participantIds)],
+    alerts: [...new Set(values.alerts)].sort((a, b) => a - b),
   }
 }
 
