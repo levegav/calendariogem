@@ -176,6 +176,19 @@
   grid-template-columns: var(--gutter) repeat(var(--days), minmax(0, 1fr));
 }
 
+/* La cuadrícula de horas tiene barra de desplazamiento; los encabezados reservan
+   el mismo espacio para que las columnas queden alineadas. */
+.dayHeaders,
+.bannerRow,
+.gridScroll {
+  scrollbar-gutter: stable;
+}
+
+.dayHeaders,
+.bannerRow {
+  overflow-y: hidden;
+}
+
 .dayHeaders {
   border-bottom: 1px solid var(--color-border);
 }
