@@ -1,4 +1,5 @@
 :root {
+  --brand-logo: url('/brand/gem-consulting.png');
   --color-bg: #f6f7f9;
   --color-surface: #ffffff;
   --color-border: #e2e5ea;
@@ -47,6 +48,8 @@
 
 /* Modo oscuro: lo activa src/lib/theme.ts con data-theme="dark" */
 :root[data-theme='dark'] {
+  /* El azul marino del logo no se lee sobre fondo oscuro: versión con letras claras. */
+  --brand-logo: url('/brand/gem-consulting-oscuro.png');
   --color-bg: #0f1419;
   --color-surface: #182029;
   --color-border: #2c3642;
@@ -600,15 +603,47 @@ select:disabled {
 
 /* Inicio de sesión */
 .auth-page {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   min-height: 100svh;
   display: grid;
   place-items: center;
   padding: var(--space-4);
 }
 
+/* Logo de la empresa detrás del cuadro de ingreso, difuminado. */
+.auth-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--brand-logo) center / min(94vw, 980px) auto no-repeat;
+  filter: blur(7px);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+:root[data-theme='dark'] .auth-page::before {
+  opacity: 0.4;
+}
+
+/* En celular el cuadro ocupa casi todo el ancho: el logo va en el espacio de arriba. */
+@media (max-width: 600px) {
+  .auth-page::before {
+    background-position: center 6svh;
+    background-size: 88vw auto;
+    filter: blur(4px);
+  }
+}
+
 .auth-card {
+  position: relative;
   width: 100%;
   max-width: 380px;
+  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .alert-warning {

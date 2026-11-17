@@ -67,6 +67,8 @@ export function AppLayout() {
               )}
             </nav>
 
+            <div className={styles.companyLogo} role="img" aria-label="GEM Consulting" />
+
             <div className={styles.account}>
               <Link to="/perfil" className={styles.accountLink} onClick={() => setMenuOpen(false)}>
                 <UserAvatar name={profile.full_name} color={profile.color} size={32} />

@@ -475,6 +475,13 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - `npm run test:db`: 160 pruebas pgTAP, todas correctas.
 - `npm run test:integration`: 28 pruebas, todas correctas.
 
+### Ajuste del 2026-11-17: logo de GEM Consulting
+- **Inicio de sesión:** el logo aparece difuminado detrás del cuadro de ingreso. El cuadro es semitransparente para que el logo se vea a través de él. En celular el logo va en el espacio libre de arriba.
+- **Menú lateral:** el logo aparece al pie, encima del nombre del usuario. Ocupa el espacio libre sin cambiar el tamaño del menú y se encoge si la pantalla es baja.
+- **Modo oscuro:** el logo tiene una versión con letras claras, porque el azul marino no se lee sobre fondo oscuro. El trazo de color queda igual.
+- **Archivos:** `public/brand/gem-consulting.png` y `public/brand/gem-consulting-oscuro.png`. El tema elige cuál usar con la variable CSS `--brand-logo`.
+- **Pruebas:** revisado en computadora y celular, modo claro y oscuro. `npm run check` correcto (166 pruebas).
+
 ## Lista de verificación de la entrega
 
 - [x] Fases 0 a 6 aprobadas. La 7 está desplegada y pendiente de aprobación.
