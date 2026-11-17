@@ -333,3 +333,8 @@
     -webkit-backdrop-filter: blur(10px);
   }
 }
+
+/* El contenido usa el ancho disponible (antes se limitaba a 1200px y sobraba espacio a los lados). */
+.main {
+  max-width: 1720px;
+}

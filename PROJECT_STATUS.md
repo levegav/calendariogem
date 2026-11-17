@@ -516,6 +516,7 @@ Se eligió entre seis propuestas comparadas en dos maquetas (Órbita, Plano, Mos
 - **Colores:** fondo gris azulado `#e8ebf1`; en modo oscuro casi negro `#07090e` con mosaicos `#121722`. Se quitó la línea del degradado del borde superior de la app.
 - **Tipografía:** Manrope para todo (paquete `@fontsource-variable/manrope`). Se quitaron Inter y Plus Jakarta Sans.
 - **Dónde está:** los colores en `:root` y `:root[data-theme='dark']` de `src/styles/global.css`; la forma en el bloque "Estilo Bento" al final de `global.css`, `src/app/AppLayout.module.css` y `src/features/calendar/calendar.module.css`.
+- **Ancho:** a pedido del usuario, el contenido ya no se limita a 1200px: llega hasta 1720px (`.main` en `AppLayout.module.css`). En pantallas anchas el calendario ocupa el espacio de los costados y la barra de herramientas cabe en una fila (revisado también a 1650px).
 - **Sin cambios de funciones:** solo estilos (CSS) y fuentes.
 
 **Pruebas (2026-11-17)**
