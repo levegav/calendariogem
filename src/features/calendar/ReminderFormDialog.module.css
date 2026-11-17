@@ -97,8 +97,85 @@
   accent-color: var(--color-primary-solid);
 }
 
-/* Personas para etiquetar: pastilla con el avatar en su color. */
-.personChip {
-  padding-left: 4px;
+/* Resultados de la búsqueda de personas para etiquetar. */
+.results {
+  display: grid;
+  gap: 2px;
+  margin: var(--space-1) 0 0;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  list-style: none;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.08);
 }
 
+.results > li.muted {
+  padding: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  min-height: 38px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.result:hover,
+.result:focus-visible {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  outline: none;
+}
+
+/* Personas ya etiquetadas: pastillas con su color y una × para quitarlas. */
+.tagged {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.taggedChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 34px;
+  padding: 0 4px 0 4px;
+  border: 1px solid var(--chip-color);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--chip-color) 12%, var(--color-surface));
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.untag {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.untag:hover,
+.untag:focus-visible {
+  background: color-mix(in srgb, var(--chip-color) 25%, transparent);
+  color: var(--color-text);
+}

@@ -7,6 +7,7 @@ const suffix = `e${uniqueSuffix()}`
 let luis: SupabaseClient
 let carlos: SupabaseClient
 let ana: SupabaseClient
+let admin: SupabaseClient
 let luisId: string
 let carlosId: string
 let anaId: string
@@ -56,6 +57,7 @@ beforeAll(async () => {
   luis = await createSignedInUser(status, service, `it.luis.${suffix}`, 'user')
   carlos = await createSignedInUser(status, service, `it.carlos.${suffix}`, 'user')
   ana = await createSignedInUser(status, service, `it.ana.${suffix}`, 'user')
+  admin = await createSignedInUser(status, service, `it.admin.${suffix}`, 'admin')
   luisId = (await luis.auth.getUser()).data.user!.id
   carlosId = (await carlos.auth.getUser()).data.user!.id
   anaId = (await ana.auth.getUser()).data.user!.id
@@ -76,14 +78,25 @@ describe('etiquetar', () => {
     expect(row.participants.map((p) => p.user.id).sort()).toEqual([carlosId, anaId].sort())
   })
 
-  it('aparece en el calendario de cada etiquetado y cualquiera puede consultarlo', async () => {
+  it('aparece en el calendario de cada etiquetado', async () => {
     expect((await calendarOf(carlos, [carlosId])).map((r) => r.id)).toContain(reminderId)
-    // Ana mira el calendario de Carlos ("Ver calendario de…").
-    expect((await calendarOf(ana, [carlosId])).map((r) => r.id)).toContain(reminderId)
+    expect((await calendarOf(ana, [anaId])).map((r) => r.id)).toContain(reminderId)
+  })
+
+  it('solo el admin ve el calendario de otros', async () => {
+    const { data: privado, error } = await save(luis, null, 'Solo mío', [])
+    expect(error).toBeNull()
+    // Carlos intenta ver el calendario de Luis: solo recibe lo que comparte con él.
+    const deCarlos = (await calendarOf(carlos, [luisId])).map((r) => r.id)
+    expect(deCarlos).toContain(reminderId)
+    expect(deCarlos).not.toContain(privado)
+    // El admin ve todo el calendario de Luis.
+    const delAdmin = (await calendarOf(admin, [luisId])).map((r) => r.id)
+    expect(delAdmin).toEqual(expect.arrayContaining([reminderId, privado]))
   })
 
   it('con varios calendarios elegidos no se repite', async () => {
-    const ids = (await calendarOf(ana, [luisId, carlosId, anaId])).map((r) => r.id)
+    const ids = (await calendarOf(admin, [luisId, carlosId, anaId])).map((r) => r.id)
     expect(ids.filter((id) => id === reminderId)).toHaveLength(1)
   })
 

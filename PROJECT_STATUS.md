@@ -28,7 +28,7 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - El color del creador se muestra como línea lateral, junto con "Creado por: Nombre". La categoría se muestra como insignia, aparte.
 
 **Ver calendarios**
-- Todos pueden **ver** los calendarios de los demás con un selector "Ver calendario de…" de varias personas. Se ve todo, no hay eventos privados.
+- **Cambio del 2026-11-17:** solo el **admin** ve los calendarios de los demás, con el selector "Ver calendario de…" de varias personas. Un usuario ve únicamente los recordatorios que creó y aquellos en los que está etiquetado, junto con los demás participantes de esos recordatorios.
 - Solo el creador edita o elimina un recordatorio.
 
 **Recordatorios**
@@ -197,9 +197,9 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - `calendar_reminders(usuarios, desde, hasta)`: recordatorios de los calendarios elegidos (creados por esas personas o en los que están etiquetadas), sin repetir. También SECURITY INVOKER.
 
 **Frontend**
-- **Etiquetar personas** en el formulario: pastillas con el avatar y el color de cada usuario activo (sin el creador). Con más de 8 personas aparece un buscador. Al editar se puede quitar a alguien.
+- **Etiquetar personas** en el formulario: se escribe un nombre y aparecen hasta 6 coincidencias. Primero salen las que empiezan igual y la búsqueda ignora tildes. Enter agrega la primera. Cada etiquetado queda como una pastilla con su avatar y color, y una × para quitarlo. El creador no aparece en la búsqueda.
 - **Detalles**: lista de "Etiquetados" (con "(yo)"). Un etiquetado ve **Salir del recordatorio** (con confirmación); no ve Editar ni Eliminar.
-- **Ver calendario de…** (barra superior): casillas con el propio calendario y el de cada usuario activo, más "Solo el mío" y "Todos". Siempre queda al menos uno. La elección se recuerda por usuario en el navegador.
+- **Ver calendario de…** (barra superior, **solo admin**): casillas con el propio calendario y el de cada usuario activo, más "Solo el mío" y "Todos". Siempre queda al menos uno. La elección se recuerda por usuario en el navegador.
 - "Mi calendario" ahora incluye los recordatorios en los que el usuario está etiquetado, con la línea del color de quien los creó y "Creado por".
 - Las notificaciones (etiquetado, quitado, salida, cambios) llegan en la Fase 4.
 
@@ -213,3 +213,28 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - `db push` de `20261118120000_etiquetados.sql` en el proyecto remoto.
 - Verificación sin sesión: `reminder_participants`, `calendar_reminders` y `save_reminder` responden 401.
 - Cloudflare publicó la versión con la Fase 3.
+
+### Ajuste del 2026-11-17: visibilidad solo para el admin y buscador de etiquetados
+
+**Base de datos** (`20261118130000_visibilidad_admin.sql`)
+- `reminders`: el admin lee todos los recordatorios. Un usuario lee los que creó y aquellos en los que está etiquetado.
+- `reminder_participants`: los etiquetados de un recordatorio los ven el admin, su creador y sus etiquetados.
+- Se agregaron las funciones auxiliares `private.is_reminder_owner` y `private.is_reminder_participant` (SECURITY DEFINER), que evitan que las políticas se llamen entre sí en bucle. Las políticas para agregar y quitar etiquetados usan esas mismas funciones.
+- `calendar_reminders` no cambia: es SECURITY INVOKER, así que RLS ya filtra lo que cada quien recibe.
+
+**Frontend**
+- El selector "Ver calendario de…" solo aparece para el admin. Un usuario siempre consulta su propio calendario, aunque el navegador tenga guardada una elección anterior.
+- Hay un buscador nuevo para etiquetar personas (descrito arriba).
+
+**Pruebas (2026-11-17)**
+- `npm run check`: lint, tipos, 130 pruebas unitarias y build, todo correcto.
+  - Se actualizaron 3 pruebas para el buscador nuevo.
+  - 1 prueba nueva: un usuario que no es admin no ve "Ver calendario de…".
+- `npm run test:db`: 88 pruebas pgTAP, todas correctas. Las 5 nuevas comprueban que:
+  - un usuario no ve recordatorios ajenos, pero el admin sí;
+  - después de salirse, ya no ve el recordatorio ni a sus etiquetados;
+  - un usuario no ve el calendario de otro, pero el admin sí.
+- `npm run test:integration`: 20 pruebas contra el Supabase local, todas correctas.
+
+**Despliegue**
+- `db push` de `20261118130000_visibilidad_admin.sql` en el proyecto remoto. `migration list` muestra el local y el remoto iguales.

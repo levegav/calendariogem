@@ -1,7 +1,7 @@
 -- Pruebas de categorías y recordatorios: permisos, reglas y propiedad.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(30);
+select plan(31);
 
 insert into auth.users (id, email, aud, role) values
   ('11111111-1111-1111-1111-111111111111', 'test.admin@calendariogem.local', 'authenticated', 'authenticated'),
@@ -97,7 +97,7 @@ select is(
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"33333333-3333-3333-3333-333333333333","role":"authenticated"}', true);
 
-select is((select count(*)::int from public.reminders where owner_id = '22222222-2222-2222-2222-222222222222'), 2, 'Otro usuario ve los recordatorios de los demás');
+select is((select count(*)::int from public.reminders where owner_id = '22222222-2222-2222-2222-222222222222'), 0, 'Un usuario no ve los recordatorios de los demás (solo el admin)');
 select is_empty(
   $$update public.reminders set title = 'Modificado' where title = 'Reunión semanal' returning id$$,
   'Otro usuario no modifica un recordatorio ajeno'
@@ -106,6 +106,8 @@ select is_empty(
   $$delete from public.reminders where title = 'Reunión semanal' returning id$$,
   'Otro usuario no elimina un recordatorio ajeno'
 );
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+select is((select count(*)::int from public.reminders where owner_id = '22222222-2222-2222-2222-222222222222'), 2, 'El admin ve los recordatorios de todos');
 reset role;
 select is((select count(*)::int from public.reminders where owner_id = '22222222-2222-2222-2222-222222222222'), 2, 'Los recordatorios ajenos siguen intactos');
 

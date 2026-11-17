@@ -67,9 +67,9 @@ describe('consulta de recordatorios por rango', () => {
 })
 
 describe('propiedad', () => {
-  it('otro usuario ve los recordatorios pero no puede modificarlos ni eliminarlos', async () => {
+  it('otro usuario no ve los recordatorios ajenos ni puede modificarlos ni eliminarlos', async () => {
     const { data: visible } = await carlos.from('reminders').select('id').eq('owner_id', luisId)
-    expect(visible!.length).toBe(5)
+    expect(visible).toEqual([])
 
     const { data: updated } = await carlos.from('reminders').update({ title: 'Hackeado' }).eq('owner_id', luisId).select('id')
     expect(updated).toEqual([])

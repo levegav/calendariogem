@@ -1,7 +1,7 @@
 -- Pruebas de etiquetados: quién etiqueta, quién se sale y qué calendarios se ven.
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(22);
+select plan(26);
 
 insert into auth.users (id, email, aud, role) values
   ('11111111-1111-1111-1111-111111111111', 'test.admin@calendariogem.local', 'authenticated', 'authenticated'),
@@ -13,6 +13,7 @@ insert into auth.users (id, email, aud, role) values
 update public.profiles set active = true, must_change_password = false
   where id in ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222',
                '33333333-3333-3333-3333-333333333333', '55555555-5555-5555-5555-555555555555');
+update public.profiles set role = 'admin' where id = '11111111-1111-1111-1111-111111111111';
 
 select set_config('test.reunion', (select id::text from public.categories where name = 'Reunión'), true);
 
@@ -100,9 +101,31 @@ select is(
 );
 select is(
   (select count(*)::int from public.reminders where id = current_setting('test.r')::bigint),
-  1, 'Salirse no borra el recordatorio original'
+  0, 'Tras salirse ya no puede ver el recordatorio'
+);
+select is(
+  (select count(*)::int from public.reminder_participants where reminder_id = current_setting('test.r')::bigint),
+  0, 'Ni quiénes están etiquetados'
 );
 
+-- Un usuario no puede ver el calendario de otro (solo el admin).
+select is(
+  (select count(*)::int from public.calendar_reminders(array['22222222-2222-2222-2222-222222222222']::uuid[],
+     '2026-11-01 00:00-06', '2026-12-01 00:00-06')),
+  0, 'Un usuario no ve el calendario de otro'
+);
+
+-- El admin sí ve todos los calendarios.
+select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
+select is(
+  (select count(*)::int from public.calendar_reminders(array['22222222-2222-2222-2222-222222222222']::uuid[],
+     '2026-11-01 00:00-06', '2026-12-01 00:00-06') where id = current_setting('test.r')::bigint),
+  1, 'El admin ve el calendario de Luis'
+);
+select is(
+  (select count(*)::int from public.reminder_participants where reminder_id = current_setting('test.r')::bigint),
+  1, 'El admin ve los etiquetados (queda Ana)'
+);
 -- ---------------------------------------------------------------------------
 -- El creador edita los etiquetados
 -- ---------------------------------------------------------------------------

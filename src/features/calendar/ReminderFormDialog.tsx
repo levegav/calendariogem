@@ -40,9 +40,16 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   ) : null
 }
 
-/** Con más personas que esto aparece un campo para buscarlas por nombre. */
-const SEARCH_FROM = 8
+/** Cuántas coincidencias se muestran como máximo al buscar. */
+const MAX_RESULTS = 6
 
+const normalized = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+
+/** Etiquetar personas: se busca por nombre y se agregan como pastillas que se pueden quitar. */
 function ParticipantsPicker({
   people,
   selected,
@@ -52,59 +59,100 @@ function ParticipantsPicker({
   selected: string[]
   onChange: (ids: string[]) => void
 }) {
+  const id = useId()
   const [query, setQuery] = useState('')
-  const normalized = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-  const visible = query.trim()
-    ? people.filter((p) => selected.includes(p.id) || normalized(p.full_name).includes(normalized(query.trim())))
-    : people
+  const term = normalized(query.trim())
+  const chosen = selected.map((sid) => people.find((p) => p.id === sid)).filter((p): p is Person => Boolean(p))
+  const matches = term
+    ? people
+        .filter((p) => !selected.includes(p.id) && normalized(p.full_name).split(/\s+/).some((w) => w.startsWith(term)))
+        .concat(
+          people.filter(
+            (p) =>
+              !selected.includes(p.id) &&
+              !normalized(p.full_name).split(/\s+/).some((w) => w.startsWith(term)) &&
+              normalized(p.full_name).includes(term),
+          ),
+        )
+        .slice(0, MAX_RESULTS)
+    : []
 
-  function toggle(id: string) {
-    onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id])
+  function add(person: Person) {
+    onChange([...selected, person.id])
+    setQuery('')
   }
 
   return (
-    <fieldset className={styles.categories}>
-      <legend>
-        Etiquetar personas <small className="muted">(opcional)</small>
-      </legend>
-      {people.length === 0 ? (
-        <p className="muted">No hay otros usuarios activos para etiquetar.</p>
-      ) : (
-        <>
-          {people.length > SEARCH_FROM && (
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por nombre"
-              aria-label="Buscar personas para etiquetar"
-            />
-          )}
-          <div className={styles.chips}>
-            {visible.map((person) => {
-              const checked = selected.includes(person.id)
-              return (
-                <label
-                  key={person.id}
-                  className={`${styles.chip} ${styles.personChip} ${checked ? styles.chipSelected : ''}`}
-                  style={{ '--chip-color': person.color } as CSSProperties}
+    <div className="field">
+      <label className="field">
+        <span>
+          Etiquetar personas <small className="muted">(opcional)</small>
+        </span>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            // Enter agrega la primera coincidencia en vez de enviar el formulario.
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              if (matches[0]) add(matches[0])
+            }
+          }}
+          placeholder="Escriba un nombre para buscar"
+          autoComplete="off"
+          aria-describedby={`${id}-ayuda`}
+        />
+      </label>
+
+      {term && (
+        <ul className={styles.results} aria-label="Resultados de la búsqueda">
+          {matches.length === 0 ? (
+            <li className="muted">No se encontró a nadie con ese nombre.</li>
+          ) : (
+            matches.map((person) => (
+              <li key={person.id}>
+                <button
+                  type="button"
+                  className={styles.result}
+                  aria-label={`Etiquetar a ${person.full_name}`}
+                  onClick={() => add(person)}
                 >
-                  <input type="checkbox" checked={checked} onChange={() => toggle(person.id)} />
                   <UserAvatar name={person.full_name} color={person.color} size={26} />
                   {person.full_name}
-                </label>
-              )
-            })}
-          </div>
-          {selected.length > 0 && (
-            <small className="muted">
-              {selected.length === 1 ? '1 persona etiquetada' : `${selected.length} personas etiquetadas`}. Verán este
-              recordatorio en su calendario.
-            </small>
+                </button>
+              </li>
+            ))
           )}
-        </>
+        </ul>
       )}
-    </fieldset>
+
+      {chosen.length > 0 && (
+        <ul className={styles.tagged} aria-label="Personas etiquetadas">
+          {chosen.map((person) => (
+            <li key={person.id} className={styles.taggedChip} style={{ '--chip-color': person.color } as CSSProperties}>
+              <UserAvatar name={person.full_name} color={person.color} size={24} />
+              {person.full_name}
+              <button
+                type="button"
+                className={styles.untag}
+                aria-label={`Quitar a ${person.full_name}`}
+                title={`Quitar a ${person.full_name}`}
+                onClick={() => onChange(selected.filter((s) => s !== person.id))}
+              >
+                ×
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <small id={`${id}-ayuda`} className="muted">
+        {chosen.length === 0
+          ? 'Las personas etiquetadas verán este recordatorio en su calendario.'
+          : `${chosen.length === 1 ? '1 persona etiquetada' : `${chosen.length} personas etiquetadas`}. Verán este recordatorio en su calendario.`}
+      </small>
+    </div>
   )
 }
 

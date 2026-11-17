@@ -112,6 +112,8 @@ export function CalendarPage() {
   const { state } = useAuth()
   const profile = state.status === 'signedIn' ? state.profile : null
   const userId = profile?.id ?? ''
+  // Solo el admin puede ver los calendarios de otros (el servidor lo impone con RLS).
+  const canViewOthers = profile?.role === 'admin'
   const me: Person = useMemo(
     () => ({ id: userId, full_name: profile?.full_name ?? '', color: profile?.color ?? '#64748b' }),
     [userId, profile?.full_name, profile?.color],
@@ -137,9 +139,10 @@ export function CalendarPage() {
 
   // Solo calendarios de usuarios activos; el propio siempre se puede elegir.
   const visibleIds = useMemo(() => {
+    if (!canViewOthers) return [userId]
     const valid = savedVisible.filter((id) => id === userId || people.length === 0 || people.some((p) => p.id === id))
     return valid.length > 0 ? valid : [userId]
-  }, [savedVisible, people, userId])
+  }, [canViewOthers, savedVisible, people, userId])
   const visibleKey = visibleIds.join(',')
 
   function changeVisible(ids: string[]) {
@@ -239,7 +242,7 @@ export function CalendarPage() {
         </div>
 
         <div className={styles.toolbarEnd}>
-          {userId && <CalendarSelector me={me} people={people} selected={visibleIds} onChange={changeVisible} />}
+          {userId && canViewOthers && <CalendarSelector me={me} people={people} selected={visibleIds} onChange={changeVisible} />}
           <fieldset className={`segmented ${styles.views}`}>
             <legend className="sr-only">Vista</legend>
             {VIEWS.map((option) => (

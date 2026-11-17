@@ -102,7 +102,9 @@ describe('CalendarPage', () => {
     await userEvent.click(within(dialog).getByLabelText('Agregar fecha y hora de finalización'))
     await userEvent.selectOptions(within(dialog).getByLabelText('Hora de finalización'), '4:00 p. m.')
     await userEvent.type(within(dialog).getByLabelText(/Nota/), 'Llevar copias')
-    await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Carlos Mora' }))
+    await userEvent.type(within(dialog).getByRole('searchbox', { name: /Etiquetar personas/ }), 'car')
+    await userEvent.click(await within(dialog).findByRole('button', { name: 'Etiquetar a Carlos Mora' }))
+    expect(within(dialog).getByRole('button', { name: 'Quitar a Carlos Mora' })).toBeInTheDocument()
     expect(within(dialog).getByText(/1 persona etiquetada/)).toBeInTheDocument()
     await userEvent.click(within(dialog).getByRole('button', { name: 'Crear recordatorio' }))
 
@@ -177,8 +179,13 @@ describe('CalendarPage', () => {
     renderAt('/')
     await userEvent.click(screen.getAllByRole('button', { name: 'Nuevo recordatorio' })[0])
     const dialog = screen.getByRole('dialog', { name: 'Nuevo recordatorio' })
-    expect(await within(dialog).findByRole('checkbox', { name: 'Ana Rodríguez' })).toBeInTheDocument()
-    expect(within(dialog).queryByRole('checkbox', { name: 'Luis Vega' })).not.toBeInTheDocument()
+    const search = within(dialog).getByRole('searchbox', { name: /Etiquetar personas/ })
+    await userEvent.type(search, 'rodri')
+    expect(await within(dialog).findByRole('button', { name: 'Etiquetar a Ana Rodríguez' })).toBeInTheDocument()
+    await userEvent.clear(search)
+    await userEvent.type(search, 'luis')
+    expect(within(dialog).queryByRole('button', { name: 'Etiquetar a Luis Vega' })).not.toBeInTheDocument()
+    expect(within(dialog).getByText('No se encontró a nadie con ese nombre.')).toBeInTheDocument()
   })
 
   it('al editar se puede quitar a un etiquetado', async () => {
@@ -187,9 +194,8 @@ describe('CalendarPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Reunión de equipo/ }))
     await userEvent.click(screen.getByRole('button', { name: 'Editar' }))
     const dialog = screen.getByRole('dialog', { name: 'Editar recordatorio' })
-    const anaBox = within(dialog).getByRole('checkbox', { name: 'Ana Rodríguez' })
-    expect(anaBox).toBeChecked()
-    await userEvent.click(anaBox)
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Quitar a Ana Rodríguez' }))
+    expect(within(dialog).queryByRole('button', { name: 'Quitar a Ana Rodríguez' })).not.toBeInTheDocument()
     await userEvent.click(within(dialog).getByRole('button', { name: 'Guardar cambios' }))
     expect(saveReminder).toHaveBeenCalledWith(1, expect.objectContaining({ participant_ids: ['carlos'] }))
   })
@@ -217,7 +223,15 @@ describe('CalendarPage', () => {
     expect(await screen.findByText('Salió del recordatorio "Reunión de equipo".')).toBeInTheDocument()
   })
 
-  it('"Ver calendario de…" agrega el calendario de otra persona y lo recuerda', async () => {
+  it('un usuario que no es admin no tiene "Ver calendario de…" y solo consulta el suyo', async () => {
+    localStorage.setItem('calendarios-visibles:yo', JSON.stringify(['yo', 'carlos']))
+    renderWithAuth(routes, '/', fakeAuth({ status: 'signedIn', profile: { ...me, role: 'user' } }))
+    expect(await screen.findByRole('button', { name: /Reunión de equipo/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Ver calendario de/ })).not.toBeInTheDocument()
+    expect(listCalendarReminders).toHaveBeenLastCalledWith(['yo'], expect.any(String), expect.any(String))
+  })
+
+  it('el admin, con "Ver calendario de…", agrega el calendario de otra persona y lo recuerda', async () => {
     renderAt('/')
     await userEvent.click(await screen.findByRole('button', { name: /Ver calendario de/ }))
     const mine = screen.getByRole('checkbox', { name: 'Luis Vega (yo)' })
