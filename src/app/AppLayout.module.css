@@ -281,3 +281,55 @@
     transition: none;
   }
 }
+
+/* =========================================================================
+   Estilo "Bento" (Fase 9): el menú es una tarjeta azul marino que flota
+   con un margen alrededor; la opción activa es una pastilla clara.
+   ========================================================================= */
+.shell::before {
+  display: none;
+}
+
+.sidebar {
+  top: 12px;
+  height: calc(100svh - 24px);
+  margin: 12px 0 12px 12px;
+  border-radius: 22px;
+}
+
+.navItem[aria-current='page'] {
+  background: var(--sidebar-pill);
+  color: var(--sidebar-pill-text);
+  font-weight: 700;
+}
+
+.navItem[aria-current='page']::before {
+  display: none;
+}
+
+.account {
+  padding: var(--space-2);
+  border-top: 0;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.07);
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    top: 0;
+    inset: 8px auto 8px 8px;
+    height: auto;
+    margin: 0;
+  }
+
+  .sidebar:not([data-open='true']) {
+    transform: translateX(calc(-100% - 16px));
+  }
+
+  .topbar {
+    border-bottom: 0;
+    background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}

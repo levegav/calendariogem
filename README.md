@@ -12,7 +12,7 @@ El avance por fases está en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 El logo de GEM Consulting está en `public/brand/`. Hay una versión normal y otra con letras claras para el modo oscuro, y se usa en la pantalla de ingreso y al pie del menú. Para cambiarlo, reemplaza esos dos PNG con los mismos nombres.
 
-**Estilo visual:** los colores, las esquinas, las sombras y el degradado del logo se definen como variables al inicio de `src/styles/global.css` (modo claro en `:root`, modo oscuro en `:root[data-theme='dark']`). Los colores del menú lateral son las variables `--sidebar-*`. Las fuentes (Inter y Plus Jakarta Sans) vienen de los paquetes `@fontsource-variable` y se importan en `src/main.tsx`.
+**Estilo visual ("Bento", fase 9):** los colores, las esquinas, las sombras y el degradado del logo se definen como variables al inicio de `src/styles/global.css` (modo claro en `:root`, modo oscuro en `:root[data-theme='dark']`). Los colores del menú lateral son las variables `--sidebar-*`. El degradado del día de hoy y del botón principal es `--hot`. La forma de los mosaicos, el menú flotante y las fichas está en los bloques "Estilo Bento" al final de `global.css`, `src/app/AppLayout.module.css` y `src/features/calendar/calendar.module.css`. La fuente (Manrope) viene del paquete `@fontsource-variable/manrope` y se importa en `src/main.tsx`.
 
 ## Requisitos
 

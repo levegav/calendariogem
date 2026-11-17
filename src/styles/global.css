@@ -1,15 +1,20 @@
 :root {
   --brand-logo: url('/brand/gem-consulting.png');
-  /* Estilo "Corporativo GEM": azul marino del logo, naranja para hoy. */
-  --color-bg: #f2f4f8;
+  /* Estilo "Bento": mosaicos blancos sobre gris azulado, menú azul marino flotante
+     y el degradado cálido del logo para hoy y el botón principal. */
+  --color-bg: #e8ebf1;
   --color-surface: #ffffff;
-  --color-border: #dce2ec;
-  --color-text: #1a2337;
-  --color-muted: #586580;
+  --color-border: #e1e5ec;
+  --color-text: #121826;
+  --color-muted: #5b6478;
   --color-primary: #34507f;
   --color-primary-hover: #2a4269;
   --color-primary-soft: #e6ebf3;
-  --color-today: #cf4a1f;
+  --color-today: #f26b38;
+  /* Degradado "encendido": día de hoy, botón principal y botón + */
+  --hot: linear-gradient(140deg, #ffb238 0%, #f26b38 45%, #d8334a 100%);
+  --shadow-hot: 0 8px 20px rgb(216 51 74 / 0.3);
+  --shadow-tile: 0 1px 2px rgb(18 24 38 / 0.05), 0 4px 14px rgb(18 24 38 / 0.05);
   --color-success: #1a7f37;
   --color-success-soft: #e6f4ea;
   --color-danger: #c62828;
@@ -33,16 +38,19 @@
   --sidebar-line: rgb(255 255 255 / 0.1);
   --sidebar-hover: rgb(255 255 255 / 0.06);
   --sidebar-active: rgb(255 255 255 / 0.1);
+  /* Opción activa del menú: pastilla clara con texto oscuro */
+  --sidebar-pill: #ffffff;
+  --sidebar-pill-text: #1d2942;
   --sidebar-accent: #f08a3c;
 
   /* Degradado del trazo del logo: línea fina del borde superior */
   --brand-gradient: linear-gradient(90deg, #ffc93c, #f26b38 40%, #d8334a 70%, #8e2a6e);
 
   /* Sombras: tarjetas (calendario, cuadros) y controles (botones, buscador) */
-  --shadow-card: 0 1px 2px rgb(20 30 55 / 0.06), 0 12px 32px rgb(20 30 55 / 0.08);
-  --shadow-control: 0 0 0 1px var(--color-border), 0 2px 8px rgb(20 30 55 / 0.07);
-  --shadow-primary: 0 4px 12px rgb(52 80 127 / 0.35);
-  --shadow-today: 0 2px 6px rgb(207 74 31 / 0.4);
+  --shadow-card: 0 1px 2px rgb(18 24 38 / 0.05), 0 8px 24px rgb(18 24 38 / 0.06);
+  --shadow-control: 0 1px 2px rgb(18 24 38 / 0.06), 0 4px 12px rgb(18 24 38 / 0.06);
+  --shadow-primary: var(--shadow-hot);
+  --shadow-today: 0 4px 10px rgb(216 51 74 / 0.35);
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -52,14 +60,14 @@
   --space-6: 2rem;
 
   --radius: 12px;
-  --radius-lg: 16px;
+  --radius-lg: 18px;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.5rem;
 
-  --font-body: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-head: 'Plus Jakarta Sans Variable', 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Manrope Variable', Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-head: 'Manrope Variable', Manrope, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   font-family: var(--font-body);
   font-size: 16px;
@@ -74,15 +82,16 @@
 :root[data-theme='dark'] {
   /* El azul marino del logo no se lee sobre fondo oscuro: versión con letras claras. */
   --brand-logo: url('/brand/gem-consulting-oscuro.png');
-  --color-bg: #0c111c;
-  --color-surface: #141b2a;
-  --color-border: #253047;
-  --color-text: #e3e8f2;
-  --color-muted: #96a3bc;
+  --color-bg: #07090e;
+  --color-surface: #121722;
+  --color-border: #1f2634;
+  --color-text: #eef1f7;
+  --color-muted: #8e98ad;
   --color-primary: #8eaae0;
   --color-primary-hover: #a9c0ea;
-  --color-primary-soft: #1e2a42;
-  --color-today: #d0532c;
+  --color-primary-soft: #1c2840;
+  --color-today: #ff7a45;
+  --shadow-tile: none;
   --color-success: #57c27a;
   --color-success-soft: #13301e;
   --color-danger: #f47272;
@@ -98,11 +107,13 @@
   --color-info-border: #2c4268;
   --color-info-text: #c4d4f2;
 
-  --sidebar-bg: #080c15;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.45), 0 12px 32px rgb(0 0 0 / 0.4);
-  --shadow-control: 0 0 0 1px var(--color-border), 0 2px 8px rgb(0 0 0 / 0.35);
-  --shadow-primary: 0 4px 12px rgb(0 0 0 / 0.45);
-  --shadow-today: 0 2px 6px rgb(0 0 0 / 0.45);
+  --sidebar-bg: #121722;
+  --sidebar-pill: #eef1f7;
+  --sidebar-pill-text: #07090e;
+  --shadow-card: 0 0 0 1px var(--color-border);
+  --shadow-control: 0 0 0 1px var(--color-border);
+  --shadow-hot: 0 8px 20px rgb(216 51 74 / 0.25);
+  --shadow-today: 0 4px 10px rgb(0 0 0 / 0.45);
 
   color-scheme: dark;
 }
@@ -730,4 +741,59 @@ select:disabled {
 textarea {
   resize: vertical;
   line-height: 1.45;
+}
+
+/* =========================================================================
+   Estilo "Bento" (Fase 9): forma de los componentes generales.
+   Los colores están arriba en :root; lo propio del calendario y del menú
+   está al final de calendar.module.css y AppLayout.module.css.
+   ========================================================================= */
+h1,
+h2 {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* Botón principal con el degradado cálido del logo */
+.btn-primary {
+  background: var(--hot);
+  box-shadow: var(--shadow-hot);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--hot);
+  filter: brightness(1.06);
+}
+
+.btn {
+  font-weight: 600;
+}
+
+.btn-secondary {
+  border-color: transparent;
+}
+
+.card {
+  border-radius: 22px;
+}
+
+/* Interruptor de opciones: la elegida es una pastilla oscura (clara en modo oscuro) */
+.segmented label {
+  border-color: transparent;
+  box-shadow: var(--shadow-control);
+  font-weight: 600;
+}
+
+.segmented .is-selected {
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-weight: 700;
+}
+
+.badge {
+  border-radius: 8px;
+}
+
+.auth-card {
+  border-radius: 24px;
 }
