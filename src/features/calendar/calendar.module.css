@@ -1172,12 +1172,21 @@ button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
   .page:has(.month, .timeGrid) {
     display: flex;
     flex-direction: column;
-    height: calc(100svh - 2 * var(--space-6));
+    /* Termina a 12px del borde de abajo, al mismo nivel que el menú lateral flotante:
+       el margen negativo se come parte del relleno inferior de .main. */
+    height: calc(100svh - var(--space-6) - 12px);
     min-height: 560px;
+    margin-bottom: calc(12px - var(--space-6));
   }
 
   .page:has(.month, .timeGrid) > * {
     flex-shrink: 0;
+  }
+
+  /* El aviso de abajo queda pegado al final, alineado con el pie del menú. */
+  .page:has(.month, .timeGrid) > .empty {
+    margin-top: -4px;
+    line-height: 1.2;
   }
 
   .page:has(.month, .timeGrid) > .viewArea {
