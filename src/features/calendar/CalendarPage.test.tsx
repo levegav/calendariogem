@@ -100,9 +100,16 @@ describe('CalendarPage', () => {
 
     await userEvent.type(within(dialog).getByLabelText('Título'), 'Entrega de informe')
     await userEvent.click(within(dialog).getByRole('radio', { name: 'Tarea' }))
-    await userEvent.selectOptions(within(dialog).getByLabelText('Hora de inicio'), '2:30 p. m.')
+    // De la lista (cada 15 min)…
+    await userEvent.click(within(dialog).getByRole('combobox', { name: 'Hora de inicio' }))
+    await userEvent.click(within(dialog).getByRole('option', { name: '2:30 p. m.' }))
     await userEvent.click(within(dialog).getByLabelText('Agregar fecha y hora de finalización'))
-    await userEvent.selectOptions(within(dialog).getByLabelText('Hora de finalización'), '4:00 p. m.')
+    // …o escrita a mano, a cualquier minuto.
+    const fin = within(dialog).getByRole('combobox', { name: 'Hora de finalización' })
+    await userEvent.clear(fin)
+    await userEvent.type(fin, '4:07 pm')
+    await userEvent.tab()
+    expect(fin).toHaveValue('4:07 p. m.')
     await userEvent.type(within(dialog).getByLabelText(/Nota/), 'Llevar copias')
     await userEvent.type(within(dialog).getByRole('searchbox', { name: /Etiquetar personas/ }), 'car')
     await userEvent.click(await within(dialog).findByRole('button', { name: 'Etiquetar a Carlos Mora' }))
@@ -114,7 +121,7 @@ describe('CalendarPage', () => {
       title: 'Entrega de informe',
       description: null,
       start_at: '2026-11-16T20:30:00.000Z',
-      end_at: '2026-11-16T22:00:00.000Z',
+      end_at: '2026-11-16T22:07:00.000Z',
       all_day: false,
       category_id: 2,
       location: null,

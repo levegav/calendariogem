@@ -4,12 +4,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppLayout } from '../../app/AppLayout'
 import { fakeAuth, fakeProfile, renderWithAuth } from '../../test/fakeAuth'
 import { listNotifications, markNotificationsRead, subscribeToNotifications } from './api'
+import { playChime } from './sound'
 import type { AppNotification } from './types'
 
 vi.mock('./api', () => ({
   listNotifications: vi.fn(),
   markNotificationsRead: vi.fn(() => Promise.resolve()),
   subscribeToNotifications: vi.fn(),
+}))
+vi.mock('./sound', () => ({
+  playChime: vi.fn(),
+  unlockSound: vi.fn(),
+  isSoundEnabled: vi.fn(() => true),
+  setSoundEnabled: vi.fn(),
 }))
 vi.mock('../preferences/api', () => ({ saveMyTheme: vi.fn() }))
 
@@ -46,6 +53,7 @@ const bell = () => screen.getAllByRole('button', { name: /^Notificaciones/ })[0]
 
 beforeEach(() => {
   vi.mocked(markNotificationsRead).mockClear()
+  vi.mocked(playChime).mockClear()
   vi.mocked(subscribeToNotifications).mockImplementation((_userId, onInsert) => {
     pushInsert = onInsert
     return () => {}
@@ -63,8 +71,9 @@ describe('NotificationsProvider y campana', () => {
     const panel = screen.getByRole('region', { name: 'Notificaciones' })
     expect(within(panel).getByText('Perdido')).toBeInTheDocument()
     expect(within(panel).getByText('Carlos Mora le etiquetó en «Reunión de equipo».')).toBeInTheDocument()
-    // Al cargar no se abre la ventana de avisos: los perdidos solo quedan en la campana.
+    // Al cargar no se abre la ventana de avisos ni suena: los perdidos solo quedan en la campana.
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(playChime).not.toHaveBeenCalled()
 
     await userEvent.click(within(panel).getByRole('button', { name: 'Marcar todas como leídas' }))
     expect(markNotificationsRead).toHaveBeenCalledWith([2, 1])
@@ -80,6 +89,7 @@ describe('NotificationsProvider y campana', () => {
     await act(async () => pushInsert())
 
     const dialog = await screen.findByRole('dialog', { name: 'Aviso' })
+    expect(playChime).toHaveBeenCalledWith('aviso')
     expect(within(dialog).getByText('Reunión de equipo')).toBeInTheDocument()
     expect(within(dialog).getByText('Empieza en 15 min')).toBeInTheDocument()
     await userEvent.click(within(dialog).getByRole('button', { name: 'Entendido' }))
@@ -102,6 +112,7 @@ describe('NotificationsProvider y campana', () => {
     const toasts = screen.getByRole('status', { name: 'Notificaciones nuevas' })
     const message = await within(toasts).findByRole('button', { name: /Carlos Mora le etiquetó en «Reunión de equipo»/ })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(playChime).toHaveBeenCalledWith('notificacion')
     await userEvent.click(message)
     expect(markNotificationsRead).toHaveBeenCalledWith([9])
     expect(router.state.location.search).toBe('?vista=dia&fecha=2026-11-18')

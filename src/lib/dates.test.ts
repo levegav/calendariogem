@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  parseTime,
   addDays,
   addMonths,
   addYears,
@@ -110,5 +111,27 @@ describe('textos', () => {
     expect(minutesToHhmm(9 * 60 + 5)).toBe('09:05')
     expect(hhmmToMinutes('23:59')).toBe(1439)
     expect(hhmmToMinutes('24:00')).toBeNull()
+  })
+})
+
+describe('parseTime', () => {
+  it('acepta la hora escrita de varias formas', () => {
+    expect(parseTime('10:03 a. m.')).toBe(10 * 60 + 3)
+    expect(parseTime('10:03 AM')).toBe(10 * 60 + 3)
+    expect(parseTime('10:03pm')).toBe(22 * 60 + 3)
+    expect(parseTime('3 p. m.')).toBe(15 * 60)
+    expect(parseTime('3p')).toBe(15 * 60)
+    expect(parseTime('12:00 p. m.')).toBe(12 * 60)
+    expect(parseTime('12:15 a. m.')).toBe(15)
+    expect(parseTime('15:20')).toBe(15 * 60 + 20)
+    expect(parseTime('0:00')).toBe(0)
+    expect(parseTime('1003')).toBe(10 * 60 + 3)
+    expect(parseTime(' 9 ')).toBe(9 * 60)
+  })
+
+  it('rechaza lo que no es una hora', () => {
+    for (const text of ['', 'diez', '24:00', '10:60', '13 pm', '0 am', '10:3', '12345']) {
+      expect(parseTime(text), text).toBeNull()
+    }
   })
 })

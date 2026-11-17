@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { listNotifications, markNotificationsRead, subscribeToNotifications } from './api'
 import { AlertDialog } from './AlertDialog'
 import { notificationDate } from './messages'
+import { playChime, unlockSound } from './sound'
 import { NotificationsContext, type NotificationsValue } from './NotificationsContext'
 import { Toasts } from './Toasts'
 import type { AppNotification } from './types'
@@ -55,6 +56,8 @@ export function NotificationsProvider({ userId, children }: { userId: string; ch
     const newOthers = unreadFresh.filter((n) => n.kind !== 'aviso')
     if (newAlerts.length) setAlerts((prev) => [...prev, ...newAlerts])
     if (newOthers.length) setToasts((prev) => [...prev, ...newOthers])
+    if (newAlerts.length) playChime('aviso')
+    else if (newOthers.length) playChime('notificacion')
     setVersion((v) => v + 1)
   }, [])
 
@@ -76,6 +79,17 @@ export function NotificationsProvider({ userId, children }: { userId: string; ch
       window.clearInterval(timer)
     }
   }, [userId, refresh])
+
+  // El navegador solo permite sonido después de un gesto de la persona.
+  useEffect(() => {
+    const unlock = () => unlockSound()
+    document.addEventListener('pointerdown', unlock, { once: true })
+    document.addEventListener('keydown', unlock, { once: true })
+    return () => {
+      document.removeEventListener('pointerdown', unlock)
+      document.removeEventListener('keydown', unlock)
+    }
+  }, [])
 
   const markRead = useCallback(
     (ids: number[]) => {

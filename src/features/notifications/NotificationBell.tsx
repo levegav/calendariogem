@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Icon } from '../../components/Icon'
 import { UserAvatar } from '../../components/UserAvatar'
 import { notificationText, timeAgo } from './messages'
+import { isSoundEnabled, playChime, setSoundEnabled } from './sound'
 import styles from './notifications.module.css'
 import { useNotifications } from './NotificationsContext'
 
@@ -10,6 +11,7 @@ import { useNotifications } from './NotificationsContext'
 export function NotificationBell({ align = 'start' }: { align?: 'start' | 'end' }) {
   const { items, unread, missed, markAllRead, open: openNotification } = useNotifications()
   const [open, setOpen] = useState(false)
+  const [sound, setSound] = useState(isSoundEnabled)
   const buttonRef = useRef<HTMLDivElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
   const panelId = useId()
@@ -66,11 +68,27 @@ export function NotificationBell({ align = 'start' }: { align?: 'start' | 'end' 
             >
               <header className={styles.panelHeader}>
                 <h2>Notificaciones</h2>
-                {unread > 0 && (
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={markAllRead}>
-                    Marcar todas como leídas
+                <div className={styles.panelActions}>
+                  {unread > 0 && (
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={markAllRead}>
+                      Marcar todas como leídas
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="icon-btn"
+                    aria-pressed={sound}
+                    aria-label="Sonido de notificaciones"
+                    title={sound ? 'Sonido activado (tocar para silenciar)' : 'Sonido silenciado (tocar para activar)'}
+                    onClick={() => {
+                      setSoundEnabled(!sound)
+                      setSound(!sound)
+                      if (!sound) playChime('aviso', { force: true }) // así suena
+                    }}
+                  >
+                    <Icon name={sound ? 'volume' : 'volumeOff'} size={18} />
                   </button>
-                )}
+                </div>
               </header>
 
               {items.length === 0 ? (

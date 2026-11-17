@@ -1,7 +1,7 @@
 import { useId, useState, type CSSProperties, type FormEvent } from 'react'
 import { UserAvatar } from '../../components/UserAvatar'
 import { Modal } from '../../components/Modal'
-import { formatTime, isDateKey } from '../../lib/dates'
+import { isDateKey } from '../../lib/dates'
 import { toSpanishMessage } from '../../lib/errors'
 import type { Category } from '../categories/api'
 import { defaultAlerts } from '../notifications/alerts'
@@ -15,24 +15,8 @@ import {
   type ReminderFormValues,
 } from './reminderForm'
 import styles from './ReminderFormDialog.module.css'
+import { TimeInput } from './TimeInput'
 import type { Person } from './types'
-
-function TimeSelect({ label, value, onChange }: { label: string; value: number; onChange: (minutes: number) => void }) {
-  // Si la hora guardada no cae en la lista (p. ej. 9:05), se agrega para no perderla.
-  const options = TIME_OPTIONS.includes(value) ? TIME_OPTIONS : [...TIME_OPTIONS, value].sort((a, b) => a - b)
-  return (
-    <label className="field">
-      <span>{label}</span>
-      <select value={value} onChange={(e) => onChange(Number(e.target.value))}>
-        {options.map((minutes) => (
-          <option key={minutes} value={minutes}>
-            {formatTime(minutes)}
-          </option>
-        ))}
-      </select>
-    </label>
-  )
-}
 
 function FieldError({ id, message }: { id: string; message?: string }) {
   return message ? (
@@ -289,7 +273,14 @@ export function ReminderFormDialog({
               onChange={(e) => isDateKey(e.target.value) && set('startDate', e.target.value)}
             />
           </label>
-          {!values.allDay && <TimeSelect label="Hora de inicio" value={values.startTime} onChange={(m) => set('startTime', m)} />}
+          {!values.allDay && (
+            <TimeInput
+              label="Hora de inicio"
+              value={values.startTime}
+              options={TIME_OPTIONS}
+              onChange={(m) => set('startTime', m)}
+            />
+          )}
         </div>
 
         <label className={styles.switch}>
@@ -312,7 +303,12 @@ export function ReminderFormDialog({
                 />
               </label>
               {!values.allDay && (
-                <TimeSelect label="Hora de finalización" value={values.endTime} onChange={(m) => set('endTime', m)} />
+                <TimeInput
+                  label="Hora de finalización"
+                  value={values.endTime}
+                  options={TIME_OPTIONS}
+                  onChange={(m) => set('endTime', m)}
+                />
               )}
             </div>
             <FieldError id={`${id}-end`} message={errors.end} />

@@ -182,3 +182,28 @@ export function hhmmToMinutes(value: string): number | null {
   const [h, m] = [Number(match[1]), Number(match[2])]
   return h < 24 && m < 60 ? h * 60 + m : null
 }
+
+/**
+ * Interpreta una hora escrita a mano: "10:03", "10:03 a. m.", "10:03am",
+ * "3pm", "3 p", "15:20", "1003". Sin a. m./p. m. se toma en formato de 24 h.
+ * Devuelve minutos desde la medianoche, o null si no es una hora válida.
+ */
+export function parseTime(text: string): number | null {
+  const clean = text
+    .toLowerCase()
+    .replace(/[\s.]/g, '')
+    .replace(/(a|p)m$/, '$1')
+  const match = /^(\d{1,2})(?::(\d{2}))?(a|p)?$/.exec(clean) ?? /^(\d{1,2})(\d{2})(a|p)?$/.exec(clean)
+  if (!match) return null
+  let hours = Number(match[1])
+  const minutes = match[2] === undefined ? 0 : Number(match[2])
+  const half = match[3]
+  if (minutes > 59) return null
+  if (half) {
+    if (hours < 1 || hours > 12) return null
+    hours = (hours % 12) + (half === 'p' ? 12 : 0)
+  } else if (hours > 23) {
+    return null
+  }
+  return hours * 60 + minutes
+}

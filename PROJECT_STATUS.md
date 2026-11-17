@@ -310,3 +310,20 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
   - La notificación llega por Realtime solo a su destinatario.
   - pg_cron dispara un aviso real y llega en tiempo real.
 - **Revisión visual en Edge** con datos de demostración, en escritorio y en celular (390 px): campana con perdidos, día del recordatorio, "Mis avisos" en los detalles, mensaje breve en vivo y ventana de aviso disparada por pg_cron.
+
+### Ajuste del 2026-11-17: hora escrita a mano y sonido
+
+- **Hora libre:** la hora de inicio y la de finalización se pueden escribir a cualquier minuto, por ejemplo 10:03.
+  - Al tocar el campo sigue apareciendo la lista cada 15 min, con la hora actual centrada.
+  - Se acepta "10:03", "10:03 am", "3pm", "15:20" o "1003". Sin a. m./p. m. se toma en formato de 24 h.
+  - Enter o salir del campo aplica la hora. Si lo escrito no es una hora, vuelve a la anterior y lo indica.
+  - Con las flechas se recorre la lista. Escape cierra la lista sin cerrar la ventana.
+- **Sonido:** un timbre corto generado en el navegador, sin archivos.
+  - Avisos previos: tres notas ascendentes.
+  - Otras notificaciones: dos notas más suaves.
+  - No suena al abrir la app por los avisos perdidos.
+  - Se silencia o activa con el botón de altavoz del panel de la campana; al activarlo suena de muestra. La preferencia se guarda en ese navegador.
+  - Los navegadores solo permiten sonido después de que la persona tocó la página: el audio se habilita con el primer clic o tecla.
+- `npm run check`: 153 pruebas unitarias y build, todo correcto. Las 7 nuevas cubren la lectura de horas escritas, el campo de hora (lista, escrita, inválida, flechas) y en qué momentos suena el timbre.
+- `npm run test:integration`: 25 pruebas, todas correctas.
+- Revisión visual en Edge, en escritorio y en celular: lista de horas dentro del formulario y 10:03 escrita a mano.
