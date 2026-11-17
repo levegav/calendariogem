@@ -6,7 +6,7 @@
 |---|---|---|
 | 0 | Base: proyecto, Supabase, pruebas, primer despliegue | Terminada (aprobada) |
 | 1 | Usuarios: login, panel admin, colores RGB, perfil, menú, responsive | Terminada (aprobada) |
-| 2 | Categorías, CRUD de recordatorios, vistas día/semana/mes/año | En curso |
+| 2 | Categorías, CRUD de recordatorios, vistas día/semana/mes/año | Desplegada, pendiente de aprobación |
 | 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Pendiente |
 | 4 | Notificaciones en tiempo real y avisos previos por participante | Pendiente |
 | 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Pendiente |
@@ -174,3 +174,8 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
   - Mes y Semana en celular.
   - El formulario de nuevo recordatorio.
 - Corregido en la revisión: en celular aparecían el botón "Nuevo recordatorio" y el botón flotante a la vez, y la etiqueta "7 a. m." quedaba cortada.
+
+**Despliegue (2026-11-17)**
+- `db push`: las 2 migraciones se aplicaron en el proyecto remoto (por el hotspot, porque la red de la oficina bloquea el puerto 5432).
+- Verificación remota sin sesión: leer `categories` y `reminders` da 401 (42501), crear una categoría da 401 y `admin_delete_category` da 401.
+- `npm run check` correcto. Push del commit ce64d4f; Cloudflare publicó la nueva versión en https://calendariogem.pages.dev.
