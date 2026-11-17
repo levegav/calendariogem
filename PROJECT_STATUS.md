@@ -1,6 +1,6 @@
 # Estado del proyecto: Calendario GEM
 
-**Estado general: entregado (2026-11-17).** Fases 0 a 7 terminadas y aprobadas. La Fase 8 (estilo visual) está desplegada y pendiente de aprobación.
+**Estado general: entregado (2026-11-17).** Las 9 fases (0 a 8) están terminadas y aprobadas.
 
 ## Fases
 
@@ -14,7 +14,7 @@
 | 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Terminada (aprobada) |
 | 6 | Búsqueda y filtros | Terminada (aprobada) |
 | 7 | Pulido y entrega final | Terminada (aprobada) |
-| 8 | Estilo visual "Corporativo GEM" | Desplegada, pendiente de aprobación |
+| 8 | Estilo visual "Corporativo GEM" | Terminada (aprobada) |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización Google/Outlook | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
@@ -504,7 +504,7 @@ Se eligió entre tres propuestas comparadas en una maqueta (A Corporativo GEM, B
 
 ## Lista de verificación de la entrega
 
-- [x] Fases 0 a 7 aprobadas: proyecto entregado (2026-11-17).
+- [x] Fases 0 a 8 aprobadas: proyecto entregado (2026-11-17).
 - [x] App publicada en https://calendariogem.pages.dev, con despliegue automático al hacer push a `main`.
 - [x] Base de datos real con las 9 migraciones aplicadas (local y remoto iguales).
 - [x] Datos de prueba eliminados del proyecto real.
