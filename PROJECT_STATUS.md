@@ -508,19 +508,19 @@ Se eligió entre tres propuestas comparadas en una maqueta (A Corporativo GEM, B
 Se eligió entre seis propuestas comparadas en dos maquetas (Órbita, Plano, Mosaico, Sereno, Editorial y Bento). El usuario eligió Bento. Reemplaza al estilo Corporativo GEM.
 
 - **Idea:** cada día del mes es un mosaico blanco redondeado, suelto, con espacio entre ellos. Los días de otros meses son solo un contorno.
-- **Día de hoy:** el mosaico entero con el degradado cálido del logo (amarillo, naranja y rojo, variable ), con el número más grande y los recordatorios en blanco. En Día y Semana es el número con ese degradado; en Año, el día con ese degradado.
+- **Día de hoy:** el mosaico entero con el degradado cálido del logo (amarillo, naranja y rojo, variable `--hot`), con el número más grande y los recordatorios en blanco. En Día y Semana es el número con ese degradado; en Año, el día con ese degradado.
 - **Botón principal y botón +:** con el mismo degradado. Se aplica a todos los botones principales de la app (crear, guardar, ingresar).
-- **Menú lateral:** tarjeta azul marino que flota con un margen alrededor y esquinas de 22px. La opción activa es una pastilla blanca con letras azul marino (variables ). La cuenta va en un recuadro suave. En celular el panel también flota.
+- **Menú lateral:** tarjeta azul marino que flota con un margen alrededor y esquinas de 22px. La opción activa es una pastilla blanca con letras azul marino (variables `--sidebar-pill` y `--sidebar-pill-text`). La cuenta va en un recuadro suave. En celular el panel también flota.
 - **Recordatorios:** fichas redondeadas. La línea del color del creador pasa a ser una barrita redondeada dentro de la ficha (el punto sigue siendo la categoría).
 - **Selector Día / Semana / Mes / Año:** la opción elegida es una pastilla oscura (clara en modo oscuro).
-- **Colores:** fondo gris azulado ; en modo oscuro casi negro  con mosaicos . Se quitó la línea del degradado del borde superior de la app.
-- **Tipografía:** Manrope para todo (paquete ). Se quitaron Inter y Plus Jakarta Sans.
-- **Dónde está:** los colores en  y  de ; la forma en el bloque "Estilo Bento" al final de ,  y .
+- **Colores:** fondo gris azulado `#e8ebf1`; en modo oscuro casi negro `#07090e` con mosaicos `#121722`. Se quitó la línea del degradado del borde superior de la app.
+- **Tipografía:** Manrope para todo (paquete `@fontsource-variable/manrope`). Se quitaron Inter y Plus Jakarta Sans.
+- **Dónde está:** los colores en `:root` y `:root[data-theme='dark']` de `src/styles/global.css`; la forma en el bloque "Estilo Bento" al final de `global.css`, `src/app/AppLayout.module.css` y `src/features/calendar/calendar.module.css`.
 - **Sin cambios de funciones:** solo estilos (CSS) y fuentes.
 
 **Pruebas (2026-11-17)**
 - Revisado con capturas: ingreso, Mes, Semana, Año, nuevo recordatorio, Usuarios y Perfil, en modo claro y oscuro, en computadora y celular (sin desbordes a 390px).
-- : 166 pruebas, lint y build sin advertencias.
+- `npm run check`: 166 pruebas, lint y build sin advertencias.
 
 ## Lista de verificación de la entrega
 
