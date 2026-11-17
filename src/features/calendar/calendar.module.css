@@ -65,6 +65,8 @@
 .search input {
   width: 220px;
   min-height: 36px;
+  border-color: transparent;
+  box-shadow: var(--shadow-control);
   padding-left: 34px;
   font-size: var(--text-sm);
 }
@@ -82,7 +84,7 @@
   height: 18px;
   padding: 0 5px;
   border-radius: 999px;
-  background: var(--color-primary-solid);
+  background: var(--color-today);
   color: #fff;
   font-size: 0.7rem;
   font-weight: 700;
@@ -118,9 +120,10 @@
   display: grid;
   gap: var(--space-3);
   padding: var(--space-4);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
+  box-shadow: var(--shadow-card);
 }
 
 .resultsHeader {
@@ -376,7 +379,7 @@
     border-radius: 50%;
     background: var(--color-primary-solid);
     color: #fff;
-    box-shadow: 0 8px 24px rgb(37 99 235 / 0.4);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary-solid) 45%, transparent);
     cursor: pointer;
   }
 }
@@ -394,7 +397,7 @@
   padding: 1px 6px 1px 6px;
   border: 0;
   border-left: 4px solid var(--owner-color);
-  border-radius: 4px;
+  border-radius: 6px;
   background: color-mix(in srgb, var(--owner-color) 10%, var(--color-surface));
   color: var(--color-text);
   font: inherit;
@@ -449,9 +452,10 @@
   /* Sombra de la casilla bajo el mouse (en modo oscuro, el texto claro la aclara). */
   --cell-hover: color-mix(in srgb, var(--color-text) 6%, transparent);
   display: grid;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
@@ -524,12 +528,13 @@ button.dayHeader:hover .dayHeaderNumber {
 }
 
 .dayHeaderNumber[data-today='true'] {
-  background: var(--color-primary-solid);
+  background: var(--color-today);
   color: #fff;
+  box-shadow: var(--shadow-today);
 }
 
 button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
-  background: var(--color-primary-solid-hover);
+  background: color-mix(in srgb, var(--color-today) 85%, #000);
 }
 
 .bannerRow {
@@ -703,9 +708,10 @@ button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
    ========================================================================= */
 .month {
   --cell-hover: color-mix(in srgb, var(--color-text) 6%, transparent);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
 }
 
@@ -787,8 +793,9 @@ button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
 }
 
 .monthDay[data-today='true'] {
-  background: var(--color-primary-solid);
+  background: var(--color-today);
   color: #fff;
+  box-shadow: var(--shadow-today);
 }
 
 .more {
@@ -857,9 +864,10 @@ button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
 
 .miniMonth {
   padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
+  box-shadow: var(--shadow-card);
 }
 
 .miniTitle {
@@ -928,7 +936,7 @@ button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
 }
 
 .miniDay[data-today='true'] {
-  background: var(--color-primary-solid);
+  background: var(--color-today);
   color: #fff;
 }
 

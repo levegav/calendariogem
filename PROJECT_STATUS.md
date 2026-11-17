@@ -1,6 +1,6 @@
 # Estado del proyecto: Calendario GEM
 
-**Estado general: entregado (2026-11-17).** Las 8 fases están terminadas y aprobadas.
+**Estado general: entregado (2026-11-17).** Fases 0 a 7 terminadas y aprobadas. La Fase 8 (estilo visual) está desplegada y pendiente de aprobación.
 
 ## Fases
 
@@ -14,6 +14,7 @@
 | 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Terminada (aprobada) |
 | 6 | Búsqueda y filtros | Terminada (aprobada) |
 | 7 | Pulido y entrega final | Terminada (aprobada) |
+| 8 | Estilo visual "Corporativo GEM" | Desplegada, pendiente de aprobación |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización Google/Outlook | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
@@ -483,6 +484,23 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - **Modo oscuro:** el logo tiene una versión con letras claras, porque el azul marino no se lee sobre fondo oscuro. El trazo de color queda igual.
 - **Archivos:** `public/brand/gem-consulting.png` y `public/brand/gem-consulting-oscuro.png`. El tema elige cuál usar con la variable CSS `--brand-logo`.
 - **Pruebas:** revisado en computadora y celular, modo claro y oscuro. `npm run check` correcto (166 pruebas).
+
+## Fase 8: estilo visual "Corporativo GEM"
+
+Se eligió entre tres propuestas comparadas en una maqueta (A Corporativo GEM, B Moderno y aireado, C Acento de marca). El usuario eligió la A con ajustes (A+).
+
+- **Colores:** el azul marino del logo es el color principal (botones, enlaces, opción activa). El círculo del día de hoy va en naranja, tomado del trazo del logo. Hay versión para modo claro y oscuro.
+- **Menú lateral:** fondo azul marino con letras claras y el logo en su versión clara. La opción activa lleva una marca naranja. Los colores se redefinen dentro del menú, así la campana y la cuenta se adaptan solas.
+- **Línea del logo:** línea fina con el degradado del logo (amarillo, naranja, rojo, morado) en el borde superior de la app y de la pantalla de ingreso.
+- **Esquinas y sombras:** esquinas más redondeadas (`--radius` 12px, `--radius-lg` 16px). El calendario, los cuadros y las tarjetas llevan una sombra suave alrededor en vez de borde (`--shadow-card`). Los botones secundarios y el buscador llevan un contorno con sombra (`--shadow-control`). El botón principal y el día de hoy llevan sombra de su color.
+- **Tipografía:** Inter para el texto y Plus Jakarta Sans para los títulos. Se sirven desde la propia app con los paquetes `@fontsource-variable`, porque la CSP solo permite fuentes de 'self'.
+- **Ingreso:** banda azul marino en la parte de abajo, cuadro más redondeado y con sombra.
+- **Barra del navegador y app instalada:** color `#1d2942`.
+- **Sin cambios de funciones:** solo estilos (CSS), fuentes y colores del manifiesto.
+
+**Pruebas (2026-11-17)**
+- Revisado con capturas: ingreso, Mes, Semana, Año, nuevo recordatorio, Usuarios y Perfil, en modo claro y oscuro, en computadora y celular (sin desbordes a 390px).
+- `npm run check`: 166 pruebas, lint y build sin advertencias.
 
 ## Lista de verificación de la entrega
 

@@ -1,13 +1,15 @@
 :root {
   --brand-logo: url('/brand/gem-consulting.png');
-  --color-bg: #f6f7f9;
+  /* Estilo "Corporativo GEM": azul marino del logo, naranja para hoy. */
+  --color-bg: #f2f4f8;
   --color-surface: #ffffff;
-  --color-border: #e2e5ea;
-  --color-text: #1c2430;
-  --color-muted: #5f6b7a;
-  --color-primary: #2563eb;
-  --color-primary-hover: #1d4ed8;
-  --color-primary-soft: #e8f0fe;
+  --color-border: #dce2ec;
+  --color-text: #1a2337;
+  --color-muted: #586580;
+  --color-primary: #34507f;
+  --color-primary-hover: #2a4269;
+  --color-primary-soft: #e6ebf3;
+  --color-today: #cf4a1f;
   --color-success: #1a7f37;
   --color-success-soft: #e6f4ea;
   --color-danger: #c62828;
@@ -15,14 +17,32 @@
   --color-warning: #9a6700;
   --color-warning-soft: #fff4d6;
   /* Fondo de botones principales (texto blanco encima) */
-  --color-primary-solid: #2563eb;
-  --color-primary-solid-hover: #1d4ed8;
+  --color-primary-solid: #34507f;
+  --color-primary-solid-hover: #2a4269;
   --color-danger-border: #f5c2c0;
   --color-danger-text: #8e1b1b;
   --color-success-border: #b7dfc3;
   --color-success-text: #14532d;
-  --color-info-border: #c6d8fb;
-  --color-info-text: #123a7a;
+  --color-info-border: #c5d0e3;
+  --color-info-text: #1d2f52;
+
+  /* Menú lateral azul marino (en modo oscuro solo cambia el tono) */
+  --sidebar-bg: #1d2942;
+  --sidebar-text: #eef1f7;
+  --sidebar-muted: #a3afc8;
+  --sidebar-line: rgb(255 255 255 / 0.1);
+  --sidebar-hover: rgb(255 255 255 / 0.06);
+  --sidebar-active: rgb(255 255 255 / 0.1);
+  --sidebar-accent: #f08a3c;
+
+  /* Degradado del trazo del logo: línea fina del borde superior */
+  --brand-gradient: linear-gradient(90deg, #ffc93c, #f26b38 40%, #d8334a 70%, #8e2a6e);
+
+  /* Sombras: tarjetas (calendario, cuadros) y controles (botones, buscador) */
+  --shadow-card: 0 1px 2px rgb(20 30 55 / 0.06), 0 12px 32px rgb(20 30 55 / 0.08);
+  --shadow-control: 0 0 0 1px var(--color-border), 0 2px 8px rgb(20 30 55 / 0.07);
+  --shadow-primary: 0 4px 12px rgb(52 80 127 / 0.35);
+  --shadow-today: 0 2px 6px rgb(207 74 31 / 0.4);
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -31,13 +51,17 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
 
-  --radius: 10px;
+  --radius: 12px;
+  --radius-lg: 16px;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.5rem;
 
-  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter Variable', Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-head: 'Plus Jakarta Sans Variable', 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.5;
   color: var(--color-text);
@@ -50,28 +74,35 @@
 :root[data-theme='dark'] {
   /* El azul marino del logo no se lee sobre fondo oscuro: versión con letras claras. */
   --brand-logo: url('/brand/gem-consulting-oscuro.png');
-  --color-bg: #0f1419;
-  --color-surface: #182029;
-  --color-border: #2c3642;
-  --color-text: #e3e8ee;
-  --color-muted: #9aa6b4;
-  --color-primary: #6aa6ff;
-  --color-primary-hover: #8cbaff;
-  --color-primary-soft: #17304f;
+  --color-bg: #0c111c;
+  --color-surface: #141b2a;
+  --color-border: #253047;
+  --color-text: #e3e8f2;
+  --color-muted: #96a3bc;
+  --color-primary: #8eaae0;
+  --color-primary-hover: #a9c0ea;
+  --color-primary-soft: #1e2a42;
+  --color-today: #d0532c;
   --color-success: #57c27a;
   --color-success-soft: #13301e;
   --color-danger: #f47272;
   --color-danger-soft: #3a1919;
   --color-warning: #e3ac42;
   --color-warning-soft: #352a10;
-  --color-primary-solid: #2563eb;
-  --color-primary-solid-hover: #3b82f0;
+  --color-primary-solid: #3d5d94;
+  --color-primary-solid-hover: #4a6ba3;
   --color-danger-border: #6b2a2a;
   --color-danger-text: #ffbaba;
   --color-success-border: #285e3a;
   --color-success-text: #a9e4bc;
-  --color-info-border: #24497a;
-  --color-info-text: #bcd6ff;
+  --color-info-border: #2c4268;
+  --color-info-text: #c4d4f2;
+
+  --sidebar-bg: #080c15;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.45), 0 12px 32px rgb(0 0 0 / 0.4);
+  --shadow-control: 0 0 0 1px var(--color-border), 0 2px 8px rgb(0 0 0 / 0.35);
+  --shadow-primary: 0 4px 12px rgb(0 0 0 / 0.45);
+  --shadow-today: 0 2px 6px rgb(0 0 0 / 0.45);
 
   color-scheme: dark;
 }
@@ -87,9 +118,16 @@ body {
   background: var(--color-bg);
 }
 
+h1,
+h2 {
+  font-family: var(--font-head);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
 h1 {
   font-size: var(--text-xl);
-  font-weight: 600;
+  font-weight: 700;
   margin: 0 0 var(--space-2);
 }
 
@@ -103,7 +141,7 @@ a {
 
 h2 {
   font-size: var(--text-lg);
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
 }
 
@@ -201,6 +239,7 @@ th.num {
   padding: 0 var(--space-3);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
+  box-shadow: 0 2px 8px rgb(20 30 55 / 0.06);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -236,7 +275,6 @@ th.num {
 
 .segmented .is-selected {
   background: var(--color-primary-soft);
-  border-color: var(--color-primary);
   color: var(--color-primary);
   font-weight: 600;
 }
@@ -270,8 +308,9 @@ th.num {
 
 .card {
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   padding: var(--space-4);
 }
 
@@ -320,6 +359,7 @@ textarea:focus-visible {
 .btn-primary {
   background: var(--color-primary-solid);
   color: #fff;
+  box-shadow: var(--shadow-primary);
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -328,7 +368,7 @@ textarea:focus-visible {
 
 .btn-secondary {
   background: var(--color-surface);
-  border-color: var(--color-border);
+  box-shadow: var(--shadow-control);
   color: var(--color-text);
 }
 
@@ -398,8 +438,8 @@ textarea:focus-visible {
   width: min(380px, calc(100vw - 2 * var(--space-4)));
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.18);
 }
 
 .popover-small {
@@ -610,6 +650,10 @@ select:disabled {
   display: grid;
   place-items: center;
   padding: var(--space-4);
+  background:
+    var(--brand-gradient) top / 100% 3px no-repeat,
+    linear-gradient(var(--sidebar-bg), var(--sidebar-bg)) bottom / 100% 38% no-repeat,
+    var(--color-bg);
 }
 
 /* Logo de la empresa detrás del cuadro de ingreso, difuminado. */
@@ -641,7 +685,9 @@ select:disabled {
   position: relative;
   width: 100%;
   max-width: 380px;
-  background: color-mix(in srgb, var(--color-surface) 82%, transparent);
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgb(10 20 40 / 0.18);
+  background: color-mix(in srgb, var(--color-surface) 84%, transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -679,10 +725,6 @@ select:disabled {
 .auth-logo {
   display: block;
   margin-bottom: var(--space-3);
-}
-
-.card {
-  box-shadow: 0 1px 2px rgb(16 24 40 / 0.04);
 }
 
 textarea {

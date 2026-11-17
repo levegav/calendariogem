@@ -4,6 +4,17 @@
   display: flex;
 }
 
+/* Línea fina con el degradado del logo en el borde superior de la app. */
+.shell::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 35;
+  height: 3px;
+  background: var(--brand-gradient);
+  pointer-events: none;
+}
+
 .sidebar {
   position: sticky;
   top: 0;
@@ -14,8 +25,17 @@
   height: 100svh;
   flex-shrink: 0;
   padding: var(--space-4) var(--space-3);
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
+  /* Menú azul marino: los colores se redefinen aquí para que todo lo de adentro
+     (campana, opciones, cuenta) se adapte sin reglas aparte. */
+  --color-text: var(--sidebar-text);
+  --color-muted: var(--sidebar-muted);
+  --color-bg: var(--sidebar-hover);
+  --color-border: var(--sidebar-line);
+  --color-primary: var(--sidebar-text);
+  --color-primary-soft: var(--sidebar-active);
+  --brand-logo: url('/brand/gem-consulting-oscuro.png');
+  background: var(--sidebar-bg);
+  color: var(--color-text);
   overflow-y: auto;
 }
 
@@ -31,8 +51,11 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-1) var(--space-2);
+  font-family: var(--font-head);
   font-weight: 700;
-  font-size: var(--text-lg);
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
   color: var(--color-text);
   text-decoration: none;
 }
@@ -53,6 +76,7 @@
 }
 
 .navItem {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -73,6 +97,18 @@
   background: var(--color-primary-soft);
   color: var(--color-primary);
   font-weight: 600;
+}
+
+/* Marca naranja (del trazo del logo) en la opción activa */
+.navItem[aria-current='page']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--sidebar-accent);
 }
 
 .navItem:focus-visible {

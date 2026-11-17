@@ -12,6 +12,8 @@ El avance por fases está en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 
 El logo de GEM Consulting está en `public/brand/`. Hay una versión normal y otra con letras claras para el modo oscuro, y se usa en la pantalla de ingreso y al pie del menú. Para cambiarlo, reemplaza esos dos PNG con los mismos nombres.
 
+**Estilo visual:** los colores, las esquinas, las sombras y el degradado del logo se definen como variables al inicio de `src/styles/global.css` (modo claro en `:root`, modo oscuro en `:root[data-theme='dark']`). Los colores del menú lateral son las variables `--sidebar-*`. Las fuentes (Inter y Plus Jakarta Sans) vienen de los paquetes `@fontsource-variable` y se importan en `src/main.tsx`.
+
 ## Requisitos
 
 - Node.js 24 (ver `.node-version`).

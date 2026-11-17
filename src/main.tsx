@@ -4,6 +4,9 @@ import { createBrowserRouter, RouterProvider } from 'react-router'
 import { routes } from './app/routes'
 import { AuthProvider } from './features/auth/AuthProvider'
 import { applyTheme, readCachedTheme } from './lib/theme'
+// Fuentes servidas desde la propia app (la CSP solo permite fuentes de 'self').
+import '@fontsource-variable/inter/wght.css'
+import '@fontsource-variable/plus-jakarta-sans/wght.css'
 import './styles/global.css'
 
 applyTheme(readCachedTheme())
