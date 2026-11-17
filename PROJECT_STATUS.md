@@ -1,5 +1,7 @@
 # Estado del proyecto: Calendario GEM
 
+**Estado general: entregado (2026-11-17).** Las 8 fases están terminadas y aprobadas.
+
 ## Fases
 
 | Fase | Contenido | Estado |
@@ -11,7 +13,7 @@
 | 4 | Notificaciones en tiempo real y avisos previos por participante | Terminada (aprobada) |
 | 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Terminada (aprobada) |
 | 6 | Búsqueda y filtros | Terminada (aprobada) |
-| 7 | Pulido y entrega final | Desplegada, pendiente de aprobación |
+| 7 | Pulido y entrega final | Terminada (aprobada) |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización Google/Outlook | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
@@ -484,7 +486,7 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 
 ## Lista de verificación de la entrega
 
-- [x] Fases 0 a 6 aprobadas. La 7 está desplegada y pendiente de aprobación.
+- [x] Fases 0 a 7 aprobadas: proyecto entregado (2026-11-17).
 - [x] App publicada en https://calendariogem.pages.dev, con despliegue automático al hacer push a `main`.
 - [x] Base de datos real con las 9 migraciones aplicadas (local y remoto iguales).
 - [x] Datos de prueba eliminados del proyecto real.
