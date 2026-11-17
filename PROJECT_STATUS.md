@@ -7,7 +7,7 @@
 | 0 | Base: proyecto, Supabase, pruebas, primer despliegue | Terminada (aprobada) |
 | 1 | Usuarios: login, panel admin, colores RGB, perfil, menú, responsive | Terminada (aprobada) |
 | 2 | Categorías, CRUD de recordatorios, vistas día/semana/mes/año | Terminada (aprobada) |
-| 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Terminada, pendiente de aprobación |
+| 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Desplegada, pendiente de aprobación |
 | 4 | Notificaciones en tiempo real y avisos previos por participante | Pendiente |
 | 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Pendiente |
 | 6 | Búsqueda y filtros | Pendiente |
@@ -208,3 +208,8 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - `npm run test:db`: 83 pruebas pgTAP (22 nuevas), todas correctas: quién etiqueta, que no se etiquete al creador ni a inactivos, que un etiquetado no modifique ni quite a otros pero sí se salga, que quien ya estaba no se reinserte, el borrado en cascada y que sin sesión no haya acceso.
 - `npm run test:integration`: 19 pruebas contra el Supabase local (6 nuevas) con la misma consulta que usa la app.
 - Revisión visual en Edge: Semana con solo mi calendario y con 3 calendarios, formulario con etiquetados, detalles de un recordatorio donde estoy etiquetado y Mes en celular con el selector.
+
+**Despliegue (2026-11-17)**
+- `db push` de `20261118120000_etiquetados.sql` en el proyecto remoto.
+- Verificación sin sesión: `reminder_participants`, `calendar_reminders` y `save_reminder` responden 401.
+- Cloudflare publicó la versión con la Fase 3.
