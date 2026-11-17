@@ -258,6 +258,8 @@
    ========================================================================= */
 .timeGrid {
   --gutter: 56px;
+  /* Sombra de la casilla bajo el mouse (en modo oscuro, el texto claro la aclara). */
+  --cell-hover: color-mix(in srgb, var(--color-text) 6%, transparent);
   display: grid;
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -406,6 +408,21 @@ button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
   border-left: 0;
 }
 
+/* Franja de media hora bajo el mouse en Día y Semana. */
+.hoverSlot {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background: var(--cell-hover);
+  pointer-events: none;
+}
+
+@media (hover: none) {
+  .hoverSlot {
+    display: none;
+  }
+}
+
 .dayColumn[data-today='true'] {
   background-color: color-mix(in srgb, var(--color-primary) 4%, transparent);
 }
@@ -497,6 +514,7 @@ button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
    Vista mensual
    ========================================================================= */
 .month {
+  --cell-hover: color-mix(in srgb, var(--color-text) 6%, transparent);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   background: var(--color-surface);
@@ -550,6 +568,13 @@ button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
 
 .monthCell[data-outside='true'] .monthDay {
   color: var(--color-muted);
+}
+
+/* Al pasar el mouse, la casilla del día se oscurece un poco (se superpone al fondo que tenga). */
+@media (hover: hover) {
+  .monthCell:hover {
+    background-image: linear-gradient(var(--cell-hover), var(--cell-hover));
+  }
 }
 
 .monthDay {

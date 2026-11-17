@@ -238,3 +238,10 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 
 **Despliegue**
 - `db push` de `20261118130000_visibilidad_admin.sql` en el proyecto remoto. `migration list` muestra el local y el remoto iguales.
+
+### Ajuste del 2026-11-17: resaltar la casilla bajo el mouse
+
+- **Mes:** la casilla del día bajo el mouse se oscurece un poco.
+- **Día y Semana:** se oscurece la franja de media hora bajo el mouse, que es la misma que se usa al hacer clic para crear un recordatorio. Sobre un recordatorio no se resalta, porque ese clic lo abre.
+- En modo oscuro el resaltado aclara en vez de oscurecer. En pantallas táctiles no se muestra.
+- `npm run check`: 131 pruebas unitarias (1 nueva: la franja aparece en la posición correcta y desaparece al salir) y build, todo correcto.

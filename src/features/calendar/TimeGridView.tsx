@@ -41,6 +41,8 @@ export function TimeGridView({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const now = useNowMinutes()
+  /** Franja bajo el mouse, para resaltarla (la misma que se usaría al hacer clic). */
+  const [hovered, setHovered] = useState<{ day: DateKey; minutes: number } | null>(null)
   const single = days.length === 1
   const columns = { '--days': days.length } as CSSProperties
   const banners = days.map((day) => eventsOnDay(events, day).filter(isBanner))
@@ -51,12 +53,26 @@ export function TimeGridView({
     if (scrollRef.current) scrollRef.current.scrollTop = SCROLL_TO_HOUR * HOUR_HEIGHT - 12
   }, [])
 
-  function createAt(day: DateKey, event: MouseEvent<HTMLDivElement>) {
-    if (event.target !== event.currentTarget) return
+  /** Inicio de la franja de SLOT_MINUTES bajo el puntero dentro de la columna de un día. */
+  function slotAt(event: MouseEvent<HTMLDivElement>): number {
     const rect = event.currentTarget.getBoundingClientRect()
     const raw = ((event.clientY - rect.top) / HOUR_HEIGHT) * 60
-    const minutes = Math.max(0, Math.min(23 * 60 + 30, Math.floor(raw / SLOT_MINUTES) * SLOT_MINUTES))
-    onCreate(day, minutes)
+    return Math.max(0, Math.min(24 * 60 - SLOT_MINUTES, Math.floor(raw / SLOT_MINUTES) * SLOT_MINUTES))
+  }
+
+  function createAt(day: DateKey, event: MouseEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget) return
+    onCreate(day, slotAt(event))
+  }
+
+  function hoverAt(day: DateKey, event: MouseEvent<HTMLDivElement>) {
+    // Sobre un recordatorio no se resalta la franja: ese clic abre el recordatorio.
+    if (event.target !== event.currentTarget) {
+      if (hovered) setHovered(null)
+      return
+    }
+    const minutes = slotAt(event)
+    if (hovered?.day !== day || hovered.minutes !== minutes) setHovered({ day, minutes })
   }
 
   return (
@@ -112,8 +128,17 @@ export function TimeGridView({
               className={styles.dayColumn}
               data-today={day === today}
               onClick={(event) => createAt(day, event)}
+              onMouseMove={(event) => hoverAt(day, event)}
+              onMouseLeave={() => setHovered(null)}
               role="presentation"
             >
+              {hovered?.day === day && (
+                <div
+                  className={styles.hoverSlot}
+                  style={{ top: (hovered.minutes / 60) * HOUR_HEIGHT, height: (SLOT_MINUTES / 60) * HOUR_HEIGHT }}
+                  aria-hidden="true"
+                />
+              )}
               {layoutTimedEvents(events, day).map(({ event, start, end, lane, lanes }) => {
                 const height = ((end - start) / 60) * HOUR_HEIGHT
                 return (

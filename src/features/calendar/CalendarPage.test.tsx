@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeAuth, fakeProfile, renderWithAuth } from '../../test/fakeAuth'
@@ -221,6 +221,20 @@ describe('CalendarPage', () => {
     expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Dejará de aparecer en su calendario'))
     expect(leaveReminder).toHaveBeenCalledWith(1, 'yo')
     expect(await screen.findByText('Salió del recordatorio "Reunión de equipo".')).toBeInTheDocument()
+  })
+
+  it('en Semana se resalta la franja de media hora bajo el mouse y desaparece al salir', async () => {
+    renderAt('/?vista=semana&fecha=2026-11-16')
+    const container = document.body
+    await screen.findByRole('button', { name: /Reunión de equipo/ })
+    const column = container.querySelector<HTMLElement>('[class*="dayColumn"]')!
+    // 9:40 a. m. -> franja de 9:30 (48 px por hora).
+    fireEvent.mouseMove(column, { clientY: 9 * 48 + 32 })
+    const slot = container.querySelector<HTMLElement>('[class*="hoverSlot"]')!
+    expect(slot.style.top).toBe(`${9.5 * 48}px`)
+    expect(slot.style.height).toBe('24px')
+    fireEvent.mouseLeave(column)
+    expect(container.querySelector('[class*="hoverSlot"]')).toBeNull()
   })
 
   it('un usuario que no es admin no tiene "Ver calendario de…" y solo consulta el suyo', async () => {
