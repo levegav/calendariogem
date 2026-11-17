@@ -16,6 +16,8 @@ export interface ReminderFormValues {
   endTime: number
   location: string
   note: string
+  /** Usuarios etiquetados (sin el creador). */
+  participantIds: string[]
 }
 
 export type ReminderFormErrors = Partial<Record<'title' | 'categoryId' | 'end' | 'description' | 'location' | 'note', string>>
@@ -53,6 +55,7 @@ export function newReminderValues(
     endTime,
     location: '',
     note: '',
+    participantIds: [],
   }
 }
 
@@ -71,6 +74,7 @@ export function valuesFromEvent(event: CalendarEvent): ReminderFormValues {
     endTime: end?.minutes ?? Math.min(span.startMinutes + 60, MINUTES_PER_DAY - TIME_STEP),
     location: event.location ?? '',
     note: event.note ?? '',
+    participantIds: event.participants.map((p) => p.id),
   }
 }
 
@@ -119,6 +123,7 @@ export function toPayload(values: ReminderFormValues): ReminderPayload {
     category_id: values.categoryId!,
     location: optional(values.location),
     note: optional(values.note),
+    participant_ids: [...new Set(values.participantIds)],
   }
 }
 

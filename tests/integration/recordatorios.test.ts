@@ -9,20 +9,17 @@ let luisId: string
 let carlos: SupabaseClient
 let categoryId: number
 
-// Misma consulta que src/features/calendar/api.ts (listMyReminders).
+// Misma consulta que src/features/calendar/api.ts (listCalendarReminders).
 const COLUMNS =
   'id, title, start_at, end_at, all_day, ' +
   'category:categories!reminders_category_id_fkey(id, name, color, active), ' +
-  'owner:profiles!reminders_owner_id_fkey(id, full_name, color)'
+  'owner:profiles!reminders_owner_id_fkey(id, full_name, color), ' +
+  'participants:reminder_participants(user:profiles!reminder_participants_user_id_fkey(id, full_name, color))'
 
 async function inRange(client: SupabaseClient, ownerId: string, fromIso: string, toIso: string) {
   const { data, error } = await client
-    .from('reminders')
+    .rpc('calendar_reminders', { p_user_ids: [ownerId], p_from: fromIso, p_to: toIso })
     .select(COLUMNS)
-    .eq('owner_id', ownerId)
-    .lt('start_at', toIso)
-    .or(`end_at.gte.${fromIso},and(end_at.is.null,start_at.gte.${fromIso})`)
-    .order('start_at')
   if (error) throw error
   return (data as unknown as { title: string }[]).map((r) => r.title)
 }

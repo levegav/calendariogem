@@ -6,8 +6,8 @@
 |---|---|---|
 | 0 | Base: proyecto, Supabase, pruebas, primer despliegue | Terminada (aprobada) |
 | 1 | Usuarios: login, panel admin, colores RGB, perfil, menú, responsive | Terminada (aprobada) |
-| 2 | Categorías, CRUD de recordatorios, vistas día/semana/mes/año | Desplegada, pendiente de aprobación |
-| 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Pendiente |
+| 2 | Categorías, CRUD de recordatorios, vistas día/semana/mes/año | Terminada (aprobada) |
+| 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Terminada, pendiente de aprobación |
 | 4 | Notificaciones en tiempo real y avisos previos por participante | Pendiente |
 | 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Pendiente |
 | 6 | Búsqueda y filtros | Pendiente |
@@ -179,3 +179,32 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
 - `db push`: las 2 migraciones se aplicaron en el proyecto remoto (por el hotspot, porque la red de la oficina bloquea el puerto 5432).
 - Verificación remota sin sesión: leer `categories` y `reminders` da 401 (42501), crear una categoría da 401 y `admin_delete_category` da 401.
 - `npm run check` correcto. Push del commit ce64d4f; Cloudflare publicó la nueva versión en https://calendariogem.pages.dev.
+
+**Ajuste tras la revisión del usuario (2026-11-17)**
+- En Día y Semana las líneas de los encabezados no coincidían con las de la cuadrícula: la zona de horas tiene barra de desplazamiento y los encabezados no. Ahora los encabezados y la franja "Todo el día" reservan el mismo espacio (`scrollbar-gutter: stable`). Verificado con captura con barras visibles.
+
+## Fase 3: compartir (etiquetados y calendarios de otros)
+
+**Base de datos** (`20261118120000_etiquetados.sql`)
+- `reminder_participants (reminder_id, user_id, added_at)`: vínculo entre el recordatorio original y cada etiquetado. Nunca se copia el recordatorio.
+- Reglas (trigger): no se etiqueta al propio creador ni a usuarios inactivos.
+- RLS:
+  - Todos los usuarios activos ven quién está etiquetado.
+  - Solo el creador agrega o quita etiquetados.
+  - Cada etiquetado puede quitarse a sí mismo (salirse); el recordatorio original no se toca.
+  - Al eliminar el recordatorio se eliminan sus vínculos. La ventana Conservar / Eliminar para los etiquetados llega en la Fase 5.
+- `save_reminder(...)`: guarda el recordatorio y sus etiquetados en una sola transacción. Es SECURITY INVOKER: corre con los permisos de quien llama, así que se aplican las mismas reglas que a un cambio directo. Quien ya estaba etiquetado se mantiene; solo se agregan los nuevos y se quitan los que salieron de la lista.
+- `calendar_reminders(usuarios, desde, hasta)`: recordatorios de los calendarios elegidos (creados por esas personas o en los que están etiquetadas), sin repetir. También SECURITY INVOKER.
+
+**Frontend**
+- **Etiquetar personas** en el formulario: pastillas con el avatar y el color de cada usuario activo (sin el creador). Con más de 8 personas aparece un buscador. Al editar se puede quitar a alguien.
+- **Detalles**: lista de "Etiquetados" (con "(yo)"). Un etiquetado ve **Salir del recordatorio** (con confirmación); no ve Editar ni Eliminar.
+- **Ver calendario de…** (barra superior): casillas con el propio calendario y el de cada usuario activo, más "Solo el mío" y "Todos". Siempre queda al menos uno. La elección se recuerda por usuario en el navegador.
+- "Mi calendario" ahora incluye los recordatorios en los que el usuario está etiquetado, con la línea del color de quien los creó y "Creado por".
+- Las notificaciones (etiquetado, quitado, salida, cambios) llegan en la Fase 4.
+
+**Pruebas (2026-11-17)**
+- `npm run check`: lint, tipos, 129 pruebas unitarias y build, todo correcto. El lint muestra 2 advertencias que ya existían.
+- `npm run test:db`: 83 pruebas pgTAP (22 nuevas), todas correctas: quién etiqueta, que no se etiquete al creador ni a inactivos, que un etiquetado no modifique ni quite a otros pero sí se salga, que quien ya estaba no se reinserte, el borrado en cascada y que sin sesión no haya acceso.
+- `npm run test:integration`: 19 pruebas contra el Supabase local (6 nuevas) con la misma consulta que usa la app.
+- Revisión visual en Edge: Semana con solo mi calendario y con 3 calendarios, formulario con etiquetados, detalles de un recordatorio donde estoy etiquetado y Mes en celular con el selector.

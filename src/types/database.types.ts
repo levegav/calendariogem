@@ -71,6 +71,32 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"reminder_participants": {
+                  Row: {
+                    "added_at": string,"reminder_id": number,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "added_at"?: string,"reminder_id": number,"user_id": string
+                  }
+                  Update: {
+                    "added_at"?: string,"reminder_id"?: number,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "reminder_participants_reminder_id_fkey"
+      columns: ["reminder_id"]
+isOneToOne: false
+      referencedRelation: "reminders"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "reminder_participants_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"reminders": {
                   Row: {
                     "all_day": boolean,"category_id": number,"created_at": string,"description": string | null,"end_at": string | null,"id": number,"location": string | null,"note": string | null,"owner_id": string,"start_at": string,"title": string,"updated_at": string
@@ -112,8 +138,32 @@ isOneToOne: false
 "admin_update_user":
 { Args: { "p_active": boolean,"p_color": string,"p_full_name": string,"p_role": Database["public"]['Enums']["user_role"],"p_user_id": string }; Returns: undefined
                            },
+"calendar_reminders":
+{ Args: { "p_from": string,"p_to": string,"p_user_ids": (string)[] }; Returns: {
+              "all_day": boolean,
+"category_id": number,
+"created_at": string,
+"description": string | null,
+"end_at": string | null,
+"id": number,
+"location": string | null,
+"note": string | null,
+"owner_id": string,
+"start_at": string,
+"title": string,
+"updated_at": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "reminders"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "complete_password_change":
 { Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"save_reminder":
+{ Args: { "p_all_day": boolean,"p_category_id": number,"p_description": string,"p_end_at": string,"p_id": number,"p_location": string,"p_note": string,"p_participants": (string)[],"p_start_at": string,"p_title": string }; Returns: number
                            },
 "set_my_theme":
 { Args: { "p_theme": string }; Returns: undefined

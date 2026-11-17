@@ -45,6 +45,97 @@
   min-width: 0;
 }
 
+/* "Ver calendario de…" */
+.selector {
+  position: relative;
+}
+
+.selectorAvatars {
+  display: inline-flex;
+}
+
+.selectorAvatars > * + * {
+  margin-left: -8px;
+}
+
+.selectorAvatars > * {
+  box-shadow: 0 0 0 2px var(--color-surface);
+}
+
+.selectorMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: var(--space-3);
+  width: max-content;
+  min-width: 240px;
+  max-width: min(320px, calc(100vw - 32px));
+  max-height: min(420px, 70svh);
+  overflow-y: auto;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.15);
+}
+
+.selectorMenu fieldset {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.selectorMenu legend {
+  margin-bottom: var(--space-2);
+  padding: 0;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.selectorOption {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 0 var(--space-2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.selectorOption:hover {
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+}
+
+.selectorOption input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--color-primary-solid);
+}
+
+.selectorLine {
+  flex: none;
+  width: 4px;
+  height: 18px;
+  border-radius: 2px;
+}
+
+.selectorActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.selectorActions > * {
+  flex: 1;
+}
+
 .empty {
   text-align: center;
   font-size: var(--text-sm);
@@ -71,6 +162,11 @@
 
   .views {
     flex: 1;
+  }
+
+  .selectorMenu {
+    right: auto;
+    left: 0;
   }
 
   /* Más específico que .btn (estilos globales): en celular se usa el botón flotante. */

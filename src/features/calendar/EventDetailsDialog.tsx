@@ -1,59 +1,77 @@
 import { useState } from 'react'
 import { Modal } from '../../components/Modal'
+import { UserAvatar } from '../../components/UserAvatar'
 import { toSpanishMessage } from '../../lib/errors'
 import { describeWhen } from './eventText'
 import styles from './EventDetailsDialog.module.css'
 import { asLink } from './reminderForm'
 import type { CalendarEvent } from './types'
 
-/** Detalles de un recordatorio. Solo su creador ve Editar y Eliminar. */
+/** Detalles de un recordatorio. Solo su creador ve Editar y Eliminar; un etiquetado puede salirse. */
 export function EventDetailsDialog({
   event,
   currentUserId,
   onEdit,
   onDelete,
+  onLeave,
   onClose,
 }: {
   event: CalendarEvent
   currentUserId: string
   onEdit: () => void
   onDelete: () => Promise<void>
+  onLeave: () => Promise<void>
   onClose: () => void
 }) {
   const [error, setError] = useState<string | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  const [busy, setBusy] = useState(false)
   const isOwner = event.owner.id === currentUserId
+  const isParticipant = event.participants.some((p) => p.id === currentUserId)
   const link = event.location ? asLink(event.location) : null
 
-  async function remove() {
-    if (!window.confirm(`¿Eliminar el recordatorio "${event.title}"? Esta acción no se puede deshacer.`)) return
+  async function run(action: () => Promise<void>) {
     setError(null)
-    setDeleting(true)
+    setBusy(true)
     try {
-      await onDelete()
+      await action()
     } catch (err) {
       setError(toSpanishMessage(err))
-      setDeleting(false)
+      setBusy(false)
     }
   }
+
+  function remove() {
+    if (!window.confirm(`¿Eliminar el recordatorio "${event.title}"? Esta acción no se puede deshacer.`)) return
+    void run(onDelete)
+  }
+
+  function leave() {
+    if (!window.confirm(`¿Salir del recordatorio "${event.title}"? Dejará de aparecer en su calendario.`)) return
+    void run(onLeave)
+  }
+
+  const footer = isOwner ? (
+    <>
+      <button type="button" className="btn btn-danger" onClick={remove} disabled={busy}>
+        {busy ? 'Eliminando…' : 'Eliminar'}
+      </button>
+      <button type="button" className="btn btn-primary" onClick={onEdit} disabled={busy}>
+        Editar
+      </button>
+    </>
+  ) : isParticipant ? (
+    <button type="button" className="btn btn-secondary" onClick={leave} disabled={busy}>
+      {busy ? 'Saliendo…' : 'Salir del recordatorio'}
+    </button>
+  ) : undefined
 
   return (
     <Modal
       title={event.title}
       onClose={onClose}
       accentColor={event.owner.color}
-      footer={
-        isOwner ? (
-          <>
-            <button type="button" className="btn btn-danger" onClick={() => void remove()} disabled={deleting}>
-              {deleting ? 'Eliminando…' : 'Eliminar'}
-            </button>
-            <button type="button" className="btn btn-primary" onClick={onEdit} disabled={deleting}>
-              Editar
-            </button>
-          </>
-        ) : undefined
-      }
+      footer={footer}
+
     >
       <div className="stack">
         {error && (
@@ -105,10 +123,30 @@ export function EventDetailsDialog({
               <dd className={styles.multiline}>{event.note}</dd>
             </>
           )}
+
+          {event.participants.length > 0 && (
+            <>
+              <dt>Etiquetados</dt>
+              <dd>
+                <ul className={styles.people}>
+                  {event.participants.map((person) => (
+                    <li key={person.id}>
+                      <UserAvatar name={person.full_name} color={person.color} size={24} />
+                      {person.full_name}
+                      {person.id === currentUserId && <span className="muted"> (yo)</span>}
+                    </li>
+                  ))}
+                </ul>
+              </dd>
+            </>
+          )}
         </dl>
 
         {!isOwner && (
-          <p className="muted">Solo {event.owner.full_name} puede modificar o eliminar este recordatorio.</p>
+          <p className="muted">
+            Solo {event.owner.full_name} puede modificar o eliminar este recordatorio.
+            {isParticipant && ' Si no le corresponde, puede salirse.'}
+          </p>
         )}
       </div>
     </Modal>

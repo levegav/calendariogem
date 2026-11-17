@@ -13,6 +13,13 @@ export function isCalendarView(value: unknown): value is CalendarView {
   return value === 'dia' || value === 'semana' || value === 'mes' || value === 'ano'
 }
 
+/** Un usuario tal como aparece en el calendario (creador, etiquetado o calendario visible). */
+export interface Person {
+  id: string
+  full_name: string
+  color: string
+}
+
 /** Un recordatorio tal como lo muestra el calendario. */
 export interface CalendarEvent {
   id: number
@@ -24,5 +31,7 @@ export interface CalendarEvent {
   location: string | null
   note: string | null
   category: { id: number; name: string; color: string; active: boolean }
-  owner: { id: string; full_name: string; color: string }
+  owner: Person
+  /** Usuarios etiquetados (sin el creador), por nombre. */
+  participants: Person[]
 }

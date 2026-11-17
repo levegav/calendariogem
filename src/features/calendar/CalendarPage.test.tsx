@@ -3,19 +3,22 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeAuth, fakeProfile, renderWithAuth } from '../../test/fakeAuth'
 import { listCategories } from '../categories/api'
-import { createReminder, deleteReminder, listMyReminders, updateReminder } from './api'
+import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder } from './api'
 import { CalendarPage } from './CalendarPage'
 import { fakeEvent } from './testEvents'
 
 vi.mock('./api', () => ({
-  listMyReminders: vi.fn(),
-  createReminder: vi.fn(),
-  updateReminder: vi.fn(),
+  listCalendarReminders: vi.fn(),
+  listPeople: vi.fn(),
+  saveReminder: vi.fn(),
   deleteReminder: vi.fn(),
+  leaveReminder: vi.fn(),
 }))
 vi.mock('../categories/api', () => ({ listCategories: vi.fn() }))
 
 const me = fakeProfile({ id: 'yo', full_name: 'Luis Vega', color: '#2563eb' })
+const carlos = { id: 'carlos', full_name: 'Carlos Mora', color: '#16a34a' }
+const ana = { id: 'ana', full_name: 'Ana Rodríguez', color: '#ea580c' }
 const routes = [{ path: '/', element: <CalendarPage /> }]
 
 const meeting = fakeEvent({
@@ -36,15 +39,16 @@ beforeEach(() => {
   // Hoy: lunes 16 de noviembre de 2026, 10:20 a. m. en Costa Rica.
   vi.useFakeTimers({ now: new Date('2026-11-16T16:20:00Z'), toFake: ['Date'] })
   localStorage.clear()
-  vi.mocked(listMyReminders).mockResolvedValue([meeting])
+  vi.mocked(listCalendarReminders).mockResolvedValue([meeting])
+  vi.mocked(listPeople).mockResolvedValue([ana, carlos, { id: 'yo', full_name: 'Luis Vega', color: '#2563eb' }])
   vi.mocked(listCategories).mockResolvedValue([
     { id: 1, name: 'Reunión', color: '#2563eb', active: true },
     { id: 2, name: 'Tarea', color: '#16a34a', active: true },
     { id: 3, name: 'Vieja', color: '#000000', active: false },
   ])
-  vi.mocked(createReminder).mockResolvedValue(undefined)
-  vi.mocked(updateReminder).mockResolvedValue(undefined)
+  vi.mocked(saveReminder).mockResolvedValue(1)
   vi.mocked(deleteReminder).mockResolvedValue(undefined)
+  vi.mocked(leaveReminder).mockResolvedValue(undefined)
   vi.spyOn(window, 'confirm').mockReturnValue(true)
 })
 
@@ -57,7 +61,7 @@ describe('CalendarPage', () => {
     renderAt('/')
     expect(screen.getByRole('heading', { name: 'Noviembre 2026' })).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: /Reunión de equipo, 2:00 p\. m\./ })).toBeInTheDocument()
-    expect(listMyReminders).toHaveBeenCalledWith('yo', '2026-10-26T06:00:00.000Z', '2026-12-07T06:00:00.000Z')
+    expect(listCalendarReminders).toHaveBeenCalledWith(['yo'], '2026-10-26T06:00:00.000Z', '2026-12-07T06:00:00.000Z')
   })
 
   it('navega entre meses y vuelve a hoy', async () => {
@@ -98,9 +102,11 @@ describe('CalendarPage', () => {
     await userEvent.click(within(dialog).getByLabelText('Agregar fecha y hora de finalización'))
     await userEvent.selectOptions(within(dialog).getByLabelText('Hora de finalización'), '4:00 p. m.')
     await userEvent.type(within(dialog).getByLabelText(/Nota/), 'Llevar copias')
+    await userEvent.click(within(dialog).getByRole('checkbox', { name: 'Carlos Mora' }))
+    expect(within(dialog).getByText(/1 persona etiquetada/)).toBeInTheDocument()
     await userEvent.click(within(dialog).getByRole('button', { name: 'Crear recordatorio' }))
 
-    expect(createReminder).toHaveBeenCalledWith({
+    expect(saveReminder).toHaveBeenCalledWith(null, {
       title: 'Entrega de informe',
       description: null,
       start_at: '2026-11-16T20:30:00.000Z',
@@ -109,6 +115,7 @@ describe('CalendarPage', () => {
       category_id: 2,
       location: null,
       note: 'Llevar copias',
+      participant_ids: ['carlos'],
     })
     expect(await screen.findByText('Recordatorio "Entrega de informe" creado.')).toBeInTheDocument()
   })
@@ -125,7 +132,7 @@ describe('CalendarPage', () => {
     await userEvent.click(screen.getAllByRole('button', { name: 'Nuevo recordatorio' })[0])
     await userEvent.click(screen.getByRole('button', { name: 'Crear recordatorio' }))
     expect(screen.getByText('Escriba un título.')).toBeInTheDocument()
-    expect(createReminder).not.toHaveBeenCalled()
+    expect(saveReminder).not.toHaveBeenCalled()
   })
 
   it('muestra los detalles con "Creado por" y el enlace de la reunión', async () => {
@@ -146,7 +153,7 @@ describe('CalendarPage', () => {
     await userEvent.clear(title)
     await userEvent.type(title, 'Reunión semanal')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Guardar cambios' }))
-    expect(updateReminder).toHaveBeenCalledWith(1, expect.objectContaining({ title: 'Reunión semanal', category_id: 1 }))
+    expect(saveReminder).toHaveBeenCalledWith(1, expect.objectContaining({ title: 'Reunión semanal', category_id: 1 }))
   })
 
   it('el creador elimina su recordatorio tras confirmar', async () => {
@@ -158,13 +165,72 @@ describe('CalendarPage', () => {
   })
 
   it('un recordatorio de otra persona no se puede editar ni eliminar', async () => {
-    vi.mocked(listMyReminders).mockResolvedValue([
-      { ...meeting, owner: { id: 'otro', full_name: 'Carlos Mora', color: '#16a34a' } },
-    ])
+    vi.mocked(listCalendarReminders).mockResolvedValue([{ ...meeting, owner: carlos }])
     renderAt('/')
     await userEvent.click(await screen.findByRole('button', { name: /Reunión de equipo/ }))
     expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Eliminar' })).not.toBeInTheDocument()
     expect(screen.getByText('Solo Carlos Mora puede modificar o eliminar este recordatorio.')).toBeInTheDocument()
+  })
+
+  it('al crear no se ofrece etiquetarse a uno mismo', async () => {
+    renderAt('/')
+    await userEvent.click(screen.getAllByRole('button', { name: 'Nuevo recordatorio' })[0])
+    const dialog = screen.getByRole('dialog', { name: 'Nuevo recordatorio' })
+    expect(await within(dialog).findByRole('checkbox', { name: 'Ana Rodríguez' })).toBeInTheDocument()
+    expect(within(dialog).queryByRole('checkbox', { name: 'Luis Vega' })).not.toBeInTheDocument()
+  })
+
+  it('al editar se puede quitar a un etiquetado', async () => {
+    vi.mocked(listCalendarReminders).mockResolvedValue([{ ...meeting, participants: [ana, carlos] }])
+    renderAt('/')
+    await userEvent.click(await screen.findByRole('button', { name: /Reunión de equipo/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Editar' }))
+    const dialog = screen.getByRole('dialog', { name: 'Editar recordatorio' })
+    const anaBox = within(dialog).getByRole('checkbox', { name: 'Ana Rodríguez' })
+    expect(anaBox).toBeChecked()
+    await userEvent.click(anaBox)
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Guardar cambios' }))
+    expect(saveReminder).toHaveBeenCalledWith(1, expect.objectContaining({ participant_ids: ['carlos'] }))
+  })
+
+  it('los detalles muestran a los etiquetados', async () => {
+    vi.mocked(listCalendarReminders).mockResolvedValue([{ ...meeting, participants: [ana, carlos] }])
+    renderAt('/')
+    await userEvent.click(await screen.findByRole('button', { name: /Reunión de equipo/ }))
+    const dialog = screen.getByRole('dialog', { name: 'Reunión de equipo' })
+    expect(within(dialog).getByText('Etiquetados')).toBeInTheDocument()
+    expect(within(dialog).getByText('Ana Rodríguez')).toBeInTheDocument()
+    expect(within(dialog).getByText('Carlos Mora')).toBeInTheDocument()
+  })
+
+  it('un etiquetado puede salirse del recordatorio', async () => {
+    vi.mocked(listCalendarReminders).mockResolvedValue([
+      { ...meeting, owner: carlos, participants: [{ id: 'yo', full_name: 'Luis Vega', color: '#2563eb' }] },
+    ])
+    renderAt('/')
+    await userEvent.click(await screen.findByRole('button', { name: /Reunión de equipo/ }))
+    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Salir del recordatorio' }))
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Dejará de aparecer en su calendario'))
+    expect(leaveReminder).toHaveBeenCalledWith(1, 'yo')
+    expect(await screen.findByText('Salió del recordatorio "Reunión de equipo".')).toBeInTheDocument()
+  })
+
+  it('"Ver calendario de…" agrega el calendario de otra persona y lo recuerda', async () => {
+    renderAt('/')
+    await userEvent.click(await screen.findByRole('button', { name: /Ver calendario de/ }))
+    const mine = screen.getByRole('checkbox', { name: 'Luis Vega (yo)' })
+    expect(mine).toBeChecked()
+    expect(mine).toBeDisabled() // siempre queda al menos uno
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Carlos Mora' }))
+    expect(listCalendarReminders).toHaveBeenLastCalledWith(['yo', 'carlos'], expect.any(String), expect.any(String))
+    expect(JSON.parse(localStorage.getItem('calendarios-visibles:yo')!)).toEqual(['yo', 'carlos'])
+    expect(screen.getByRole('button', { name: /Ver calendario de:.*2 calendarios/ })).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Luis Vega (yo)' }))
+    expect(listCalendarReminders).toHaveBeenLastCalledWith(['carlos'], expect.any(String), expect.any(String))
+    await userEvent.click(screen.getByRole('button', { name: 'Solo el mío' }))
+    expect(listCalendarReminders).toHaveBeenLastCalledWith(['yo'], expect.any(String), expect.any(String))
   })
 })

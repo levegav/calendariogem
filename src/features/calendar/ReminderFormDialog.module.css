@@ -96,3 +96,9 @@
   margin: 0;
   accent-color: var(--color-primary-solid);
 }
+
+/* Personas para etiquetar: pastilla con el avatar en su color. */
+.personChip {
+  padding-left: 4px;
+}
+

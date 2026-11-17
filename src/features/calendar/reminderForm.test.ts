@@ -51,6 +51,7 @@ describe('toPayload', () => {
       endTime: 15 * 60 + 30,
       description: '  ',
       location: ' Sala 2 ',
+      participantIds: ['u2', 'u1', 'u2'],
     }
     expect(toPayload(values)).toEqual({
       title: 'Reunión',
@@ -61,6 +62,7 @@ describe('toPayload', () => {
       category_id: 3,
       location: 'Sala 2',
       note: null,
+      participant_ids: ['u2', 'u1'],
     })
   })
 
@@ -75,11 +77,13 @@ describe('toPayload', () => {
       end_at: '2026-11-20T15:00:00-06:00',
       title: 'Reunión',
       location: 'Sala 2',
+      participants: [{ id: 'u1', full_name: 'Carlos Mora', color: '#16a34a' }],
     })
     const payload = toPayload(valuesFromEvent(event))
     expect(new Date(payload.start_at).getTime()).toBe(new Date(event.start_at).getTime())
     expect(new Date(payload.end_at!).getTime()).toBe(new Date(event.end_at!).getTime())
     expect(payload.location).toBe('Sala 2')
+    expect(payload.participant_ids).toEqual(['u1'])
   })
 })
 

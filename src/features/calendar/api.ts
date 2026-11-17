@@ -1,25 +1,38 @@
 import { AppError } from '../../lib/errors'
 import { supabase } from '../../lib/supabase'
-import type { CalendarEvent } from './types'
+import type { Database } from '../../types/database.types'
+import type { CalendarEvent, Person } from './types'
 
 const COLUMNS =
   'id, title, description, start_at, end_at, all_day, location, note, ' +
   'category:categories!reminders_category_id_fkey(id, name, color, active), ' +
-  'owner:profiles!reminders_owner_id_fkey(id, full_name, color)'
+  'owner:profiles!reminders_owner_id_fkey(id, full_name, color), ' +
+  'participants:reminder_participants(user:profiles!reminder_participants_user_id_fkey(id, full_name, color))'
+
+type ReminderRow = Omit<CalendarEvent, 'participants'> & { participants: { user: Person }[] }
+
+const byName = (a: Person, b: Person) => a.full_name.localeCompare(b.full_name, 'es')
+
+function toEvent({ participants, ...row }: ReminderRow): CalendarEvent {
+  return { ...row, participants: participants.map((p) => p.user).sort(byName) }
+}
 
 /**
- * Recordatorios propios que se ven en el rango [desde, hasta): los que empiezan
- * antes de "hasta" y terminan (o empiezan, si no tienen fin) desde "desde".
+ * Recordatorios de los calendarios elegidos (creados por esas personas o en los
+ * que están etiquetadas) que se ven en el rango [desde, hasta).
  */
-export async function listMyReminders(ownerId: string, fromIso: string, toIso: string): Promise<CalendarEvent[]> {
+export async function listCalendarReminders(userIds: string[], fromIso: string, toIso: string): Promise<CalendarEvent[]> {
   const { data, error } = await supabase
-    .from('reminders')
+    .rpc('calendar_reminders', { p_user_ids: userIds, p_from: fromIso, p_to: toIso })
     .select(COLUMNS)
-    .eq('owner_id', ownerId)
-    .lt('start_at', toIso)
-    .or(`end_at.gte.${fromIso},and(end_at.is.null,start_at.gte.${fromIso})`)
-    .order('start_at')
-    .returns<CalendarEvent[]>()
+    .returns<ReminderRow[]>()
+  if (error) throw error
+  return data.map(toEvent)
+}
+
+/** Usuarios activos: se pueden etiquetar y sus calendarios se pueden ver. */
+export async function listPeople(): Promise<Person[]> {
+  const { data, error } = await supabase.from('profiles').select('id, full_name, color').eq('active', true).order('full_name')
   if (error) throw error
   return data
 }
@@ -33,21 +46,45 @@ export interface ReminderPayload {
   category_id: number
   location: string | null
   note: string | null
+  /** Usuarios etiquetados (sin el creador). */
+  participant_ids: string[]
 }
 
-export async function createReminder(payload: ReminderPayload): Promise<void> {
-  const { error } = await supabase.from('reminders').insert(payload)
-  if (error) throw error
-}
+type SaveArgs = Database['public']['Functions']['save_reminder']['Args']
 
-export async function updateReminder(id: number, payload: ReminderPayload): Promise<void> {
-  const { data, error } = await supabase.from('reminders').update(payload).eq('id', id).select('id')
+/** Crea (id null) o modifica un recordatorio junto con sus etiquetados, en una sola transacción. */
+export async function saveReminder(id: number | null, payload: ReminderPayload): Promise<number> {
+  const args = {
+    p_id: id,
+    p_title: payload.title,
+    p_description: payload.description,
+    p_start_at: payload.start_at,
+    p_end_at: payload.end_at,
+    p_all_day: payload.all_day,
+    p_category_id: payload.category_id,
+    p_location: payload.location,
+    p_note: payload.note,
+    p_participants: payload.participant_ids,
+  } as SaveArgs
+  const { data, error } = await supabase.rpc('save_reminder', args)
   if (error) throw error
-  if (data.length === 0) throw new AppError('Solo el creador puede modificar este recordatorio.')
+  return data
 }
 
 export async function deleteReminder(id: number): Promise<void> {
   const { data, error } = await supabase.from('reminders').delete().eq('id', id).select('id')
   if (error) throw error
   if (data.length === 0) throw new AppError('Solo el creador puede eliminar este recordatorio.')
+}
+
+/** El usuario etiquetado se quita del recordatorio (deja de verlo en su calendario). */
+export async function leaveReminder(reminderId: number, userId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from('reminder_participants')
+    .delete()
+    .eq('reminder_id', reminderId)
+    .eq('user_id', userId)
+    .select('reminder_id')
+  if (error) throw error
+  if (data.length === 0) throw new AppError('Ya no está etiquetado en este recordatorio.')
 }

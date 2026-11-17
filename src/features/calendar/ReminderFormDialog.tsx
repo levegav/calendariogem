@@ -1,4 +1,5 @@
 import { useId, useState, type CSSProperties, type FormEvent } from 'react'
+import { UserAvatar } from '../../components/UserAvatar'
 import { Modal } from '../../components/Modal'
 import { formatTime, isDateKey } from '../../lib/dates'
 import { toSpanishMessage } from '../../lib/errors'
@@ -12,6 +13,7 @@ import {
   type ReminderFormValues,
 } from './reminderForm'
 import styles from './ReminderFormDialog.module.css'
+import type { Person } from './types'
 
 function TimeSelect({ label, value, onChange }: { label: string; value: number; onChange: (minutes: number) => void }) {
   // Si la hora guardada no cae en la lista (p. ej. 9:05), se agrega para no perderla.
@@ -38,10 +40,79 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   ) : null
 }
 
+/** Con más personas que esto aparece un campo para buscarlas por nombre. */
+const SEARCH_FROM = 8
+
+function ParticipantsPicker({
+  people,
+  selected,
+  onChange,
+}: {
+  people: Person[]
+  selected: string[]
+  onChange: (ids: string[]) => void
+}) {
+  const [query, setQuery] = useState('')
+  const normalized = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  const visible = query.trim()
+    ? people.filter((p) => selected.includes(p.id) || normalized(p.full_name).includes(normalized(query.trim())))
+    : people
+
+  function toggle(id: string) {
+    onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id])
+  }
+
+  return (
+    <fieldset className={styles.categories}>
+      <legend>
+        Etiquetar personas <small className="muted">(opcional)</small>
+      </legend>
+      {people.length === 0 ? (
+        <p className="muted">No hay otros usuarios activos para etiquetar.</p>
+      ) : (
+        <>
+          {people.length > SEARCH_FROM && (
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por nombre"
+              aria-label="Buscar personas para etiquetar"
+            />
+          )}
+          <div className={styles.chips}>
+            {visible.map((person) => {
+              const checked = selected.includes(person.id)
+              return (
+                <label
+                  key={person.id}
+                  className={`${styles.chip} ${styles.personChip} ${checked ? styles.chipSelected : ''}`}
+                  style={{ '--chip-color': person.color } as CSSProperties}
+                >
+                  <input type="checkbox" checked={checked} onChange={() => toggle(person.id)} />
+                  <UserAvatar name={person.full_name} color={person.color} size={26} />
+                  {person.full_name}
+                </label>
+              )
+            })}
+          </div>
+          {selected.length > 0 && (
+            <small className="muted">
+              {selected.length === 1 ? '1 persona etiquetada' : `${selected.length} personas etiquetadas`}. Verán este
+              recordatorio en su calendario.
+            </small>
+          )}
+        </>
+      )}
+    </fieldset>
+  )
+}
+
 export function ReminderFormDialog({
   mode,
   initialValues,
   categories,
+  people,
   onSave,
   onClose,
 }: {
@@ -49,6 +120,8 @@ export function ReminderFormDialog({
   initialValues: ReminderFormValues
   /** Categorías que se pueden elegir (activas y, al editar, la que ya tenía). */
   categories: Category[]
+  /** Personas que se pueden etiquetar (sin el creador). */
+  people: Person[]
   onSave: (payload: ReminderPayload) => Promise<void>
   onClose: () => void
 }) {
@@ -193,6 +266,8 @@ export function ReminderFormDialog({
             <FieldError id={`${id}-end`} message={errors.end} />
           </div>
         )}
+
+        <ParticipantsPicker people={people} selected={values.participantIds} onChange={(ids) => set('participantIds', ids)} />
 
         <div className="field">
           <label className="field">

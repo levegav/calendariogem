@@ -5,7 +5,10 @@ import { fakeAuth, fakeProfile, renderWithAuth } from '../test/fakeAuth'
 import { routes } from './routes'
 
 vi.mock('../features/preferences/api', () => ({ saveMyTheme: vi.fn() }))
-vi.mock('../features/calendar/api', () => ({ listMyReminders: vi.fn(() => Promise.resolve([])) }))
+vi.mock('../features/calendar/api', () => ({
+  listCalendarReminders: vi.fn(() => Promise.resolve([])),
+  listPeople: vi.fn(() => Promise.resolve([])),
+}))
 vi.mock('../features/categories/api', () => ({ listCategories: vi.fn(() => Promise.resolve([])) }))
 
 const listedUsers = [

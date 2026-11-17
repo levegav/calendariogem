@@ -17,15 +17,16 @@ import {
 import { toSpanishMessage } from '../../lib/errors'
 import { useAuth } from '../auth/AuthContext'
 import { listCategories, type Category } from '../categories/api'
-import { createReminder, deleteReminder, listMyReminders, updateReminder } from './api'
+import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder } from './api'
 import styles from './calendar.module.css'
+import { CalendarSelector } from './CalendarSelector'
 import { EventDetailsDialog } from './EventDetailsDialog'
 import { visibleRange } from './layout'
 import { MonthView } from './MonthView'
 import { ReminderFormDialog } from './ReminderFormDialog'
 import { newReminderValues, valuesFromEvent, type ReminderFormValues } from './reminderForm'
 import { TimeGridView } from './TimeGridView'
-import { isCalendarView, VIEW_LABELS, VIEWS, type CalendarEvent, type CalendarView } from './types'
+import { isCalendarView, VIEW_LABELS, VIEWS, type CalendarEvent, type CalendarView, type Person } from './types'
 import { YearView } from './YearView'
 
 const VIEW_STORAGE_KEY = 'vista-calendario'
@@ -42,6 +43,27 @@ function readSavedView(): CalendarView {
 function saveView(view: CalendarView) {
   try {
     localStorage.setItem(VIEW_STORAGE_KEY, view)
+  } catch {
+    // sin almacenamiento local: solo se pierde la preferencia
+  }
+}
+
+const VISIBLE_STORAGE_KEY = 'calendarios-visibles'
+
+/** Calendarios elegidos en "Ver calendario de…" (por defecto, solo el propio). */
+function readVisible(userId: string): string[] {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(`${VISIBLE_STORAGE_KEY}:${userId}`) ?? 'null')
+    if (Array.isArray(saved) && saved.length > 0 && saved.every((id) => typeof id === 'string')) return saved
+  } catch {
+    // valor dañado o sin almacenamiento local
+  }
+  return userId ? [userId] : []
+}
+
+function saveVisible(userId: string, ids: string[]) {
+  try {
+    localStorage.setItem(`${VISIBLE_STORAGE_KEY}:${userId}`, JSON.stringify(ids))
   } catch {
     // sin almacenamiento local: solo se pierde la preferencia
   }
@@ -88,7 +110,12 @@ type Dialog =
 
 export function CalendarPage() {
   const { state } = useAuth()
-  const userId = state.status === 'signedIn' ? state.profile.id : ''
+  const profile = state.status === 'signedIn' ? state.profile : null
+  const userId = profile?.id ?? ''
+  const me: Person = useMemo(
+    () => ({ id: userId, full_name: profile?.full_name ?? '', color: profile?.color ?? '#64748b' }),
+    [userId, profile?.full_name, profile?.color],
+  )
   const [params, setParams] = useSearchParams()
   const today = todayKey()
 
@@ -98,6 +125,8 @@ export function CalendarPage() {
 
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [people, setPeople] = useState<Person[]>([])
+  const [savedVisible, setSavedVisible] = useState<string[]>(() => readVisible(userId))
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
@@ -105,6 +134,18 @@ export function CalendarPage() {
   const [reloadKey, setReloadKey] = useState(0)
 
   const range = useMemo(() => visibleRange(view, date), [view, date])
+
+  // Solo calendarios de usuarios activos; el propio siempre se puede elegir.
+  const visibleIds = useMemo(() => {
+    const valid = savedVisible.filter((id) => id === userId || people.length === 0 || people.some((p) => p.id === id))
+    return valid.length > 0 ? valid : [userId]
+  }, [savedVisible, people, userId])
+  const visibleKey = visibleIds.join(',')
+
+  function changeVisible(ids: string[]) {
+    setSavedVisible(ids)
+    saveVisible(userId, ids)
+  }
 
   const go = useCallback(
     (nextView: CalendarView, nextDate: DateKey) => {
@@ -120,6 +161,10 @@ export function CalendarPage() {
       (data) => !cancelled && setCategories(data),
       (err) => !cancelled && setError(toSpanishMessage(err)),
     )
+    listPeople().then(
+      (data) => !cancelled && setPeople(data),
+      (err) => !cancelled && setError(toSpanishMessage(err)),
+    )
     return () => {
       cancelled = true
     }
@@ -129,7 +174,7 @@ export function CalendarPage() {
     if (!userId) return
     let cancelled = false
     setLoading(true)
-    listMyReminders(userId, fromCostaRica(range.from), fromCostaRica(range.to)).then(
+    listCalendarReminders(visibleKey.split(','), fromCostaRica(range.from), fromCostaRica(range.to)).then(
       (data) => {
         if (cancelled) return
         setEvents(data)
@@ -145,10 +190,12 @@ export function CalendarPage() {
     return () => {
       cancelled = true
     }
-  }, [userId, range.from, range.to, reloadKey])
+  }, [userId, visibleKey, range.from, range.to, reloadKey])
 
   const reload = () => setReloadKey((key) => key + 1)
   const activeCategories = categories.filter((c) => c.active)
+  const taggable = people.filter((p) => p.id !== userId)
+  const showingOnlyMine = visibleIds.length === 1 && visibleIds[0] === userId
 
   function openCreate(day?: DateKey, minutes?: number) {
     setNotice(null)
@@ -192,6 +239,7 @@ export function CalendarPage() {
         </div>
 
         <div className={styles.toolbarEnd}>
+          {userId && <CalendarSelector me={me} people={people} selected={visibleIds} onChange={changeVisible} />}
           <fieldset className={`segmented ${styles.views}`}>
             <legend className="sr-only">Vista</legend>
             {VIEWS.map((option) => (
@@ -251,9 +299,10 @@ export function CalendarPage() {
           mode="create"
           initialValues={dialog.values}
           categories={activeCategories}
+          people={taggable}
           onClose={() => setDialog(null)}
           onSave={async (payload) => {
-            await createReminder(payload)
+            await saveReminder(null, payload)
             setDialog(null)
             setNotice(`Recordatorio "${payload.title}" creado.`)
             reload()
@@ -273,6 +322,12 @@ export function CalendarPage() {
             setNotice(`Recordatorio "${dialog.event.title}" eliminado.`)
             reload()
           }}
+          onLeave={async () => {
+            await leaveReminder(dialog.event.id, userId)
+            setDialog(null)
+            setNotice(`Salió del recordatorio "${dialog.event.title}".`)
+            reload()
+          }}
         />
       )}
 
@@ -285,9 +340,14 @@ export function CalendarPage() {
               ? activeCategories
               : [...activeCategories, { ...dialog.event.category }]
           }
+          people={[
+            ...taggable,
+            // Etiquetados que ya no están activos se conservan mientras no se quiten.
+            ...dialog.event.participants.filter((p) => !taggable.some((t) => t.id === p.id)),
+          ]}
           onClose={() => setDialog({ type: 'details', event: dialog.event })}
           onSave={async (payload) => {
-            await updateReminder(dialog.event.id, payload)
+            await saveReminder(dialog.event.id, payload)
             setDialog(null)
             setNotice(`Recordatorio "${payload.title}" actualizado.`)
             reload()
@@ -297,7 +357,10 @@ export function CalendarPage() {
 
       {!loading && events.length === 0 && !error && (
         <p className={`muted ${styles.empty}`}>
-          No tiene recordatorios en este período. Use <strong>Nuevo recordatorio</strong> o toque un día para crear uno.
+          {showingOnlyMine
+            ? 'No tiene recordatorios en este período.'
+            : 'No hay recordatorios de los calendarios elegidos en este período.'}{' '}
+          Use <strong>Nuevo recordatorio</strong> o toque un día para crear uno.
         </p>
       )}
     </section>
