@@ -10,6 +10,7 @@ import {
   formatWeekRange,
   fromCostaRica,
   isDateKey,
+  toCostaRica,
   todayKey,
   weekDays,
   type DateKey,
@@ -18,19 +19,33 @@ import { toSpanishMessage } from '../../lib/errors'
 import { useAuth } from '../auth/AuthContext'
 import { listCategories, type Category } from '../categories/api'
 import { useNotifications } from '../notifications/NotificationsContext'
-import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder, setMyAlerts } from './api'
+import {
+  deleteReminder,
+  leaveReminder,
+  listCalendarReminders,
+  listPeople,
+  saveReminder,
+  searchReminders,
+  setMyAlerts,
+} from './api'
 import styles from './calendar.module.css'
 import { CalendarSelector } from './CalendarSelector'
 import { EventDetailsDialog } from './EventDetailsDialog'
+import { applyFilters, countFilters, describeFilters, NO_FILTERS, type CalendarFilters } from './filters'
+import { FiltersMenu } from './FiltersMenu'
 import { visibleRange } from './layout'
 import { MonthView } from './MonthView'
 import { ReminderFormDialog } from './ReminderFormDialog'
+import { SearchResults } from './SearchResults'
 import { newReminderValues, valuesFromEvent, type ReminderFormValues } from './reminderForm'
 import { TimeGridView } from './TimeGridView'
 import { isCalendarView, VIEW_LABELS, VIEWS, type CalendarEvent, type CalendarView, type Person } from './types'
 import { YearView } from './YearView'
 
 const VIEW_STORAGE_KEY = 'vista-calendario'
+/** Se busca al dejar de escribir por este tiempo, y desde esta cantidad de letras. */
+const SEARCH_DELAY_MS = 300
+const MIN_SEARCH_LENGTH = 2
 
 function readSavedView(): CalendarView {
   try {
@@ -137,6 +152,13 @@ export function CalendarPage() {
   const [notice, setNotice] = useState<string | null>(null)
   const [dialog, setDialog] = useState<Dialog>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  // Filtros (no se guardan: al volver a entrar se ve todo).
+  const [filters, setFilters] = useState<CalendarFilters>(NO_FILTERS)
+  // Búsqueda en todas las fechas; se consulta al dejar de escribir.
+  const [searchText, setSearchText] = useState('')
+  const [query, setQuery] = useState('')
+  const [search, setSearch] = useState<{ query: string; results: CalendarEvent[]; truncated: boolean } | null>(null)
+  const [searching, setSearching] = useState(false)
 
   const range = useMemo(() => visibleRange(view, date), [view, date])
 
@@ -198,7 +220,52 @@ export function CalendarPage() {
     }
   }, [userId, visibleKey, range.from, range.to, reloadKey, notificationsVersion])
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => setQuery(searchText.trim()), SEARCH_DELAY_MS)
+    return () => window.clearTimeout(timer)
+  }, [searchText])
+
+  const searchActive = query.length >= MIN_SEARCH_LENGTH
+  useEffect(() => {
+    if (!userId || query.length < MIN_SEARCH_LENGTH) return
+    let cancelled = false
+    setSearching(true)
+    searchReminders(visibleKey.split(','), query).then(
+      ({ results, truncated }) => {
+        if (cancelled) return
+        setSearch({ query, results, truncated })
+        setError(null)
+        setSearching(false)
+      },
+      (err) => {
+        if (cancelled) return
+        setError(toSpanishMessage(err))
+        setSearching(false)
+      },
+    )
+    return () => {
+      cancelled = true
+    }
+  }, [userId, query, visibleKey, reloadKey, notificationsVersion])
+
+  function clearSearch() {
+    setSearchText('')
+    setQuery('')
+    setSearch(null)
+  }
+
+  /** Un resultado abre su día y sus detalles. */
+  function openResult(event: CalendarEvent) {
+    clearSearch()
+    go('dia', toCostaRica(event.start_at).date)
+    setDialog({ type: 'details', event })
+  }
+
   const reload = () => setReloadKey((key) => key + 1)
+  const shownEvents = useMemo(() => applyFilters(events, filters, userId), [events, filters, userId])
+  const filterCount = countFilters(filters)
+  const hiddenByFilters = events.length - shownEvents.length
+  const searchResults = search ? applyFilters(search.results, filters, userId) : []
   const activeCategories = categories.filter((c) => c.active)
   const taggable = people.filter((p) => p.id !== userId)
   const showingOnlyMine = visibleIds.length === 1 && visibleIds[0] === userId
@@ -245,6 +312,20 @@ export function CalendarPage() {
         </div>
 
         <div className={styles.toolbarEnd}>
+          <label className={styles.search}>
+            <Icon name="search" size={16} />
+            <span className="sr-only">Buscar recordatorios</span>
+            <input
+              type="search"
+              value={searchText}
+              placeholder="Buscar recordatorios"
+              onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') clearSearch()
+              }}
+            />
+          </label>
+          <FiltersMenu categories={categories} filters={filters} onChange={setFilters} />
           {userId && canViewOthers && <CalendarSelector me={me} people={people} selected={visibleIds} onChange={changeVisible} />}
           <fieldset className={`segmented ${styles.views}`}>
             <legend className="sr-only">Vista</legend>
@@ -273,27 +354,53 @@ export function CalendarPage() {
         </p>
       )}
 
-      <div className={styles.viewArea} aria-busy={loading}>
-        {view === 'dia' && (
-          <TimeGridView days={[date]} events={events} today={today} onCreate={openCreate} onOpen={openEvent} />
-        )}
-        {view === 'semana' && (
-          <TimeGridView
-            days={weekDays(date)}
-            events={events}
-            today={today}
-            onCreate={openCreate}
-            onOpen={openEvent}
-            onOpenDay={openDay}
-          />
-        )}
-        {view === 'mes' && (
-          <MonthView date={date} events={events} today={today} onCreate={(d) => openCreate(d)} onOpen={openEvent} onOpenDay={openDay} />
-        )}
-        {view === 'ano' && (
-          <YearView date={date} events={events} today={today} onOpenDay={openDay} onOpenMonth={(m) => go('mes', m)} />
-        )}
-      </div>
+      {filterCount > 0 && (
+        <p className={styles.filterBanner} role="status">
+          <span>
+            <strong>Filtros:</strong> {describeFilters(filters, categories).join(' · ')}
+            {!searchActive && hiddenByFilters > 0 && (
+              <> ({hiddenByFilters === 1 ? '1 recordatorio oculto' : `${hiddenByFilters} recordatorios ocultos`})</>
+            )}
+          </span>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setFilters(NO_FILTERS)}>
+            Quitar filtros
+          </button>
+        </p>
+      )}
+
+      {searchActive ? (
+        <SearchResults
+          query={query}
+          results={search?.query === query ? searchResults : []}
+          loading={searching || search?.query !== query}
+          truncated={search?.query === query && search.truncated}
+          filtered={search?.query === query ? search.results.length - searchResults.length : 0}
+          onOpen={openResult}
+          onClear={clearSearch}
+        />
+      ) : (
+        <div className={styles.viewArea} aria-busy={loading}>
+          {view === 'dia' && (
+            <TimeGridView days={[date]} events={shownEvents} today={today} onCreate={openCreate} onOpen={openEvent} />
+          )}
+          {view === 'semana' && (
+            <TimeGridView
+              days={weekDays(date)}
+              events={shownEvents}
+              today={today}
+              onCreate={openCreate}
+              onOpen={openEvent}
+              onOpenDay={openDay}
+            />
+          )}
+          {view === 'mes' && (
+            <MonthView date={date} events={shownEvents} today={today} onCreate={(d) => openCreate(d)} onOpen={openEvent} onOpenDay={openDay} />
+          )}
+          {view === 'ano' && (
+            <YearView date={date} events={shownEvents} today={today} onOpenDay={openDay} onOpenMonth={(m) => go('mes', m)} />
+          )}
+        </div>
+      )}
 
       {/* Botón flotante en celular */}
       <button type="button" className={styles.fab} aria-label="Nuevo recordatorio" onClick={() => openCreate()}>
@@ -367,7 +474,11 @@ export function CalendarPage() {
         />
       )}
 
-      {!loading && events.length === 0 && !error && (
+      {!searchActive && !loading && !error && events.length > 0 && shownEvents.length === 0 && (
+        <p className={`muted ${styles.empty}`}>Los filtros ocultan todos los recordatorios de este período.</p>
+      )}
+
+      {!searchActive && !loading && events.length === 0 && !error && (
         <p className={`muted ${styles.empty}`}>
           {showingOnlyMine
             ? 'No tiene recordatorios en este período.'

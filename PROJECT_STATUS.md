@@ -9,8 +9,8 @@
 | 2 | Categorías, CRUD de recordatorios, vistas día/semana/mes/año | Terminada (aprobada) |
 | 3 | Compartir: etiquetas, "Creado por", ver calendarios de otros, salirse | Terminada (aprobada) |
 | 4 | Notificaciones en tiempo real y avisos previos por participante | Terminada (aprobada) |
-| 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Desplegada, pendiente de aprobación |
-| 6 | Búsqueda y filtros | Pendiente |
+| 5 | Ventana Conservar / Eliminar (borrado y usuario desactivado) | Terminada (aprobada) |
+| 6 | Búsqueda y filtros | Desplegada, pendiente de aprobación |
 | 7 | Pulido y entrega final | Pendiente |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización Google/Outlook | — |
 
@@ -378,3 +378,50 @@ Regla: no se empieza una fase sin la autorización explícita del usuario.
   - La copia aparece en el calendario de quien la conservó.
   - Desactivar al creador genera la decisión.
 - **Revisión visual en Edge:** ventana "Recordatorio eliminado" (escritorio) y "Creador desactivado" (celular), con "Conservar" y "Eliminar" de punta a punta.
+
+## Fase 6: búsqueda y filtros
+
+**Decisiones (2026-11-17)**
+- **Búsqueda:** muestra una lista de resultados de todas las fechas, pasadas y futuras. Al tocar un resultado se abre su día y sus detalles.
+- **Filtros:** por categoría; todos, creados por mí o donde me etiquetaron; ocultar los que ya pasaron; solo con ubicación o enlace.
+- **Admin:** busca en los calendarios elegidos en "Ver calendario de…".
+- Los filtros no se guardan: al volver a entrar se ve todo.
+
+**Búsqueda**
+- Hay un buscador en la barra del calendario. En celular ocupa todo el ancho.
+  - Busca al dejar de escribir, desde 2 letras.
+  - Escape o "Volver al calendario" limpian la búsqueda.
+- Busca en título, descripción, ubicación y nota, sin importar tildes ni mayúsculas. Con varias palabras, deben aparecer todas, en cualquier orden.
+- Respeta los permisos:
+  - Un usuario encuentra solo lo suyo y aquello en lo que está etiquetado.
+  - El admin busca en los calendarios que tenga elegidos.
+- Los resultados se agrupan en **Próximos** (de lo más cercano a lo más lejano) y **Anteriores** (de lo más reciente a lo más viejo), por día, marcando "Hoy".
+  - Cada resultado muestra la hora, la categoría, quién lo creó y la ubicación, con la línea del color del creador.
+- Se muestran hasta 100 resultados, empezando por los más cercanos a hoy. Si hay más, se pide afinar la búsqueda.
+- Los filtros activos también se aplican a los resultados, y se indica cuántos ocultan.
+
+**Filtros**
+- El botón **Filtros** muestra cuántos hay activos. Su menú tiene:
+  - Las categorías, con su color; también aparecen las desactivadas.
+  - Mostrar: Todos, Creados por mí o Donde me etiquetaron.
+  - Ocultar los que ya pasaron. Uno de todo el día de hoy todavía no pasó.
+  - Solo con ubicación o enlace.
+- Con filtros activos aparece un aviso con el resumen, cuántos recordatorios ocultan en el período y el botón **Quitar filtros**.
+  - Si los filtros ocultan todo, el calendario lo indica.
+- Funcionan en las vistas Día, Semana, Mes y Año.
+
+**Base de datos** (`20261121120000_busqueda.sql`)
+- Extensión `unaccent` y `search_reminders(calendarios, texto, límite)`, SECURITY INVOKER: RLS decide qué ve cada quien.
+- La búsqueda usa comparación literal, así que caracteres como `%` no funcionan como comodín.
+
+**Pruebas (2026-11-17)**
+- `npm run check`: lint, tipos, 166 pruebas unitarias (10 nuevas) y build, todo correcto.
+  - Cubren la lógica de filtros y la agrupación de resultados, la búsqueda que abre el día y los detalles, la búsqueda sin resultados, y los filtros por categoría y por relación.
+- `npm run test:db`: 160 pruebas pgTAP (11 nuevas), todas correctas.
+  - Sin tildes ni mayúsculas, en descripción, ubicación y nota, varias palabras.
+  - Que un usuario no encuentre lo de otros, y que el admin busque en los calendarios elegidos.
+- `npm run test:integration`: 28 pruebas (1 nueva), con la misma consulta que usa la app.
+- **Revisión visual en Edge:**
+  - Escritorio: barra con buscador y filtros, menú de filtros con el aviso, y resultados.
+  - Celular: buscador a todo el ancho y resultados.
+  - Ajuste: con 0 coincidencias el encabezado dice "Sin resultados para «…»".

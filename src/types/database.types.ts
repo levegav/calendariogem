@@ -270,6 +270,27 @@ isOneToOne: false
 "save_reminder":
 { Args: { "p_alerts"?: (number)[],"p_all_day": boolean,"p_category_id": number,"p_description": string,"p_end_at": string,"p_id": number,"p_location": string,"p_note": string,"p_participants": (string)[],"p_start_at": string,"p_title": string }; Returns: number
                            },
+"search_reminders":
+{ Args: { "p_limit"?: number,"p_query": string,"p_user_ids": (string)[] }; Returns: {
+              "all_day": boolean,
+"category_id": number,
+"created_at": string,
+"description": string | null,
+"end_at": string | null,
+"id": number,
+"location": string | null,
+"note": string | null,
+"owner_id": string,
+"start_at": string,
+"title": string,
+"updated_at": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "reminders"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "set_my_theme":
 { Args: { "p_theme": string }; Returns: undefined
                            },

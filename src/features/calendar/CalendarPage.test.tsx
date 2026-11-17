@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeAuth, fakeProfile, renderWithAuth } from '../../test/fakeAuth'
 import { listCategories } from '../categories/api'
-import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder, setMyAlerts } from './api'
+import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder, searchReminders, setMyAlerts } from './api'
 import { CalendarPage } from './CalendarPage'
 import { fakeEvent } from './testEvents'
 
@@ -14,6 +14,7 @@ vi.mock('./api', () => ({
   deleteReminder: vi.fn(),
   leaveReminder: vi.fn(),
   setMyAlerts: vi.fn(),
+  searchReminders: vi.fn(),
 }))
 vi.mock('../categories/api', () => ({ listCategories: vi.fn() }))
 
@@ -306,5 +307,77 @@ describe('CalendarPage', () => {
     expect(listCalendarReminders).toHaveBeenLastCalledWith(['carlos'], expect.any(String), expect.any(String))
     await userEvent.click(screen.getByRole('button', { name: 'Solo el mío' }))
     expect(listCalendarReminders).toHaveBeenLastCalledWith(['yo'], expect.any(String), expect.any(String))
+  })
+
+  describe('búsqueda', () => {
+    it('busca en todas las fechas y al tocar un resultado abre su día y sus detalles', async () => {
+      const lejano = fakeEvent({
+        id: 9,
+        title: 'Comité anual',
+        start_at: '2027-03-10T09:00:00-06:00',
+        owner: { id: 'yo', full_name: 'Luis Vega', color: '#2563eb' },
+      })
+      const pasado = fakeEvent({ id: 8, title: 'Comité de octubre', start_at: '2026-10-05T09:00:00-06:00' })
+      vi.mocked(searchReminders).mockResolvedValue({ results: [lejano, pasado], truncated: false })
+      const router = renderAt('/')
+      await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar recordatorios' }), 'comite')
+
+      const results = await screen.findByRole('region', { name: 'Resultados de la búsqueda' })
+      expect(searchReminders).toHaveBeenCalledWith(['yo'], 'comite')
+      expect(within(results).getByRole('heading', { name: '2 resultados para «comite»' })).toBeInTheDocument()
+      expect(within(results).getByText('Próximos')).toBeInTheDocument()
+      expect(within(results).getByText('Anteriores')).toBeInTheDocument()
+      expect(within(results).getByText('Miércoles 10 de marzo de 2027')).toBeInTheDocument()
+
+      await userEvent.click(within(results).getByRole('button', { name: /Comité anual/ }))
+      expect(router.state.location.search).toBe('?vista=dia&fecha=2027-03-10')
+      expect(screen.getByRole('dialog', { name: 'Comité anual' })).toBeInTheDocument()
+      expect(screen.queryByRole('region', { name: 'Resultados de la búsqueda' })).not.toBeInTheDocument()
+    })
+
+    it('sin coincidencias lo indica, y "Volver al calendario" limpia la búsqueda', async () => {
+      vi.mocked(searchReminders).mockResolvedValue({ results: [], truncated: false })
+      renderAt('/')
+      const box = screen.getByRole('searchbox', { name: 'Buscar recordatorios' })
+      await userEvent.type(box, 'xyz')
+      expect(await screen.findByText(/No se encontraron recordatorios/)).toBeInTheDocument()
+      await userEvent.click(screen.getByRole('button', { name: 'Volver al calendario' }))
+      expect(box).toHaveValue('')
+      expect(await screen.findByRole('button', { name: /Reunión de equipo/ })).toBeInTheDocument()
+    })
+  })
+
+  describe('filtros', () => {
+    it('por categoría: oculta, lo indica y se quitan', async () => {
+      renderAt('/')
+      expect(await screen.findByRole('button', { name: /Reunión de equipo/ })).toBeInTheDocument()
+      await userEvent.click(screen.getByRole('button', { name: /^Filtros/ }))
+      await userEvent.click(screen.getByRole('checkbox', { name: 'Reunión' }))
+      expect(screen.queryByRole('button', { name: /Reunión de equipo/ })).not.toBeInTheDocument()
+      const banner = screen.getByText('Filtros:').closest('p')!
+      expect(banner).toHaveTextContent('Categorías: Tarea, Vieja')
+      expect(banner).toHaveTextContent('1 recordatorio oculto')
+      expect(screen.getByText('Los filtros ocultan todos los recordatorios de este período.')).toBeInTheDocument()
+      await userEvent.click(within(banner).getByRole('button', { name: 'Quitar filtros' }))
+      expect(screen.getByRole('button', { name: /Reunión de equipo/ })).toBeInTheDocument()
+    })
+
+    it('"Donde me etiquetaron" oculta los que creé', async () => {
+      const etiquetado = fakeEvent({
+        id: 2,
+        title: 'Visita de Carlos',
+        start_at: '2026-11-19T09:00:00-06:00',
+        owner: carlos,
+        participants: [{ id: 'yo', full_name: 'Luis Vega', color: '#2563eb' }],
+      })
+      vi.mocked(listCalendarReminders).mockResolvedValue([meeting, etiquetado])
+      renderAt('/')
+      await screen.findByRole('button', { name: /Reunión de equipo/ })
+      await userEvent.click(screen.getByRole('button', { name: /^Filtros/ }))
+      await userEvent.click(screen.getByRole('radio', { name: 'Donde me etiquetaron' }))
+      expect(screen.queryByRole('button', { name: /Reunión de equipo/ })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Visita de Carlos/ })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Filtros (1 activo)' })).toBeInTheDocument()
+    })
   })
 })

@@ -106,3 +106,20 @@ export async function setMyAlerts(reminderId: number, minutes: number[]): Promis
   const { error } = await supabase.rpc('set_reminder_alerts', { p_reminder_id: reminderId, p_minutes: minutes })
   if (error) throw error
 }
+
+/** Máximo de resultados que se muestran al buscar. */
+export const SEARCH_LIMIT = 100
+
+/**
+ * Busca en todas las fechas de los calendarios elegidos (título, descripción,
+ * ubicación y nota; sin importar tildes). Primero lo más cercano a hoy.
+ * Pide uno de más para saber si hubo más coincidencias.
+ */
+export async function searchReminders(userIds: string[], query: string): Promise<{ results: CalendarEvent[]; truncated: boolean }> {
+  const { data, error } = await supabase
+    .rpc('search_reminders', { p_user_ids: userIds, p_query: query, p_limit: SEARCH_LIMIT + 1 })
+    .select(COLUMNS)
+    .returns<ReminderRow[]>()
+  if (error) throw error
+  return { results: data.slice(0, SEARCH_LIMIT).map(toEvent), truncated: data.length > SEARCH_LIMIT }
+}
