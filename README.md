@@ -60,6 +60,7 @@ Los puertos son `5642x`, distintos de los de `nacente` (`5532x`), para poder cor
 - Los **avisos previos** de cada participante están en `reminder_alerts`. Los dispara en el servidor la tarea de **pg_cron** `avisos-previos`, cada 30 segundos, con la función `private.fire_due_alerts()`. Por eso llegan aunque la app esté cerrada: al entrar aparecen en la campana como "Perdido".
 - **Conservar / Eliminar:** al eliminar un recordatorio con etiquetados, o al desactivar a su creador, se crea una fila por etiquetado en `reminder_decisions` (también publicada en Realtime). Cada persona la resuelve con `resolve_reminder_decision`.
 - Si la conexión en tiempo real se corta, la app vuelve a consultar al reconectar, al volver a la pestaña y cada 2 minutos.
+- **Sonido:** un timbre corto al llegar una notificación (se silencia desde la campana). Al entrar, si llegaron notificaciones mientras la persona no estaba, suena una sola vez; cada navegador anota lo último que ya anunció para no repetir.
 - Para revisar la tarea en el proyecto real: Supabase > Integrations > Cron (o la tabla `cron.job_run_details`).
 
 ## Instalar la app (teléfono o computadora)

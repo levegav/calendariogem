@@ -562,6 +562,14 @@ Pedido del usuario: unos pocos usuarios "especiales" comparten un calendario gen
 - `npm run check`: 174 pruebas, lint, tipos y build. Integración: 28 pruebas.
 - Capturas con usuarios de demostración: Mes, Semana, detalle, formulario, notificaciones, búsqueda, Usuarios, en claro y oscuro y en celular (sin desbordes a 390px).
 
+## Ajuste del 19/11/2026: sonido al entrar
+
+- Pedido del usuario: si llegaron notificaciones mientras la persona no estaba, al entrar suena **una sola vez** (el timbre de aviso si entre ellas hay un aviso previo o una decisión Conservar / Eliminar; si no, el de notificación).
+- Cada navegador anota lo último que ya anunció (`src/features/notifications/announced.ts`, en `localStorage` por usuario, una marca para notificaciones y otra para decisiones) para no repetir el sonido.
+- Si la página aún no recibió un clic (sesión guardada), el timbre suena con el primer clic o tecla; al iniciar sesión, el clic en "Ingresar" ya cuenta.
+- Lo mismo se agregó a los inventarios de oficina y del equipo de carreras.
+- Pruebas: `NotificationsProvider.test.tsx` actualizado (178 pruebas en `npm run check`).
+
 ## Lista de verificación de la entrega
 
 - [x] Fases 0 a 8 aprobadas: proyecto entregado (2026-11-17).

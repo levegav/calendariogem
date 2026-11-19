@@ -1,4 +1,4 @@
-import { act, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppLayout } from '../../app/AppLayout'
@@ -59,6 +59,7 @@ const bell = () => screen.getAllByRole('button', { name: /^Notificaciones/ })[0]
 beforeEach(() => {
   vi.mocked(markNotificationsRead).mockClear()
   vi.mocked(playChime).mockClear()
+  localStorage.clear()
   vi.mocked(listPendingDecisions).mockResolvedValue([])
   vi.mocked(resolveDecision).mockReset().mockResolvedValue(undefined)
   vi.mocked(subscribeToNotifications).mockImplementation((_userId, onInsert) => {
@@ -78,13 +79,35 @@ describe('NotificationsProvider y campana', () => {
     const panel = screen.getByRole('region', { name: 'Notificaciones' })
     expect(within(panel).getByText('Perdido')).toBeInTheDocument()
     expect(within(panel).getByText('Carlos Mora le etiquetó en «Reunión de equipo».')).toBeInTheDocument()
-    // Al cargar no se abre la ventana de avisos ni suena: los perdidos solo quedan en la campana.
+    // Al cargar no se abre la ventana de avisos: los perdidos quedan en la campana.
+    // Suena una sola vez, porque llegaron mientras no estaba (hay un aviso previo entre ellos).
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(playChime).not.toHaveBeenCalled()
+    expect(playChime).toHaveBeenCalledTimes(1)
+    expect(playChime).toHaveBeenCalledWith('aviso')
 
     await userEvent.click(within(panel).getByRole('button', { name: 'Marcar todas como leídas' }))
     expect(markNotificationsRead).toHaveBeenCalledWith([2, 1])
     expect(screen.getAllByRole('button', { name: 'Notificaciones' })).toHaveLength(2)
+  })
+
+  it('al volver a entrar no suena por las que ya se anunciaron', async () => {
+    vi.mocked(listNotifications).mockResolvedValue([fake({ id: 1 })])
+    renderApp()
+    await screen.findAllByRole('button', { name: 'Notificaciones (1 sin leer)' })
+    await waitFor(() => expect(playChime).toHaveBeenCalledWith('notificacion'))
+    cleanup()
+    vi.mocked(playChime).mockClear()
+
+    renderApp()
+    await screen.findAllByRole('button', { name: 'Notificaciones (1 sin leer)' })
+    expect(playChime).not.toHaveBeenCalled()
+  })
+
+  it('al entrar no suena si no llegó nada nuevo sin leer', async () => {
+    vi.mocked(listNotifications).mockResolvedValue([fake({ id: 3, read_at: '2026-11-17T10:00:00Z' })])
+    renderApp()
+    await screen.findAllByRole('button', { name: 'Notificaciones' })
+    expect(playChime).not.toHaveBeenCalled()
   })
 
   it('un aviso previo que llega con la app abierta sale en una ventana', async () => {
@@ -171,8 +194,8 @@ describe('NotificationsProvider y campana', () => {
       await userEvent.click(within(second).getByRole('button', { name: 'Eliminar de mi calendario' }))
       expect(resolveDecision).toHaveBeenLastCalledWith(2, false)
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
-      // Las que ya estaban al entrar no suenan.
-      expect(playChime).not.toHaveBeenCalled()
+      // Las que encontró al entrar suenan una sola vez.
+      expect(playChime).toHaveBeenCalledTimes(1)
     })
 
     it('si no se puede guardar la decisión, lo indica y la ventana sigue', async () => {

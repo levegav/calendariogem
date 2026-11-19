@@ -71,17 +71,45 @@ function note(ctx: AudioContext, frequency: number, start: number, volume: numbe
   }
 }
 
+let waiting = false
+
+/**
+ * El navegador no deja sonar hasta que la persona tocó la página. Si todavía no
+ * lo hizo (p. ej. abrió la app con la sesión guardada), el timbre espera a su
+ * primer clic o tecla. Varias llamadas mientras espera suenan una sola vez.
+ */
+function whenAllowed(play: () => void): void {
+  const activation = typeof navigator === 'undefined' ? undefined : navigator.userActivation
+  if (!activation || activation.hasBeenActive) {
+    play()
+    return
+  }
+  if (waiting) return
+  waiting = true
+  const go = () => {
+    document.removeEventListener('pointerdown', go)
+    document.removeEventListener('keydown', go)
+    waiting = false
+    unlockSound()
+    play()
+  }
+  document.addEventListener('pointerdown', go)
+  document.addEventListener('keydown', go)
+}
+
 /** Toca el timbre si el sonido está activado (si el navegador no lo permite, no pasa nada). */
 export function playChime(kind: ChimeKind, { force = false } = {}): void {
   if (!force && !isSoundEnabled()) return
-  const ctx = getContext()
-  if (!ctx) return
-  try {
-    if (ctx.state === 'suspended') void ctx.resume().catch(() => {})
-    const { notes, volume } = CHIMES[kind]
-    const start = ctx.currentTime + 0.03
-    notes.forEach((frequency, i) => note(ctx, frequency, start + i * 0.11, volume))
-  } catch {
-    // el sonido es un extra: si falla, la notificación igual se muestra
-  }
+  whenAllowed(() => {
+    const ctx = getContext()
+    if (!ctx) return
+    try {
+      if (ctx.state === 'suspended') void ctx.resume().catch(() => {})
+      const { notes, volume } = CHIMES[kind]
+      const start = ctx.currentTime + 0.03
+      notes.forEach((frequency, i) => note(ctx, frequency, start + i * 0.11, volume))
+    } catch {
+      // el sonido es un extra: si falla, la notificación igual se muestra
+    }
+  })
 }

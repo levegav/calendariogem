@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
+import { takeUnannounced } from './announced'
 import { listNotifications, markNotificationsRead, subscribeToNotifications } from './api'
 import { AlertDialog } from './AlertDialog'
 import { DecisionDialog } from './DecisionDialog'
 import { listPendingDecisions, resolveDecision, type PendingDecision } from './decisions'
 import { notificationDate } from './messages'
-import { playChime, unlockSound } from './sound'
+import { playChime, unlockSound, type ChimeKind } from './sound'
 import { NotificationsContext, type NotificationsValue } from './NotificationsContext'
 import { Toasts } from './Toasts'
 import type { AppNotification } from './types'
@@ -19,6 +20,8 @@ const APP_TITLE = 'Calendario GEM'
  * real y las presenta. Los avisos previos que llegan con la app abierta salen en
  * una ventana; los que llegaron con la app cerrada quedan en la campana como
  * "Perdido". Las demás notificaciones nuevas salen como mensaje breve.
+ * Al entrar, si llegó algo mientras la persona no estaba (y este navegador aún
+ * no lo había anunciado), suena una sola vez.
  */
 export function NotificationsProvider({ userId, children }: { userId: string; children: ReactNode }) {
   const navigate = useNavigate()
@@ -34,6 +37,14 @@ export function NotificationsProvider({ userId, children }: { userId: string; ch
   const known = useRef<Set<number> | null>(null)
   const requestSeq = useRef(0)
   const appliedSeq = useRef(0)
+  /** Al entrar suena una sola vez, aunque haya notificaciones y decisiones pendientes. */
+  const entryChimed = useRef(false)
+
+  const chimeOnEntry = useCallback((kind: ChimeKind) => {
+    if (entryChimed.current) return
+    entryChimed.current = true
+    playChime(kind)
+  }, [])
 
   /** Decisiones Conservar / Eliminar pendientes: se presentan una por una. */
   const refreshDecisions = useCallback(async () => {
@@ -46,11 +57,14 @@ export function NotificationsProvider({ userId, children }: { userId: string; ch
     setDecisions(list)
     const seen = knownDecisions.current
     knownDecisions.current = new Set(list.map((d) => d.id))
-    if (seen && list.some((d) => !seen.has(d.id))) {
+    const unannounced = takeUnannounced('decisiones', userId, list)
+    if (!seen) {
+      if (unannounced.length) chimeOnEntry('aviso') // llegaron mientras no estaba
+    } else if (list.some((d) => !seen.has(d.id))) {
       playChime('aviso')
       setVersion((v) => v + 1) // el recordatorio pudo desaparecer del calendario
     }
-  }, [])
+  }, [userId, chimeOnEntry])
 
   const refresh = useCallback(async () => {
     void refreshDecisions()
@@ -65,9 +79,12 @@ export function NotificationsProvider({ userId, children }: { userId: string; ch
     appliedSeq.current = seq
     setItems(list)
 
+    const unannounced = takeUnannounced('notificaciones', userId, list)
     if (known.current === null) {
       known.current = new Set(list.map((n) => n.id))
       setMissed(new Set(list.filter((n) => n.kind === 'aviso' && !n.read_at).map((n) => n.id)))
+      // Llegaron mientras no estaba: suena una vez (el aviso previo tiene su propio timbre).
+      if (unannounced.length) chimeOnEntry(unannounced.some((n) => n.kind === 'aviso') ? 'aviso' : 'notificacion')
       return
     }
     const seen = known.current
@@ -82,7 +99,7 @@ export function NotificationsProvider({ userId, children }: { userId: string; ch
     if (newAlerts.length) playChime('aviso')
     else if (newOthers.length) playChime('notificacion')
     setVersion((v) => v + 1)
-  }, [refreshDecisions])
+  }, [refreshDecisions, userId, chimeOnEntry])
 
   useEffect(() => {
     // refresh es asíncrona: solo cambia el estado después de recibir la respuesta.
