@@ -1,6 +1,6 @@
 # Estado del proyecto: Calendario GEM
 
-**Estado general: entregado (2026-11-17).** Las fases 0 a 8 están terminadas y aprobadas. La fase 9 (estilo Bento) está terminada y espera aprobación.
+**Estado general: entregado (2026-11-17).** Las fases 0 a 9 están terminadas y aprobadas (la fase 9, estilo Bento, se aprobó el 19/11/2026).
 
 ## Fases
 
@@ -15,7 +15,7 @@
 | 6 | Búsqueda y filtros | Terminada (aprobada) |
 | 7 | Pulido y entrega final | Terminada (aprobada) |
 | 8 | Estilo visual "Corporativo GEM" | Terminada (aprobada) |
-| 9 | Estilo visual "Bento" | Terminada, espera aprobación |
+| 9 | Estilo visual "Bento" | Terminada (aprobada) |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización Google/Outlook | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
