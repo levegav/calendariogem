@@ -6,9 +6,11 @@ export interface Category {
   name: string
   color: string
   active: boolean
+  /** Solo para calendarios personales: no se ofrece en el calendario general. */
+  personal_only: boolean
 }
 
-const COLUMNS = 'id, name, color, active'
+const COLUMNS = 'id, name, color, active, personal_only'
 const DUPLICATE = 'Ya existe una categoría con ese nombre.'
 
 /** Todas las categorías (activas e inactivas), ordenadas por nombre. */
@@ -18,12 +20,12 @@ export async function listCategories(): Promise<Category[]> {
   return data
 }
 
-export async function createCategory(input: { name: string; color: string }): Promise<void> {
+export async function createCategory(input: { name: string; color: string; personal_only: boolean }): Promise<void> {
   const { error } = await supabase.from('categories').insert(input)
   if (error) throw duplicateAs(error, DUPLICATE)
 }
 
-export async function updateCategory(id: number, changes: Partial<Pick<Category, 'name' | 'color' | 'active'>>) {
+export async function updateCategory(id: number, changes: Partial<Pick<Category, 'name' | 'color' | 'active' | 'personal_only'>>) {
   const { error } = await supabase.from('categories').update(changes).eq('id', id)
   if (error) throw duplicateAs(error, DUPLICATE)
 }

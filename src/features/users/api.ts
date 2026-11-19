@@ -42,6 +42,8 @@ export function createUser(input: {
   role: UserRole
   color: string
   password: string
+  /** Acceso al calendario general desde que se crea. */
+  general_access: boolean
 }): Promise<{ id: string; username: string }> {
   return invokeAdminUsers({ action: 'create', ...input })
 }

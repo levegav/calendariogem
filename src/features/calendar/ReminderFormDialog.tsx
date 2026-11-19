@@ -173,6 +173,11 @@ export function ReminderFormDialog({
       const next = { ...prev, [key]: value }
       // Las opciones de aviso cambian entre "todo el día" y con hora: vuelve al de por defecto.
       if (key === 'allDay' && next.allDay !== prev.allDay) next.alerts = defaultAlerts(next.allDay)
+      // El calendario general no lleva etiquetados ni categorías personales.
+      if (key === 'isGeneral' && next.isGeneral) {
+        const category = categories.find((c) => c.id === next.categoryId)
+        if (category?.personal_only) next.categoryId = categories.find((c) => !c.personal_only)?.id ?? null
+      }
       // Al mover el inicio, la finalización se mueve con él si quedaba antes.
       if (key === 'startDate' && next.endDate < next.startDate) next.endDate = next.startDate
       if (key === 'startTime' && next.endDate === next.startDate && next.endTime <= next.startTime) {
@@ -198,6 +203,11 @@ export function ReminderFormDialog({
   }
 
   const formId = `${id}-form`
+  // En el calendario general no se ofrecen las categorías personales (salvo la que ya tenía).
+  const shownCategories = values.isGeneral
+    ? categories.filter((c) => !c.personal_only || (c.id === initialValues.categoryId && initialValues.isGeneral))
+    : categories
+  const removesTagged = values.isGeneral && values.participantIds.length > 0
 
   return (
     <Modal
@@ -263,16 +273,22 @@ export function ReminderFormDialog({
             </div>
             <small className="muted">
               {values.isGeneral
-                ? 'Lo verán todos los que tienen acceso al calendario general. Solo usted podrá modificarlo o eliminarlo.'
+                ? 'Lo verán todos los que tienen acceso al calendario general. Solo usted podrá modificarlo o eliminarlo. En el general no se etiqueta a personas.'
                 : 'Solo usted (y las personas que etiquete) lo verán.'}
             </small>
+            {removesTagged && (
+              <p className="alert alert-warning" role="status">
+                Al publicarlo en el calendario general se quitará a{' '}
+                {values.participantIds.length === 1 ? 'la persona etiquetada' : `las ${values.participantIds.length} personas etiquetadas`}.
+              </p>
+            )}
           </fieldset>
         )}
 
         <fieldset className={styles.categories} aria-describedby={errors.categoryId ? `${id}-cat` : undefined}>
           <legend>Categoría</legend>
           <div className={styles.chips}>
-            {categories.map((category) => (
+            {shownCategories.map((category) => (
               <label
                 key={category.id}
                 className={`${styles.chip} ${values.categoryId === category.id ? styles.chipSelected : ''}`}
@@ -352,7 +368,9 @@ export function ReminderFormDialog({
 
         <AlertsPicker allDay={values.allDay} selected={values.alerts} onChange={(m) => set('alerts', m)} legend="Mis avisos" />
 
-        <ParticipantsPicker people={people} selected={values.participantIds} onChange={(ids) => set('participantIds', ids)} />
+        {!values.isGeneral && (
+          <ParticipantsPicker people={people} selected={values.participantIds} onChange={(ids) => set('participantIds', ids)} />
+        )}
 
         <div className="field">
           <label className="field">

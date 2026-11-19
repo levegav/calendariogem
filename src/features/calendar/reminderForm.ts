@@ -136,7 +136,8 @@ export function toPayload(values: ReminderFormValues, canPublishGeneral = false)
     category_id: values.categoryId!,
     location: optional(values.location),
     note: optional(values.note),
-    participant_ids: [...new Set(values.participantIds)],
+    // En el calendario general no se etiqueta a nadie.
+    participant_ids: values.isGeneral ? [] : [...new Set(values.participantIds)],
     alerts: [...new Set(values.alerts)].sort((a, b) => a - b),
     is_general: canPublishGeneral ? values.isGeneral : null,
   }

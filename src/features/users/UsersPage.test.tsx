@@ -52,6 +52,18 @@ describe('UsersPage', () => {
     expect(screen.getByText('Contraseña temporal')).toBeInTheDocument()
   })
 
+  it('al crear un usuario se le puede dar acceso al calendario general', async () => {
+    renderPage()
+    await userEvent.click(await screen.findByRole('button', { name: 'Nuevo usuario' }))
+    await userEvent.type(screen.getByLabelText('Usuario'), 'maria')
+    await userEvent.type(screen.getByLabelText('Nombre completo'), 'María Pérez')
+    const access = screen.getByRole('checkbox', { name: /Acceso al calendario general/ })
+    expect(access).not.toBeChecked()
+    await userEvent.click(access)
+    await userEvent.click(screen.getByRole('button', { name: 'Crear usuario' }))
+    expect(createUser).toHaveBeenCalledWith(expect.objectContaining({ username: 'maria', general_access: true }))
+  })
+
   it('no deja elegir un color que ya usa otro usuario', async () => {
     renderPage()
     await userEvent.click(await screen.findByRole('button', { name: 'Nuevo usuario' }))

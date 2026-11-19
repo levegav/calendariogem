@@ -20,8 +20,8 @@ function renderPage() {
 
 beforeEach(() => {
   vi.mocked(listCategories).mockResolvedValue([
-    { id: 1, name: 'Reunión', color: '#2563eb', active: true },
-    { id: 2, name: 'Feriado', color: '#ca8a04', active: false },
+    { id: 1, name: 'Reunión', color: '#2563eb', active: true, personal_only: false },
+    { id: 2, name: 'Feriado', color: '#ca8a04', active: false, personal_only: false },
   ])
   vi.mocked(createCategory).mockResolvedValue(undefined)
   vi.mocked(updateCategory).mockResolvedValue(undefined)
@@ -43,7 +43,7 @@ describe('CategoriesPage', () => {
     await userEvent.type(screen.getByLabelText('Nombre'), '  Capacitación ')
     await userEvent.click(screen.getByRole('button', { name: '#0891B2' }))
     await userEvent.click(screen.getByRole('button', { name: 'Crear categoría' }))
-    expect(createCategory).toHaveBeenCalledWith({ name: 'Capacitación', color: '#0891b2' })
+    expect(createCategory).toHaveBeenCalledWith({ name: 'Capacitación', color: '#0891b2', personal_only: false })
     expect(await screen.findByText('La categoría "Capacitación" fue creada.')).toBeInTheDocument()
   })
 

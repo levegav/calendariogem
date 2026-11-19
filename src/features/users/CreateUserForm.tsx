@@ -11,6 +11,7 @@ import { isColorAvailable, suggestColor } from '../../lib/colors'
 import { toSpanishMessage } from '../../lib/errors'
 import type { Profile } from '../auth/AuthContext'
 import { createUser } from './api'
+import { GeneralAccessField } from './GeneralAccessField'
 import { RoleSelect } from './RoleSelect'
 
 export interface Credentials {
@@ -32,6 +33,7 @@ export function CreateUserForm({
   const [role, setRole] = useState<UserRole>('user')
   const [color, setColor] = useState(() => suggestColor(users.map((u) => u.color)))
   const [password, setPassword] = useState(generateTemporaryPassword)
+  const [generalAccess, setGeneralAccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -60,7 +62,14 @@ export function CreateUserForm({
 
     setSubmitting(true)
     try {
-      await createUser({ username: normalized, full_name: fullName.trim(), role, color, password })
+      await createUser({
+        username: normalized,
+        full_name: fullName.trim(),
+        role,
+        color,
+        password,
+        general_access: generalAccess,
+      })
       onCreated({ username: normalized, password })
     } catch (err) {
       setError(toSpanishMessage(err))
@@ -96,6 +105,7 @@ export function CreateUserForm({
         <input value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="off" />
       </label>
       <RoleSelect value={role} onChange={setRole} />
+      <GeneralAccessField checked={generalAccess} onChange={setGeneralAccess} />
       <ColorPicker value={color} onChange={setColor} users={users} />
       <div className="field">
         <div className="input-row">

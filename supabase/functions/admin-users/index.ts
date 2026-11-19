@@ -102,6 +102,10 @@ async function createUser(ctx: Context, body: Record<string, unknown>) {
     throw new HttpError(400, 'El color no es válido. Use el formato #RRGGBB.')
   }
   const password = validatePassword(body.password)
+  if (body.general_access !== undefined && typeof body.general_access !== 'boolean') {
+    throw new HttpError(400, 'El acceso al calendario general no es válido.')
+  }
+  const generalAccess = body.general_access === true
 
   // Validar el color antes de crear la cuenta evita dejar usuarios a medias.
   const { data: colorOwner, error: colorError } = await ctx.caller
@@ -129,13 +133,15 @@ async function createUser(ctx: Context, body: Record<string, unknown>) {
     throw error
   }
 
-  // El trigger creó el perfil desactivado; el admin le asigna nombre, rol y color, y lo activa.
+  // El trigger creó el perfil desactivado; el admin le asigna nombre, rol, color y
+  // acceso al calendario general, y lo activa.
   const { error: updateError } = await ctx.caller.rpc('admin_update_user', {
     p_user_id: data.user.id,
     p_full_name: fullName,
     p_role: role,
     p_active: true,
     p_color: color,
+    p_general_access: generalAccess,
   })
   if (updateError) {
     console.error('admin_update_user tras crear usuario', updateError)

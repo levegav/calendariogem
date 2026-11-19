@@ -45,14 +45,14 @@ isOneToOne: false
                   ]
                 },"categories": {
                   Row: {
-                    "active": boolean,"color": string,"created_at": string,"id": number,"name": string,"updated_at": string
+                    "active": boolean,"color": string,"created_at": string,"id": number,"name": string,"personal_only": boolean,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"color": string,"created_at"?: string,"id"?: never,"name": string,"updated_at"?: string
+                    "active"?: boolean,"color": string,"created_at"?: string,"id"?: never,"name": string,"personal_only"?: boolean,"updated_at"?: string
                   }
                   Update: {
-                    "active"?: boolean,"color"?: string,"created_at"?: string,"id"?: never,"name"?: string,"updated_at"?: string
+                    "active"?: boolean,"color"?: string,"created_at"?: string,"id"?: never,"name"?: string,"personal_only"?: boolean,"updated_at"?: string
                   }
                   Relationships: [
                     

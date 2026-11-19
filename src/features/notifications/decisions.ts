@@ -1,10 +1,13 @@
 import { supabase } from '../../lib/supabase'
 import type { Person } from '../calendar/types'
 
-/** Decisión Conservar / Eliminar pendiente de un etiquetado. */
+/**
+ * Decisión Conservar / Eliminar pendiente de un etiquetado, o de alguien con
+ * acceso al calendario general cuando se elimina un recordatorio de ahí.
+ */
 export interface PendingDecision {
   id: number
-  reason: 'eliminado' | 'creador_desactivado'
+  reason: 'eliminado' | 'creador_desactivado' | 'general_eliminado'
   title: string
   start_at: string
   end_at: string | null

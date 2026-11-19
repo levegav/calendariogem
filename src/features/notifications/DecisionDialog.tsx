@@ -22,7 +22,8 @@ export function DecisionDialog({
   const [busy, setBusy] = useState<'conservar' | 'eliminar' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const owner = decision.former_owner?.full_name ?? 'El creador'
-  const deleted = decision.reason === 'eliminado'
+  const general = decision.reason === 'general_eliminado'
+  const deleted = decision.reason === 'eliminado' || general
 
   async function resolve(keep: boolean) {
     setError(null)
@@ -39,7 +40,7 @@ export function DecisionDialog({
     <Modal
       title={deleted ? 'Recordatorio eliminado' : 'Creador desactivado'}
       dismissible={false}
-      accentColor={decision.former_owner?.color}
+      accentColor={general ? 'var(--rainbow)' : decision.former_owner?.color}
       onClose={() => {}}
       footer={
         <>
@@ -65,7 +66,11 @@ export function DecisionDialog({
           </p>
         )}
         <p>
-          {deleted ? (
+          {general ? (
+            <>
+              <strong>{owner}</strong> eliminó un recordatorio del calendario general.
+            </>
+          ) : deleted ? (
             <>
               <strong>{owner}</strong> eliminó un recordatorio en el que le había etiquetado.
             </>
@@ -81,7 +86,9 @@ export function DecisionDialog({
           {decision.location && <span className="muted">{decision.location}</span>}
         </div>
         <p>
-          ¿Quiere conservar una copia en su calendario? La copia será suya: podrá modificarla o eliminarla.
+          {general
+            ? '¿Quiere conservar una copia en su calendario personal? La copia será suya: podrá modificarla o eliminarla.'
+            : '¿Quiere conservar una copia en su calendario? La copia será suya: podrá modificarla o eliminarla.'}
         </p>
         {remaining > 1 && (
           <p className="muted">

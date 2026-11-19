@@ -5,7 +5,7 @@ import type { CalendarEvent, Person } from './types'
 
 const COLUMNS =
   'id, title, description, start_at, end_at, all_day, location, note, is_general, ' +
-  'category:categories!reminders_category_id_fkey(id, name, color, active), ' +
+  'category:categories!reminders_category_id_fkey(id, name, color, active, personal_only), ' +
   'owner:profiles!reminders_owner_id_fkey(id, full_name, color), ' +
   'participants:reminder_participants(user:profiles!reminder_participants_user_id_fkey(id, full_name, color)), ' +
   // Por RLS, cada quien recibe solo sus propios avisos.

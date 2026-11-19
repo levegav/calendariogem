@@ -548,7 +548,14 @@ Pedido del usuario: unos pocos usuarios "especiales" comparten un calendario gen
 **Casos especiales**
 - Si se le quita el acceso a alguien, deja de ver el general; lo que publicó sigue visible para los demás.
 - Si se desactiva a quien publicó, sus recordatorios del general siguen en el general. La ventana Conservar / Eliminar sigue aplicando solo a sus etiquetados, como antes. (Se ajustó lo propuesto: si todos los especiales tuvieran que decidir, cada uno haría una copia y el general quedaría con duplicados.)
-- La casilla de acceso se marca al editar el usuario; al crearlo nace sin acceso.
+
+**Ajustes pedidos tras la primera entrega (19/11/2026)** (`supabase/migrations/20261124120000_calendario_general_ajustes.sql`)
+- **Sin etiquetados en el general:** al elegir "Calendario general" desaparece "Etiquetar personas". Si un recordatorio personal con etiquetados se pasa al general, se avisa que se les quitará. La base de datos no deja etiquetar en un recordatorio del general.
+- **Sin categorías personales en el general:** nueva marca en **Categorías > Editar**: "Solo para calendarios personales" (`categories.personal_only`). "Personal" ya viene marcada. En el general esas categorías no se ofrecen y, si estaba elegida, se cambia a otra. La base de datos tampoco lo permite.
+- **Conservar al eliminar del general:** si quien lo creó elimina un recordatorio del general que todavía no pasó, los demás con acceso reciben la ventana Conservar / Eliminar (motivo `general_eliminado`) y pueden quedarse con una copia en su calendario personal, igual que los etiquetados. La copia lleva sus avisos o el de por defecto. Si ya pasó, solo reciben la notificación "eliminado".
+- **Acceso desde la creación:** la casilla "Acceso al calendario general" también está en **Usuarios > Nuevo usuario** (la Edge Function `admin-users` recibe `general_access`).
+- `save_reminder` ahora quita primero a los etiquetados que salen y luego guarda el recordatorio, para poder pasarlo al general en un solo guardado.
+- Pruebas: base de datos 205 (la 07 del calendario general tiene 45); `npm run check` 176; integración 28. Las pruebas 05 y 07 ahora parten sin datos previos, para no fallar por datos de demostración en la base local.
 
 **Pruebas (19/11/2026)**
 - Base de datos: `07_calendario_general.test.sql`, 35 pruebas (publicar sin acceso, quién ve, quién modifica, notificaciones, quitar el acceso). Todas las de base de datos pasan.

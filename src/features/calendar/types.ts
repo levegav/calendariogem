@@ -30,7 +30,7 @@ export interface CalendarEvent {
   all_day: boolean
   location: string | null
   note: string | null
-  category: { id: number; name: string; color: string; active: boolean }
+  category: { id: number; name: string; color: string; active: boolean; personal_only: boolean }
   owner: Person
   /** true = publicado en el calendario general; false = calendario personal del creador. */
   is_general: boolean

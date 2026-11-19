@@ -4,8 +4,8 @@ import { fakeEvent } from './testEvents'
 
 const yo = { id: 'yo', full_name: 'Luis Vega', color: '#2563eb' }
 const carlos = { id: 'carlos', full_name: 'Carlos Mora', color: '#16a34a' }
-const reunion = { id: 1, name: 'Reunión', color: '#2563eb', active: true }
-const tarea = { id: 2, name: 'Tarea', color: '#16a34a', active: true }
+const reunion = { id: 1, name: 'Reunión', color: '#2563eb', active: true, personal_only: false }
+const tarea = { id: 2, name: 'Tarea', color: '#16a34a', active: true, personal_only: false }
 const now = new Date('2026-11-17T16:00:00Z') // 10:00 a. m. en Costa Rica
 
 const mio = fakeEvent({ id: 1, title: 'Mío', start_at: '2026-11-18T09:00:00-06:00', owner: yo, category: reunion, location: 'Sala 2' })

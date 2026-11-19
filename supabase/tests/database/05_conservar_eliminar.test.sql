@@ -13,6 +13,10 @@ update public.profiles set active = true, must_change_password = false
                '55555555-5555-5555-5555-555555555555');
 
 select set_config('test.reunion', (select id::text from public.categories where name = 'Reunión'), true);
+-- Las consultas de esta prueba cuentan sobre toda la tabla: se parte sin datos
+-- previos (la base local puede tener datos de demostración).
+delete from public.notifications;
+delete from public.reminder_decisions;
 select set_config('test.feriado', (select id::text from public.categories where name = 'Feriado'), true);
 
 create function pg_temp.pending(p_user uuid) returns int language sql as $$
@@ -96,7 +100,7 @@ reset role;
 select is(
   (select array_agg(decision order by decision) from public.reminder_decisions where reason = 'eliminado'),
   array['conservar', 'eliminar'], 'Cada persona decide por su cuenta');
-select is((select count(*)::int from public.reminders where title = 'Comité'), 1,
+select is((select count(*)::int from public.reminders where title = 'Comité' and created_at = now()), 1,
   'Solo existe la copia de Carlos');
 
 -- ---------------------------------------------------------------------------

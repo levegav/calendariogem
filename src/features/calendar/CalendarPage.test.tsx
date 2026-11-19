@@ -44,9 +44,9 @@ beforeEach(() => {
   vi.mocked(listCalendarReminders).mockResolvedValue([meeting])
   vi.mocked(listPeople).mockResolvedValue([ana, carlos, { id: 'yo', full_name: 'Luis Vega', color: '#2563eb' }])
   vi.mocked(listCategories).mockResolvedValue([
-    { id: 1, name: 'Reunión', color: '#2563eb', active: true },
-    { id: 2, name: 'Tarea', color: '#16a34a', active: true },
-    { id: 3, name: 'Vieja', color: '#000000', active: false },
+    { id: 1, name: 'Reunión', color: '#2563eb', active: true, personal_only: false },
+    { id: 2, name: 'Tarea', color: '#16a34a', active: true, personal_only: false },
+    { id: 3, name: 'Vieja', color: '#000000', active: false, personal_only: false },
   ])
   vi.mocked(saveReminder).mockResolvedValue(1)
   vi.mocked(deleteReminder).mockResolvedValue(undefined)
@@ -142,17 +142,31 @@ describe('CalendarPage', () => {
   })
 
   it('con acceso, se publica en el calendario general', async () => {
+    vi.mocked(listCategories).mockResolvedValue([
+      { id: 4, name: 'Personal', color: '#9333ea', active: true, personal_only: true },
+      { id: 1, name: 'Reunión', color: '#2563eb', active: true, personal_only: false },
+    ])
     renderWithAuth(routes, '/', fakeAuth({ status: 'signedIn', profile: { ...me, general_access: true } }))
     await userEvent.click(screen.getAllByRole('button', { name: 'Nuevo recordatorio' })[0])
     const dialog = screen.getByRole('dialog', { name: 'Nuevo recordatorio' })
     const publishIn = within(dialog).getByRole('group', { name: 'Publicar en' })
     expect(within(publishIn).getByRole('radio', { name: 'Mi calendario' })).toBeChecked()
+    // En su calendario se puede etiquetar y usar la categoría Personal…
+    expect(within(dialog).getByRole('searchbox', { name: /Etiquetar personas/ })).toBeInTheDocument()
+    expect(within(dialog).getByRole('radio', { name: 'Personal' })).toBeChecked()
     await userEvent.click(within(publishIn).getByRole('radio', { name: 'Calendario general' }))
     expect(within(dialog).getByText(/Lo verán todos los que tienen acceso al calendario general/)).toBeInTheDocument()
+    // …en el general, no: se ocultan y la categoría pasa a otra.
+    expect(within(dialog).queryByRole('searchbox', { name: /Etiquetar personas/ })).not.toBeInTheDocument()
+    expect(within(dialog).queryByRole('radio', { name: 'Personal' })).not.toBeInTheDocument()
+    expect(within(dialog).getByRole('radio', { name: 'Reunión' })).toBeChecked()
     await userEvent.type(within(dialog).getByLabelText('Título'), 'Comité')
     await userEvent.click(within(dialog).getByRole('button', { name: 'Crear recordatorio' }))
 
-    expect(saveReminder).toHaveBeenCalledWith(null, expect.objectContaining({ title: 'Comité', is_general: true }))
+    expect(saveReminder).toHaveBeenCalledWith(
+      null,
+      expect.objectContaining({ title: 'Comité', is_general: true, category_id: 1, participant_ids: [] }),
+    )
     expect(await screen.findByText('Recordatorio "Comité" publicado en el calendario general.')).toBeInTheDocument()
   })
 

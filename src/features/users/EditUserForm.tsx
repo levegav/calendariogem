@@ -5,6 +5,7 @@ import { isColorAvailable } from '../../lib/colors'
 import { toSpanishMessage } from '../../lib/errors'
 import type { Profile } from '../auth/AuthContext'
 import { updateUser } from './api'
+import { GeneralAccessField } from './GeneralAccessField'
 import { RoleSelect } from './RoleSelect'
 
 export function EditUserForm({
@@ -68,18 +69,7 @@ export function EditUserForm({
       </label>
       <RoleSelect value={role} onChange={setRole} disabled={isSelf} />
       {isSelf && <small className="muted">No puede cambiar su propio rol.</small>}
-      <label className="check-row">
-        <input type="checkbox" checked={generalAccess} onChange={(e) => setGeneralAccess(e.target.checked)} />
-        <span>
-          <span className="check-row-title">
-            <span className="general-mark" aria-hidden="true" /> Acceso al calendario general
-          </span>
-          <small className="muted">
-            Ve, junto con lo suyo, todo lo del calendario general y puede publicar en él. Recibe una notificación cuando
-            otro publica, cambia o elimina algo ahí.
-          </small>
-        </span>
-      </label>
+      <GeneralAccessField checked={generalAccess} onChange={setGeneralAccess} />
       <ColorPicker value={color} onChange={setColor} users={users} excludeId={user.id} />
       <div className="actions">
         <button type="submit" className="btn btn-primary" disabled={submitting}>

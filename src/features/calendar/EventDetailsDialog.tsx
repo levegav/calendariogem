@@ -64,7 +64,9 @@ export function EventDetailsDialog({
   function remove() {
     const tagged =
       event.participants.length > 0 ? ' Las personas etiquetadas podrán conservar una copia en su calendario.' : ''
-    const general = event.is_general ? ' Se quitará del calendario general para todos.' : ''
+    const general = event.is_general
+      ? ' Se quitará del calendario general; los demás con acceso podrán conservar una copia en su calendario personal.'
+      : ''
     if (!window.confirm(`¿Eliminar el recordatorio "${event.title}"?${general}${tagged} Esta acción no se puede deshacer.`)) return
     void run(onDelete)
   }

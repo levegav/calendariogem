@@ -101,7 +101,7 @@ export function CategoriesPage() {
         <div className="card stack">
           <h2>Nueva categoría</h2>
           <CategoryForm
-            initial={{ name: '', color: nextColor }}
+            initial={{ name: '', color: nextColor, personal_only: false }}
             submitLabel="Crear categoría"
             onCancel={() => setCreating(false)}
             onSubmit={async (values) => {
@@ -131,6 +131,7 @@ export function CategoriesPage() {
                   <span className={styles.dot} style={{ background: category.color }} aria-hidden="true" />
                   <strong className={styles.name}>{category.name}</strong>
                   <span className={styles.hex}>{category.color.toUpperCase()}</span>
+                  {category.personal_only && <span className="badge">Solo personal</span>}
                   {!category.active && <span className="badge badge-muted">Desactivada</span>}
                 </div>
 

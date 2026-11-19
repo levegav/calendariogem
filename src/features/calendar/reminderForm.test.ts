@@ -78,6 +78,12 @@ describe('toPayload', () => {
     expect(toPayload({ ...values, isGeneral: true }, false).is_general).toBeNull()
   })
 
+  it('en el calendario general no se envían etiquetados', () => {
+    const values = { ...newReminderValues({ date: '2026-11-20' }, now), title: 'Comité', categoryId: 1, participantIds: ['u1'] }
+    expect(toPayload(values, true).participant_ids).toEqual(['u1'])
+    expect(toPayload({ ...values, isGeneral: true }, true).participant_ids).toEqual([])
+  })
+
   it('al editar conserva el calendario del recordatorio', () => {
     const event = fakeEvent({ start_at: '2026-11-20T14:00:00-06:00', is_general: true })
     expect(valuesFromEvent(event).isGeneral).toBe(true)
