@@ -1,6 +1,6 @@
 # Estado del proyecto: Calendario GEM
 
-**Estado general: entregado (2026-11-17).** Las fases 0 a 9 están terminadas y aprobadas (la fase 9, estilo Bento, se aprobó el 19/11/2026). La fase 11 (calendario general) está terminada y espera aprobación.
+**Estado general: entregado (2026-11-17).** Las fases 0 a 9 están terminadas y aprobadas (la fase 9, estilo Bento, se aprobó el 19/11/2026). La fase 11 (calendario general) se aprobó el 19/11/2026.
 
 ## Fases
 
@@ -16,7 +16,7 @@
 | 7 | Pulido y entrega final | Terminada (aprobada) |
 | 8 | Estilo visual "Corporativo GEM" | Terminada (aprobada) |
 | 9 | Estilo visual "Bento" | Terminada (aprobada) |
-| 11 | Calendario general compartido entre usuarios con acceso | Terminada, espera aprobación |
+| 11 | Calendario general compartido entre usuarios con acceso | Terminada (aprobada) |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización Google/Outlook | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
@@ -525,7 +525,7 @@ Se eligió entre seis propuestas comparadas en dos maquetas (Órbita, Plano, Mos
 - Revisado con capturas: ingreso, Mes, Semana, Año, nuevo recordatorio, Usuarios y Perfil, en modo claro y oscuro, en computadora y celular (sin desbordes a 390px).
 - `npm run check`: 166 pruebas, lint y build sin advertencias.
 
-## Fase 11: calendario general (19/11/2026)
+## Fase 11: calendario general (19/11/2026, aprobada)
 
 Pedido del usuario: unos pocos usuarios "especiales" comparten un calendario general. Cada uno ve, junto con lo suyo, todo lo del general, y al guardar elige si publica en su calendario o en el general.
 
