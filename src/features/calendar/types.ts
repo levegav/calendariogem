@@ -32,6 +32,8 @@ export interface CalendarEvent {
   note: string | null
   category: { id: number; name: string; color: string; active: boolean }
   owner: Person
+  /** true = publicado en el calendario general; false = calendario personal del creador. */
+  is_general: boolean
   /** Usuarios etiquetados (sin el creador), por nombre. */
   participants: Person[]
   /** Avisos previos del usuario en sesión (minutos antes); vacío si no participa. */

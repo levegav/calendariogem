@@ -174,6 +174,12 @@ export function UsersPage() {
                     <span className={`badge ${user.active ? 'badge-success' : 'badge-muted'}`}>
                       {user.active ? 'Activo' : 'Inactivo'}
                     </span>
+                    {user.general_access && (
+                      <span className="general-tag" title="Acceso al calendario general">
+                        <span className="general-mark" aria-hidden="true" />
+                        Calendario general
+                      </span>
+                    )}
                     {user.active && user.must_change_password && (
                       <span className="badge badge-warning">Contraseña temporal</span>
                     )}

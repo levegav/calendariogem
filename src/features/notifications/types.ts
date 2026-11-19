@@ -1,6 +1,9 @@
 import type { Person } from '../calendar/types'
 
-export type NotificationKind = 'etiquetado' | 'quitado' | 'salida' | 'modificado' | 'aviso'
+export type NotificationKind = 'etiquetado' | 'quitado' | 'salida' | 'modificado' | 'aviso' | 'general'
+
+/** Qué pasó en el calendario general. */
+export type GeneralAction = 'publicado' | 'modificado' | 'retirado' | 'eliminado'
 
 /** Campos que puede indicar una notificación de modificación. */
 export type ChangedField = 'titulo' | 'horario' | 'categoria' | 'ubicacion' | 'descripcion' | 'nota'
@@ -14,6 +17,8 @@ export interface NotificationData {
   before?: { title: string; start_at: string; end_at: string | null; all_day: boolean }
   /** "aviso": cuánto antes era el aviso. */
   minutes_before?: number
+  /** "general": qué pasó en el calendario general. */
+  accion?: GeneralAction
 }
 
 export interface AppNotification {

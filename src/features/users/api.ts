@@ -10,9 +10,9 @@ export async function listUsers(): Promise<Profile[]> {
   return data
 }
 
-/** Cambia nombre, rol y color (la BD valida que quien llama sea admin y que el color esté libre). */
+/** Cambia nombre, rol, color y acceso al calendario general (la BD valida que quien llama sea admin y que el color esté libre). */
 export async function updateUser(
-  user: Pick<Profile, 'id' | 'full_name' | 'role' | 'active' | 'color'>,
+  user: Pick<Profile, 'id' | 'full_name' | 'role' | 'active' | 'color' | 'general_access'>,
 ): Promise<void> {
   const { error } = await supabase.rpc('admin_update_user', {
     p_user_id: user.id,
@@ -20,6 +20,7 @@ export async function updateUser(
     p_role: user.role,
     p_active: user.active,
     p_color: user.color,
+    p_general_access: user.general_access,
   })
   if (error) throw error
 }

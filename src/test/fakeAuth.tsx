@@ -13,6 +13,7 @@ export function fakeProfile(overrides: Partial<Profile> = {}): Profile {
     must_change_password: false,
     color: '#2563eb',
     theme: 'sistema',
+    general_access: false,
     ...overrides,
   }
 }

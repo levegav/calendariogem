@@ -42,6 +42,21 @@ export interface NotificationText {
   detail?: string
 }
 
+/** "Ana modificó «X»: cambió la fecha y hora." con el detalle de cómo era antes. */
+function changeText(n: AppNotification, base: string, when: string | undefined): NotificationText {
+  const changes = n.data.changes ?? []
+  const before = n.data.before
+  const text = changes.length ? `${base}: cambió ${listJoin(changes.map((c) => FIELD_NAMES[c]))}.` : `${base}.`
+  const details: string[] = []
+  if (before && changes.includes('horario') && when) {
+    details.push(`Ahora: ${when} (antes: ${formatWhen(before.start_at, before.all_day)})`)
+  } else if (when) {
+    details.push(when)
+  }
+  if (before && changes.includes('titulo')) details.push(`Antes se llamaba «${before.title}»`)
+  return { text, detail: details.join(' · ') || undefined }
+}
+
 export function notificationText(n: AppNotification): NotificationText {
   const title = `«${n.reminder_title}»`
   const who = n.actor?.full_name ?? 'Alguien'
@@ -54,21 +69,19 @@ export function notificationText(n: AppNotification): NotificationText {
       return { text: `${who} le quitó de ${title}.`, detail: when }
     case 'salida':
       return { text: `${who} salió de ${title}.`, detail: when }
-    case 'modificado': {
-      const changes = n.data.changes ?? []
-      const before = n.data.before
-      const text = changes.length
-        ? `${who} modificó ${title}: cambió ${listJoin(changes.map((c) => FIELD_NAMES[c]))}.`
-        : `${who} modificó ${title}.`
-      const details: string[] = []
-      if (before && changes.includes('horario') && when) {
-        details.push(`Ahora: ${when} (antes: ${formatWhen(before.start_at, before.all_day)})`)
-      } else if (when) {
-        details.push(when)
+    case 'modificado':
+      return changeText(n, `${who} modificó ${title}`, when)
+    case 'general':
+      switch (n.data.accion) {
+        case 'modificado':
+          return changeText(n, `${who} modificó ${title} en el calendario general`, when)
+        case 'retirado':
+          return { text: `${who} quitó ${title} del calendario general.`, detail: when }
+        case 'eliminado':
+          return { text: `${who} eliminó ${title} del calendario general.`, detail: when }
+        default:
+          return { text: `${who} publicó ${title} en el calendario general.`, detail: when }
       }
-      if (before && changes.includes('titulo')) details.push(`Antes se llamaba «${before.title}»`)
-      return { text, detail: details.join(' · ') || undefined }
-    }
     case 'aviso': {
       const moment = alertMoment(n.data.minutes_before ?? 0, Boolean(n.data.all_day))
       return { text: `${moment}: ${title}`, detail: when }

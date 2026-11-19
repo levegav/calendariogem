@@ -65,7 +65,22 @@ describe('toPayload', () => {
       note: null,
       participant_ids: ['u2', 'u1'],
       alerts: [15, 60],
+      is_general: null,
     })
+  })
+
+  it('el calendario se envía solo si quien guarda tiene acceso al general', () => {
+    const values = { ...newReminderValues({ date: '2026-11-20' }, now), title: 'Comité', categoryId: 1 }
+    expect(values.isGeneral).toBe(false)
+    expect(toPayload({ ...values, isGeneral: true }, true).is_general).toBe(true)
+    expect(toPayload(values, true).is_general).toBe(false)
+    // Sin acceso: al crear queda personal y al modificar no cambia de calendario.
+    expect(toPayload({ ...values, isGeneral: true }, false).is_general).toBeNull()
+  })
+
+  it('al editar conserva el calendario del recordatorio', () => {
+    const event = fakeEvent({ start_at: '2026-11-20T14:00:00-06:00', is_general: true })
+    expect(valuesFromEvent(event).isGeneral).toBe(true)
   })
 
   it('todo el día guarda la medianoche de Costa Rica', () => {

@@ -147,6 +147,7 @@ export function ReminderFormDialog({
   initialValues,
   categories,
   people,
+  canPublishGeneral = false,
   onSave,
   onClose,
 }: {
@@ -156,6 +157,8 @@ export function ReminderFormDialog({
   categories: Category[]
   /** Personas que se pueden etiquetar (sin el creador). */
   people: Person[]
+  /** Quien guarda tiene acceso al calendario general: puede elegir dónde publicar. */
+  canPublishGeneral?: boolean
   onSave: (payload: ReminderPayload) => Promise<void>
   onClose: () => void
 }) {
@@ -187,7 +190,7 @@ export function ReminderFormDialog({
     if (Object.keys(found).length > 0) return
     setSaving(true)
     try {
-      await onSave(toPayload(values))
+      await onSave(toPayload(values, canPublishGeneral))
     } catch (err) {
       setSaveError(toSpanishMessage(err))
       setSaving(false)
@@ -233,6 +236,38 @@ export function ReminderFormDialog({
           </label>
           <FieldError id={`${id}-title`} message={errors.title} />
         </div>
+
+        {canPublishGeneral && (
+          <fieldset className={styles.publishIn}>
+            <legend>Publicar en</legend>
+            <div className="segmented">
+              <label className={values.isGeneral ? undefined : 'is-selected'}>
+                <input
+                  type="radio"
+                  name={`${id}-calendario`}
+                  checked={!values.isGeneral}
+                  onChange={() => set('isGeneral', false)}
+                />
+                Mi calendario
+              </label>
+              <label className={values.isGeneral ? 'is-selected' : undefined}>
+                <input
+                  type="radio"
+                  name={`${id}-calendario`}
+                  checked={values.isGeneral}
+                  onChange={() => set('isGeneral', true)}
+                />
+                <span className="general-mark" aria-hidden="true" />
+                Calendario general
+              </label>
+            </div>
+            <small className="muted">
+              {values.isGeneral
+                ? 'Lo verán todos los que tienen acceso al calendario general. Solo usted podrá modificarlo o eliminarlo.'
+                : 'Solo usted (y las personas que etiquete) lo verán.'}
+            </small>
+          </fieldset>
+        )}
 
         <fieldset className={styles.categories} aria-describedby={errors.categoryId ? `${id}-cat` : undefined}>
           <legend>Categoría</legend>

@@ -20,6 +20,28 @@ function fake(overrides: Partial<AppNotification>): AppNotification {
 }
 
 describe('notificationText', () => {
+  it('calendario general: publicado, modificado, quitado y eliminado', () => {
+    const general = (accion: 'publicado' | 'modificado' | 'retirado' | 'eliminado') =>
+      notificationText(fake({ kind: 'general', data: { start_at: '2026-11-18T14:00:00-06:00', all_day: false, accion } })).text
+    expect(general('publicado')).toBe('Carlos Mora publicó «Reunión de equipo» en el calendario general.')
+    expect(general('retirado')).toBe('Carlos Mora quitó «Reunión de equipo» del calendario general.')
+    expect(general('eliminado')).toBe('Carlos Mora eliminó «Reunión de equipo» del calendario general.')
+    const changed = fake({
+      kind: 'general',
+      data: {
+        start_at: '2026-11-19T09:00:00-06:00',
+        all_day: false,
+        accion: 'modificado',
+        changes: ['horario'],
+        before: { title: 'Reunión de equipo', start_at: '2026-11-18T14:00:00-06:00', end_at: null, all_day: false },
+      },
+    })
+    expect(notificationText(changed)).toEqual({
+      text: 'Carlos Mora modificó «Reunión de equipo» en el calendario general: cambió la fecha y hora.',
+      detail: 'Ahora: jue 19 nov, 9:00 a. m. (antes: mié 18 nov, 2:00 p. m.)',
+    })
+  })
+
   it('etiquetado, quitado y salida dicen quién y cuándo es', () => {
     expect(notificationText(fake({}))).toEqual({
       text: 'Carlos Mora le etiquetó en «Reunión de equipo».',

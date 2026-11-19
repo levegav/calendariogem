@@ -91,14 +91,14 @@ isOneToOne: false
                   ]
                 },"profiles": {
                   Row: {
-                    "active": boolean,"color": string,"created_at": string,"full_name": string,"id": string,"must_change_password": boolean,"role": Database["public"]['Enums']["user_role"],"theme": string,"updated_at": string,"username": string
+                    "active": boolean,"color": string,"created_at": string,"full_name": string,"general_access": boolean,"id": string,"must_change_password": boolean,"role": Database["public"]['Enums']["user_role"],"theme": string,"updated_at": string,"username": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "active"?: boolean,"color": string,"created_at"?: string,"full_name": string,"id": string,"must_change_password"?: boolean,"role"?: Database["public"]['Enums']["user_role"],"theme"?: string,"updated_at"?: string,"username": string
+                    "active"?: boolean,"color": string,"created_at"?: string,"full_name": string,"general_access"?: boolean,"id": string,"must_change_password"?: boolean,"role"?: Database["public"]['Enums']["user_role"],"theme"?: string,"updated_at"?: string,"username": string
                   }
                   Update: {
-                    "active"?: boolean,"color"?: string,"created_at"?: string,"full_name"?: string,"id"?: string,"must_change_password"?: boolean,"role"?: Database["public"]['Enums']["user_role"],"theme"?: string,"updated_at"?: string,"username"?: string
+                    "active"?: boolean,"color"?: string,"created_at"?: string,"full_name"?: string,"general_access"?: boolean,"id"?: string,"must_change_password"?: boolean,"role"?: Database["public"]['Enums']["user_role"],"theme"?: string,"updated_at"?: string,"username"?: string
                   }
                   Relationships: [
                     
@@ -201,14 +201,14 @@ isOneToOne: false
                   ]
                 },"reminders": {
                   Row: {
-                    "all_day": boolean,"category_id": number,"created_at": string,"description": string | null,"end_at": string | null,"id": number,"location": string | null,"note": string | null,"owner_id": string,"start_at": string,"title": string,"updated_at": string
+                    "all_day": boolean,"category_id": number,"created_at": string,"description": string | null,"end_at": string | null,"id": number,"is_general": boolean,"location": string | null,"note": string | null,"owner_id": string,"start_at": string,"title": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "all_day"?: boolean,"category_id": number,"created_at"?: string,"description"?: string | null,"end_at"?: string | null,"id"?: never,"location"?: string | null,"note"?: string | null,"owner_id"?: string,"start_at": string,"title": string,"updated_at"?: string
+                    "all_day"?: boolean,"category_id": number,"created_at"?: string,"description"?: string | null,"end_at"?: string | null,"id"?: never,"is_general"?: boolean,"location"?: string | null,"note"?: string | null,"owner_id"?: string,"start_at": string,"title": string,"updated_at"?: string
                   }
                   Update: {
-                    "all_day"?: boolean,"category_id"?: number,"created_at"?: string,"description"?: string | null,"end_at"?: string | null,"id"?: never,"location"?: string | null,"note"?: string | null,"owner_id"?: string,"start_at"?: string,"title"?: string,"updated_at"?: string
+                    "all_day"?: boolean,"category_id"?: number,"created_at"?: string,"description"?: string | null,"end_at"?: string | null,"id"?: never,"is_general"?: boolean,"location"?: string | null,"note"?: string | null,"owner_id"?: string,"start_at"?: string,"title"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -238,7 +238,7 @@ isOneToOne: false
 { Args: { "p_user_id": string }; Returns: undefined
                            },
 "admin_update_user":
-{ Args: { "p_active": boolean,"p_color": string,"p_full_name": string,"p_role": Database["public"]['Enums']["user_role"],"p_user_id": string }; Returns: undefined
+{ Args: { "p_active": boolean,"p_color": string,"p_full_name": string,"p_general_access"?: boolean,"p_role": Database["public"]['Enums']["user_role"],"p_user_id": string }; Returns: undefined
                            },
 "calendar_reminders":
 { Args: { "p_from": string,"p_to": string,"p_user_ids": (string)[] }; Returns: {
@@ -248,6 +248,7 @@ isOneToOne: false
 "description": string | null,
 "end_at": string | null,
 "id": number,
+"is_general": boolean,
 "location": string | null,
 "note": string | null,
 "owner_id": string,
@@ -268,7 +269,7 @@ isOneToOne: false
 { Args: { "p_id": number,"p_keep": boolean }; Returns: number
                            },
 "save_reminder":
-{ Args: { "p_alerts"?: (number)[],"p_all_day": boolean,"p_category_id": number,"p_description": string,"p_end_at": string,"p_id": number,"p_location": string,"p_note": string,"p_participants": (string)[],"p_start_at": string,"p_title": string }; Returns: number
+{ Args: { "p_alerts"?: (number)[],"p_all_day": boolean,"p_category_id": number,"p_description": string,"p_end_at": string,"p_id": number,"p_is_general"?: boolean,"p_location": string,"p_note": string,"p_participants": (string)[],"p_start_at": string,"p_title": string }; Returns: number
                            },
 "search_reminders":
 { Args: { "p_limit"?: number,"p_query": string,"p_user_ids": (string)[] }; Returns: {
@@ -278,6 +279,7 @@ isOneToOne: false
 "description": string | null,
 "end_at": string | null,
 "id": number,
+"is_general": boolean,
 "location": string | null,
 "note": string | null,
 "owner_id": string,

@@ -3,6 +3,7 @@ import { formatTime, toCostaRica, WEEKDAY_SHORT, weekday, type DateKey } from '.
 import styles from './calendar.module.css'
 import { EventChip } from './EventChip'
 import { shortTime } from './eventText'
+import { eventOrigin, eventStyle } from './general'
 import { eventsOnDay, isBanner, layoutTimedEvents } from './layout'
 import type { CalendarEvent } from './types'
 
@@ -152,19 +153,24 @@ export function TimeGridView({
                         height: height - 2,
                         left: `calc(${(lane / lanes) * 100}% + 2px)`,
                         width: `calc(${100 / lanes}% - 4px)`,
-                        '--owner-color': event.owner.color,
-                        '--category-color': event.category.color,
+                        ...eventStyle(event),
                       } as CSSProperties
                     }
-                    title={`${event.title} · ${event.category.name} · Creado por: ${event.owner.full_name}`}
-                    aria-label={`${event.title}, ${shortTime(event)}, ${event.category.name}, creado por ${event.owner.full_name}`}
+                    data-general={event.is_general || undefined}
+                    title={`${event.title} · ${event.category.name} · ${eventOrigin(event, ' · ')}`}
+                    aria-label={`${event.title}, ${shortTime(event)}, ${event.category.name}, ${eventOrigin(event)}`}
                     onClick={() => onOpen(event)}
                   >
                     <span className={styles.blockTitle}>
                       <span className={styles.chipDot} aria-hidden="true" />
                       {event.title}
                     </span>
-                    {height >= 36 && <span className={styles.blockTime}>{shortTime(event)}</span>}
+                    {height >= 36 && (
+                      <span className={styles.blockTime}>
+                        {shortTime(event)}
+                        {event.is_general && <span className="general-tag">General</span>}
+                      </span>
+                    )}
                     {single && height >= 56 && (
                       <span className={styles.blockCreator}>Creado por: {event.owner.full_name}</span>
                     )}

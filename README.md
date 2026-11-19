@@ -107,6 +107,7 @@ El proyecto vive en **otra cuenta de Supabase**, distinta de la de oficina y nac
 - Si alguien olvida su contraseña, el admin usa **Restablecer contraseña** y le entrega la nueva contraseña temporal.
 - Desactivar un usuario bloquea su acceso de inmediato y conserva toda su información.
 - El admin no puede cambiar su propio rol ni desactivarse, así que siempre queda al menos un administrador.
+- **Calendario general:** en **Usuarios > Editar**, la casilla "Acceso al calendario general" deja a esa persona ver, junto con lo suyo, todo lo publicado en el general y publicar en él ("Publicar en: Mi calendario | Calendario general" al guardar). Solo quien creó un recordatorio lo modifica o elimina. Los demás con acceso reciben una notificación cuando se publica, modifica, quita o elimina algo. Los recordatorios del general llevan un color fijo arcoíris y la marca "General". Quien no tiene acceso no los ve.
 
 Edge Function `supabase/functions/admin-users`: crea usuarios, los activa o desactiva y restablece contraseñas. Es la única pieza que usa la clave secreta, que Supabase inyecta en el servidor, así que no hay que configurarla. Para desplegarla: `npm run remoto -- functions deploy admin-users --use-api`.
 

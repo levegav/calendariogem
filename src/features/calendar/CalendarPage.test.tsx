@@ -129,8 +129,56 @@ describe('CalendarPage', () => {
       note: 'Llevar copias',
       participant_ids: ['carlos'],
       alerts: [15],
+      is_general: null,
     })
     expect(await screen.findByText('Recordatorio "Entrega de informe" creado.')).toBeInTheDocument()
+  })
+
+  it('sin acceso al calendario general no se ofrece dónde publicar', async () => {
+    renderAt('/')
+    await userEvent.click(screen.getAllByRole('button', { name: 'Nuevo recordatorio' })[0])
+    const dialog = screen.getByRole('dialog', { name: 'Nuevo recordatorio' })
+    expect(within(dialog).queryByRole('group', { name: 'Publicar en' })).not.toBeInTheDocument()
+  })
+
+  it('con acceso, se publica en el calendario general', async () => {
+    renderWithAuth(routes, '/', fakeAuth({ status: 'signedIn', profile: { ...me, general_access: true } }))
+    await userEvent.click(screen.getAllByRole('button', { name: 'Nuevo recordatorio' })[0])
+    const dialog = screen.getByRole('dialog', { name: 'Nuevo recordatorio' })
+    const publishIn = within(dialog).getByRole('group', { name: 'Publicar en' })
+    expect(within(publishIn).getByRole('radio', { name: 'Mi calendario' })).toBeChecked()
+    await userEvent.click(within(publishIn).getByRole('radio', { name: 'Calendario general' }))
+    expect(within(dialog).getByText(/Lo verán todos los que tienen acceso al calendario general/)).toBeInTheDocument()
+    await userEvent.type(within(dialog).getByLabelText('Título'), 'Comité')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Crear recordatorio' }))
+
+    expect(saveReminder).toHaveBeenCalledWith(null, expect.objectContaining({ title: 'Comité', is_general: true }))
+    expect(await screen.findByText('Recordatorio "Comité" publicado en el calendario general.')).toBeInTheDocument()
+  })
+
+  it('lo del calendario general se ve con su marca y quien lo creó', async () => {
+    vi.mocked(listCalendarReminders).mockResolvedValue([{ ...meeting, owner: carlos, is_general: true }])
+    renderWithAuth(routes, '/', fakeAuth({ status: 'signedIn', profile: { ...me, role: 'user', general_access: true } }))
+    const chip = await screen.findByRole('button', { name: /Reunión de equipo, .*calendario general, creado por Carlos Mora/ })
+    expect(chip).toHaveAttribute('data-general', 'true')
+    // Un usuario con acceso no elige calendarios: lo propio y lo general se ven juntos.
+    expect(screen.queryByRole('button', { name: /Ver calendario de/ })).not.toBeInTheDocument()
+    await userEvent.click(chip)
+    const dialog = screen.getByRole('dialog', { name: 'Reunión de equipo' })
+    expect(within(dialog).getByText('Calendario general')).toBeInTheDocument()
+    expect(within(dialog).getByText('Creado por: Carlos Mora')).toBeInTheDocument()
+    expect(within(dialog).queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
+  })
+
+  it('al editar uno del general sin tener ya acceso, no cambia de calendario', async () => {
+    vi.mocked(listCalendarReminders).mockResolvedValue([{ ...meeting, is_general: true }])
+    renderAt('/')
+    await userEvent.click(await screen.findByRole('button', { name: /Reunión de equipo/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Editar' }))
+    const dialog = screen.getByRole('dialog', { name: 'Editar recordatorio' })
+    expect(within(dialog).queryByRole('group', { name: 'Publicar en' })).not.toBeInTheDocument()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Guardar cambios' }))
+    expect(saveReminder).toHaveBeenCalledWith(1, expect.objectContaining({ is_general: null }))
   })
 
   it('las categorías desactivadas no se ofrecen al crear', async () => {

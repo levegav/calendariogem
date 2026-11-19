@@ -23,6 +23,7 @@ export function EditUserForm({
   const [fullName, setFullName] = useState(user.full_name)
   const [role, setRole] = useState<UserRole>(user.role)
   const [color, setColor] = useState(user.color)
+  const [generalAccess, setGeneralAccess] = useState(user.general_access)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -39,7 +40,14 @@ export function EditUserForm({
     }
     setSubmitting(true)
     try {
-      await updateUser({ id: user.id, full_name: fullName.trim(), role, active: user.active, color })
+      await updateUser({
+        id: user.id,
+        full_name: fullName.trim(),
+        role,
+        active: user.active,
+        color,
+        general_access: generalAccess,
+      })
       onSaved()
     } catch (err) {
       setError(toSpanishMessage(err))
@@ -60,6 +68,18 @@ export function EditUserForm({
       </label>
       <RoleSelect value={role} onChange={setRole} disabled={isSelf} />
       {isSelf && <small className="muted">No puede cambiar su propio rol.</small>}
+      <label className="check-row">
+        <input type="checkbox" checked={generalAccess} onChange={(e) => setGeneralAccess(e.target.checked)} />
+        <span>
+          <span className="check-row-title">
+            <span className="general-mark" aria-hidden="true" /> Acceso al calendario general
+          </span>
+          <small className="muted">
+            Ve, junto con lo suyo, todo lo del calendario general y puede publicar en él. Recibe una notificación cuando
+            otro publica, cambia o elimina algo ahí.
+          </small>
+        </span>
+      </label>
       <ColorPicker value={color} onChange={setColor} users={users} excludeId={user.id} />
       <div className="actions">
         <button type="submit" className="btn btn-primary" disabled={submitting}>

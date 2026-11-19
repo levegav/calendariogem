@@ -1226,3 +1226,69 @@ button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
     min-height: 0;
   }
 }
+
+/* =============================================================================
+   Calendario general (Fase 11): sus recordatorios llevan un color fijo, el
+   degradado arcoíris, en vez del color de quien los creó.
+   ========================================================================== */
+.chip[data-general='true'],
+.block[data-general='true'] {
+  background: var(--rainbow-soft);
+}
+
+.chip[data-general='true']:hover,
+.block[data-general='true']:hover {
+  background: var(--rainbow-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--general-tint) 45%, transparent);
+}
+
+.chip[data-general='true']::before,
+.block[data-general='true']::before {
+  width: 4px;
+  background: var(--rainbow);
+}
+
+/* En el mosaico de hoy (encendido) la ficha sigue translúcida, con su barrita arcoíris. */
+.monthCell:has(.monthDay[data-today='true']) .chip[data-general='true'] {
+  background: rgb(255 255 255 / 0.2);
+  box-shadow: none;
+}
+
+.monthCell:has(.monthDay[data-today='true']) .chip[data-general='true']:hover {
+  background: rgb(255 255 255 / 0.3);
+}
+
+.monthCell:has(.monthDay[data-today='true']) .chip[data-general='true']::before {
+  background: var(--rainbow);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.9);
+}
+
+.blockTime {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.blockTime :global(.general-tag) {
+  font-size: 0.64rem;
+  line-height: 1.35;
+}
+
+/* Resultados de búsqueda: el borde izquierdo es el arcoíris. */
+.result[data-general='true'] {
+  border-left-color: transparent;
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    var(--rainbow) border-box;
+}
+
+.result[data-general='true']:hover,
+.result[data-general='true']:focus-visible {
+  background:
+    linear-gradient(
+        color-mix(in srgb, var(--general-tint) 8%, var(--color-surface)),
+        color-mix(in srgb, var(--general-tint) 8%, var(--color-surface))
+      )
+      padding-box,
+    var(--rainbow) border-box;
+}

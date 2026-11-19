@@ -4,7 +4,7 @@ import type { Database } from '../../types/database.types'
 import type { CalendarEvent, Person } from './types'
 
 const COLUMNS =
-  'id, title, description, start_at, end_at, all_day, location, note, ' +
+  'id, title, description, start_at, end_at, all_day, location, note, is_general, ' +
   'category:categories!reminders_category_id_fkey(id, name, color, active), ' +
   'owner:profiles!reminders_owner_id_fkey(id, full_name, color), ' +
   'participants:reminder_participants(user:profiles!reminder_participants_user_id_fkey(id, full_name, color)), ' +
@@ -59,6 +59,11 @@ export interface ReminderPayload {
   participant_ids: string[]
   /** Avisos previos del creador (minutos antes). */
   alerts: number[]
+  /**
+   * Calendario general (true) o personal (false). null = al crear, personal; al
+   * modificar, no lo cambia de calendario (p. ej. si el creador ya no tiene acceso).
+   */
+  is_general: boolean | null
 }
 
 type SaveArgs = Database['public']['Functions']['save_reminder']['Args']
@@ -77,6 +82,7 @@ export async function saveReminder(id: number | null, payload: ReminderPayload):
     p_note: payload.note,
     p_participants: payload.participant_ids,
     p_alerts: payload.alerts,
+    p_is_general: payload.is_general,
   } as SaveArgs
   const { data, error } = await supabase.rpc('save_reminder', args)
   if (error) throw error

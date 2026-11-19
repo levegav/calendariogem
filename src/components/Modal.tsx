@@ -1,9 +1,22 @@
-import { useEffect, useId, useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { Icon } from './Icon'
 import styles from './Modal.module.css'
 
-const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+/**
+ * Borde izquierdo de color. Un color se dibuja como borde normal; un degradado
+ * (p. ej. el arcoíris del calendario general) se pinta detrás de un borde transparente.
+ */
+function accentStyle(accent: string | undefined): CSSProperties | undefined {
+  if (!accent) return undefined
+  if (!accent.includes('gradient') && !accent.startsWith('var(')) return { borderLeft: `6px solid ${accent}` }
+  return {
+    borderLeft: '6px solid transparent',
+    background: `linear-gradient(var(--color-surface), var(--color-surface)) padding-box, ${accent} border-box`,
+  }
+}
+
+const FOCUSABLE ='button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 /**
  * Ventana emergente accesible: se cierra con Escape, con la X o tocando fuera
@@ -80,7 +93,7 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        style={accentColor ? { borderLeft: `6px solid ${accentColor}` } : undefined}
+        style={accentStyle(accentColor)}
       >
         <header className={styles.header}>
           <h2 id={titleId}>{title}</h2>

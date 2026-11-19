@@ -3,10 +3,10 @@ import type { Database } from '../../types/database.types'
 
 export type Profile = Pick<
   Database['public']['Tables']['profiles']['Row'],
-  'id' | 'username' | 'full_name' | 'role' | 'active' | 'must_change_password' | 'color' | 'theme'
+  'id' | 'username' | 'full_name' | 'role' | 'active' | 'must_change_password' | 'color' | 'theme' | 'general_access'
 >
 
-export const PROFILE_COLUMNS = 'id, username, full_name, role, active, must_change_password, color, theme'
+export const PROFILE_COLUMNS = 'id, username, full_name, role, active, must_change_password, color, theme, general_access'
 
 export type AuthState =
   | { status: 'loading' }

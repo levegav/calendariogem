@@ -1,8 +1,8 @@
-import type { CSSProperties } from 'react'
 import { formatLongDate, todayKey } from '../../lib/dates'
 import styles from './calendar.module.css'
 import { shortTime } from './eventText'
 import { groupResults, type DateGroup } from './filters'
+import { eventStyle, GENERAL_NAME } from './general'
 import type { CalendarEvent } from './types'
 
 function Group({ group, today, onOpen }: { group: DateGroup; today: string; onOpen: (event: CalendarEvent) => void }) {
@@ -18,14 +18,16 @@ function Group({ group, today, onOpen }: { group: DateGroup; today: string; onOp
             <button
               type="button"
               className={styles.result}
-              style={{ '--owner-color': event.owner.color, '--category-color': event.category.color } as CSSProperties}
+              style={eventStyle(event)}
+              data-general={event.is_general || undefined}
               onClick={() => onOpen(event)}
             >
               <span className={styles.resultTime}>{shortTime(event)}</span>
               <span className={styles.resultText}>
                 <strong>{event.title}</strong>
                 <small className="muted">
-                  <span className={styles.chipDot} aria-hidden="true" /> {event.category.name} · Creado por:{' '}
+                  <span className={styles.chipDot} aria-hidden="true" /> {event.category.name} ·{' '}
+                  {event.is_general && <>{GENERAL_NAME} · </>}Creado por:{' '}
                   {event.owner.full_name}
                   {event.location ? ` · ${event.location}` : ''}
                 </small>

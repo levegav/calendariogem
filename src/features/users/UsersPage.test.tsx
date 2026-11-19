@@ -85,8 +85,23 @@ describe('UsersPage', () => {
       role: 'user',
       active: true,
       color: '#9333ea',
+      general_access: false,
     })
     expect(await screen.findByText('Usuario actualizado.')).toBeInTheDocument()
+  })
+
+  it('da acceso al calendario general y lo muestra en la lista', async () => {
+    renderPage()
+    const card = (await screen.findByText('Carlos Mora')).closest('li')!
+    expect(within(card).queryByText('Calendario general')).not.toBeInTheDocument()
+    await userEvent.click(within(card).getByRole('button', { name: 'Editar' }))
+    await userEvent.click(within(card).getByRole('checkbox', { name: /Acceso al calendario general/ }))
+    vi.mocked(listUsers).mockResolvedValue([{ ...carlos, general_access: true }, admin])
+    await userEvent.click(within(card).getByRole('button', { name: 'Guardar' }))
+
+    expect(updateUser).toHaveBeenCalledWith(expect.objectContaining({ id: 'carlos', general_access: true }))
+    const updated = (await screen.findByText('Usuario actualizado.')) && (await screen.findByText('Carlos Mora')).closest('li')!
+    expect(await within(updated).findByText('Calendario general')).toBeInTheDocument()
   })
 
   it('desactiva a otro usuario tras confirmar', async () => {

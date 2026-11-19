@@ -1,6 +1,7 @@
 import { monthGrid, sameMonth, WEEKDAY_SHORT, type DateKey } from '../../lib/dates'
 import styles from './calendar.module.css'
 import { EventChip } from './EventChip'
+import { eventMark } from './general'
 import { eventsOnDay } from './layout'
 import type { CalendarEvent } from './types'
 
@@ -62,11 +63,11 @@ export function MonthView({
                   +{hidden + 1} más
                 </button>
               )}
-              {/* En celular las pastillas no caben: se muestran puntos con el color del creador. */}
+              {/* En celular las pastillas no caben: se muestran puntos con el color del creador (o el arcoíris). */}
               {list.length > 0 && (
                 <span className={styles.dots} aria-hidden="true">
                   {list.slice(0, 4).map((event) => (
-                    <span key={event.id} style={{ background: event.owner.color }} />
+                    <span key={event.id} style={{ background: eventMark(event) }} />
                   ))}
                 </span>
               )}

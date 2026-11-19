@@ -4,6 +4,7 @@ import { UserAvatar } from '../../components/UserAvatar'
 import { toSpanishMessage } from '../../lib/errors'
 import { AlertsPicker } from '../notifications/AlertsPicker'
 import { describeWhen } from './eventText'
+import { eventMark, GENERAL_NAME } from './general'
 import styles from './EventDetailsDialog.module.css'
 import { asLink } from './reminderForm'
 import type { CalendarEvent } from './types'
@@ -63,7 +64,8 @@ export function EventDetailsDialog({
   function remove() {
     const tagged =
       event.participants.length > 0 ? ' Las personas etiquetadas podrán conservar una copia en su calendario.' : ''
-    if (!window.confirm(`¿Eliminar el recordatorio "${event.title}"?${tagged} Esta acción no se puede deshacer.`)) return
+    const general = event.is_general ? ' Se quitará del calendario general para todos.' : ''
+    if (!window.confirm(`¿Eliminar el recordatorio "${event.title}"?${general}${tagged} Esta acción no se puede deshacer.`)) return
     void run(onDelete)
   }
 
@@ -91,7 +93,7 @@ export function EventDetailsDialog({
     <Modal
       title={event.title}
       onClose={onClose}
-      accentColor={event.owner.color}
+      accentColor={eventMark(event)}
       footer={footer}
 
     >
@@ -107,6 +109,12 @@ export function EventDetailsDialog({
             <span className={styles.dot} style={{ background: event.category.color }} aria-hidden="true" />
             {event.category.name}
           </span>
+          {event.is_general && (
+            <span className="general-tag">
+              <span className="general-mark" aria-hidden="true" />
+              {GENERAL_NAME}
+            </span>
+          )}
           <span className={styles.creator}>
             <span className={styles.creatorLine} style={{ background: event.owner.color }} aria-hidden="true" />
             Creado por: {event.owner.full_name}

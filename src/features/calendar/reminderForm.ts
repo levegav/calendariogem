@@ -21,6 +21,8 @@ export interface ReminderFormValues {
   participantIds: string[]
   /** Avisos previos del creador (minutos antes). */
   alerts: number[]
+  /** Publicar en el calendario general (solo quien tiene acceso lo puede elegir). */
+  isGeneral: boolean
 }
 
 export type ReminderFormErrors = Partial<Record<'title' | 'categoryId' | 'end' | 'description' | 'location' | 'note', string>>
@@ -60,6 +62,7 @@ export function newReminderValues(
     note: '',
     participantIds: [],
     alerts: defaultAlerts(false),
+    isGeneral: false,
   }
 }
 
@@ -80,6 +83,7 @@ export function valuesFromEvent(event: CalendarEvent): ReminderFormValues {
     note: event.note ?? '',
     participantIds: event.participants.map((p) => p.id),
     alerts: event.my_alerts,
+    isGeneral: event.is_general,
   }
 }
 
@@ -118,7 +122,11 @@ export function validateReminder(values: ReminderFormValues): ReminderFormErrors
 
 const optional = (text: string) => text.trim() || null
 
-export function toPayload(values: ReminderFormValues): ReminderPayload {
+/**
+ * Datos para guardar. Si quien guarda no tiene acceso al calendario general, no
+ * se envía el calendario: al crear queda personal y al modificar no cambia.
+ */
+export function toPayload(values: ReminderFormValues, canPublishGeneral = false): ReminderPayload {
   return {
     title: values.title.trim(),
     description: optional(values.description),
@@ -130,6 +138,7 @@ export function toPayload(values: ReminderFormValues): ReminderPayload {
     note: optional(values.note),
     participant_ids: [...new Set(values.participantIds)],
     alerts: [...new Set(values.alerts)].sort((a, b) => a - b),
+    is_general: canPublishGeneral ? values.isGeneral : null,
   }
 }
 

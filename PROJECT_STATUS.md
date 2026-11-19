@@ -1,6 +1,6 @@
 # Estado del proyecto: Calendario GEM
 
-**Estado general: entregado (2026-11-17).** Las fases 0 a 9 están terminadas y aprobadas (la fase 9, estilo Bento, se aprobó el 19/11/2026).
+**Estado general: entregado (2026-11-17).** Las fases 0 a 9 están terminadas y aprobadas (la fase 9, estilo Bento, se aprobó el 19/11/2026). La fase 11 (calendario general) está terminada y espera aprobación.
 
 ## Fases
 
@@ -16,6 +16,7 @@
 | 7 | Pulido y entrega final | Terminada (aprobada) |
 | 8 | Estilo visual "Corporativo GEM" | Terminada (aprobada) |
 | 9 | Estilo visual "Bento" | Terminada (aprobada) |
+| 11 | Calendario general compartido entre usuarios con acceso | Terminada, espera aprobación |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización Google/Outlook | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
@@ -523,6 +524,36 @@ Se eligió entre seis propuestas comparadas en dos maquetas (Órbita, Plano, Mos
 **Pruebas (2026-11-17)**
 - Revisado con capturas: ingreso, Mes, Semana, Año, nuevo recordatorio, Usuarios y Perfil, en modo claro y oscuro, en computadora y celular (sin desbordes a 390px).
 - `npm run check`: 166 pruebas, lint y build sin advertencias.
+
+## Fase 11: calendario general (19/11/2026)
+
+Pedido del usuario: unos pocos usuarios "especiales" comparten un calendario general. Cada uno ve, junto con lo suyo, todo lo del general, y al guardar elige si publica en su calendario o en el general.
+
+**Decisiones del usuario**
+- El acceso se da con una casilla en **Usuarios > Editar**: "Acceso al calendario general". Sirve para usuarios y admins.
+- Solo **quien creó** un recordatorio del general lo modifica o elimina; los demás lo ven.
+- Cuando alguien publica, modifica, quita o elimina algo del general, **los demás con acceso reciben una notificación**.
+- Los **usuarios sin acceso no ven** el calendario general (solo los recordatorios donde los etiquetaron).
+- Quien tiene acceso ve **siempre todo junto**: no hay selector ni filtro para ocultar el general.
+- **Color fijo:** los recordatorios del general usan un degradado arcoíris en vez del color de quien los creó. Llevan además la marca "General" (en Semana, Día, búsqueda y detalle) y el detalle muestra "Creado por".
+
+**Base de datos** (`supabase/migrations/20261123120000_calendario_general.sql`)
+- `profiles.general_access` y `reminders.is_general` (por defecto `false`).
+- RLS: el general lo leen quienes tienen acceso (`private.has_general_access()`); también ven sus etiquetados.
+- Un trigger impide publicar en el general sin acceso, incluso con un insert directo. Quien perdió el acceso sigue modificando lo que ya publicó, pero no publica nada nuevo.
+- `save_reminder` recibe `p_is_general` (null = al crear, personal; al modificar, no cambia de calendario). `admin_update_user` recibe `p_general_access` (null = sin cambio).
+- `calendar_reminders` y `search_reminders` incluyen el general para quien tiene acceso.
+- Notificación nueva `general` con `data.accion`: `publicado`, `modificado` (con qué cambió), `retirado` o `eliminado`. No llega a quien hizo el cambio ni a los etiquetados (ellos ya reciben las suyas).
+
+**Casos especiales**
+- Si se le quita el acceso a alguien, deja de ver el general; lo que publicó sigue visible para los demás.
+- Si se desactiva a quien publicó, sus recordatorios del general siguen en el general. La ventana Conservar / Eliminar sigue aplicando solo a sus etiquetados, como antes. (Se ajustó lo propuesto: si todos los especiales tuvieran que decidir, cada uno haría una copia y el general quedaría con duplicados.)
+- La casilla de acceso se marca al editar el usuario; al crearlo nace sin acceso.
+
+**Pruebas (19/11/2026)**
+- Base de datos: `07_calendario_general.test.sql`, 35 pruebas (publicar sin acceso, quién ve, quién modifica, notificaciones, quitar el acceso). Todas las de base de datos pasan.
+- `npm run check`: 174 pruebas, lint, tipos y build. Integración: 28 pruebas.
+- Capturas con usuarios de demostración: Mes, Semana, detalle, formulario, notificaciones, búsqueda, Usuarios, en claro y oscuro y en celular (sin desbordes a 390px).
 
 ## Lista de verificación de la entrega
 

@@ -132,6 +132,9 @@ export function CalendarPage() {
   const { version: notificationsVersion } = useNotifications()
   // Solo el admin puede ver los calendarios de otros (el servidor lo impone con RLS).
   const canViewOthers = profile?.role === 'admin'
+  // Con acceso al calendario general, lo suyo y lo del general se ven siempre juntos
+  // (el servidor los incluye) y al guardar se elige dónde publicar.
+  const canPublishGeneral = profile?.general_access === true
   const me: Person = useMemo(
     () => ({ id: userId, full_name: profile?.full_name ?? '', color: profile?.color ?? '#64748b' }),
     [userId, profile?.full_name, profile?.color],
@@ -416,11 +419,16 @@ export function CalendarPage() {
           initialValues={dialog.values}
           categories={activeCategories}
           people={taggable}
+          canPublishGeneral={canPublishGeneral}
           onClose={() => setDialog(null)}
           onSave={async (payload) => {
             await saveReminder(null, payload)
             setDialog(null)
-            setNotice(`Recordatorio "${payload.title}" creado.`)
+            setNotice(
+              payload.is_general
+                ? `Recordatorio "${payload.title}" publicado en el calendario general.`
+                : `Recordatorio "${payload.title}" creado.`,
+            )
             reload()
           }}
         />
@@ -467,6 +475,7 @@ export function CalendarPage() {
             // Etiquetados que ya no están activos se conservan mientras no se quiten.
             ...dialog.event.participants.filter((p) => !taggable.some((t) => t.id === p.id)),
           ]}
+          canPublishGeneral={canPublishGeneral}
           onClose={() => setDialog({ type: 'details', event: dialog.event })}
           onSave={async (payload) => {
             await saveReminder(dialog.event.id, payload)
