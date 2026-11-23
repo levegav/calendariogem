@@ -1,6 +1,6 @@
 # Estado del proyecto: Calendario GEM
 
-**Estado general: entregado (2026-11-17).** Las fases 0 a 9 están terminadas y aprobadas (la fase 9, estilo Bento, se aprobó el 19/11/2026). La fase 11 (calendario general) se aprobó el 19/11/2026 y la fase 12 (reuniones de Outlook) el 23/11/2026.
+**Estado general: entregado (2026-11-17).** Las fases 0 a 9 están terminadas y aprobadas (la fase 9, estilo Bento, se aprobó el 19/11/2026). La fase 11 (calendario general) se aprobó el 19/11/2026 la fase 12 (reuniones de Outlook) y la fase 13 (avisos y notificaciones de Outlook), el 23/11/2026.
 
 ## Fases
 
@@ -18,7 +18,7 @@
 | 9 | Estilo visual "Bento" | Terminada (aprobada) |
 | 11 | Calendario general compartido entre usuarios con acceso | Terminada (aprobada) |
 | 12 | Reuniones de Outlook (un solo sentido, solo lectura) | Terminada (aprobada) |
-| 13 | Avisos y notificaciones de las reuniones de Outlook | En prueba con el calendario de Luis |
+| 13 | Avisos y notificaciones de las reuniones de Outlook | Terminada (aprobada) |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización con Google | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
@@ -618,7 +618,7 @@ Pedido del usuario: que las reuniones que se agendan en Outlook se vean en el Ca
 - Usuarios muestra si el programa de la oficina está conectado (avisa si pasan más de 5 minutos sin conectarse). "Sincronizar Outlook" ahora pide releer todo en la próxima pasada (`admin_request_outlook_sync`).
 - Pruebas: base de datos 232 (la 08 tiene 27); `npm run check` 186; script 28 (`npm run test:agente`, en PowerShell 5.1 y 7). Se probó la Edge Function con el token real y con uno falso (rechazado). Desde la computadora de Luis por el hotspot el script llegó a Exchange, pero Exchange no acepta la sesión de Windows desde fuera de la red: la prueba real se hace con el script instalado en la VM.
 
-## Fase 13: avisos y notificaciones de las reuniones de Outlook (23/11/2026)
+## Fase 13: avisos y notificaciones de las reuniones de Outlook (23/11/2026, aprobada)
 
 Pedido de Luis: que las reuniones de Outlook avisen y notifiquen como los recordatorios, copiando el aviso de Outlook; y que, si se cancela una reunión a la que lo invitaron, pueda conservarla como recordatorio.
 
@@ -641,6 +641,7 @@ Pedido de Luis: que las reuniones de Outlook avisen y notifiquen como los record
 - Base de datos: `09_outlook_avisos.test.sql`, 26 pruebas (primera lectura sin avisos, nueva, modificada, mía, borrada, cancelada, fuera de la ventana, cambio de identificador, avisos copiados y cambiados, disparo, Conservar). Todas: 260.
 - `npm run check`: 192 pruebas, lint, tipos y build. Script: 32 pruebas en PowerShell 5.1 y 7.
 - Capturas en local: ventana de reunión cancelada (claro y oscuro), "Mis avisos" y la campana con notificaciones de Outlook.
+- En producción, con el script 1.1 en la VM: las 7 reuniones de Luis pasaron al identificador permanente sin notificaciones ni decisiones falsas, y los avisos se copiaron del recordatorio de Outlook (15 min).
 
 ## Lista de verificación de la entrega
 
