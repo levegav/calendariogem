@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeAuth, fakeProfile, renderWithAuth } from '../../test/fakeAuth'
 import { createUser, listUsers, resetUserPassword, setUserActive, updateUser } from './api'
-import { listOutlookLinks, setOutlookEmail, syncOutlookNow } from './outlook'
+import { getAgentStatus, listOutlookLinks, setOutlookEmail, syncOutlookNow } from './outlook'
 import { UsersPage } from './UsersPage'
 
 vi.mock('./outlook', async (importOriginal) => ({
@@ -11,6 +11,7 @@ vi.mock('./outlook', async (importOriginal) => ({
   listOutlookLinks: vi.fn(),
   setOutlookEmail: vi.fn(),
   syncOutlookNow: vi.fn(),
+  getAgentStatus: vi.fn(),
 }))
 vi.mock('./api', () => ({
   listUsers: vi.fn(),
@@ -36,7 +37,8 @@ beforeEach(() => {
   vi.mocked(resetUserPassword).mockResolvedValue(undefined)
   vi.mocked(listOutlookLinks).mockResolvedValue([])
   vi.mocked(setOutlookEmail).mockResolvedValue(undefined)
-  vi.mocked(syncOutlookNow).mockResolvedValue({ usuarios: 1, sin_cambios: 0, actualizado: 1, en_espera: 0, error: 0 })
+  vi.mocked(syncOutlookNow).mockResolvedValue(undefined)
+  vi.mocked(getAgentStatus).mockResolvedValue({ seen_at: new Date(Date.now() - 60_000).toISOString(), version: '1.0' })
   vi.spyOn(window, 'confirm').mockReturnValue(true)
 })
 
@@ -159,6 +161,15 @@ describe('UsersPage', () => {
       expect(createUser).toHaveBeenCalledWith(expect.objectContaining({ outlook_email: 'maria.perez@empresa.com' }))
     })
 
+    it('avisa si el programa de la oficina dejó de conectarse', async () => {
+      vi.mocked(listOutlookLinks).mockResolvedValue([
+        { user_id: 'carlos', email: 'carlos@empresa.com', status: 'ok', status_detail: null, checked_at: null, refreshed_at: null },
+      ])
+      vi.mocked(getAgentStatus).mockResolvedValue({ seen_at: '2026-01-01T12:00:00Z', version: '1.0' })
+      renderPage()
+      expect(await screen.findByText(/no se conecta desde el .* Revise la tarea programada/)).toBeInTheDocument()
+    })
+
     it('muestra el estado de la sincronización y el problema si lo hay', async () => {
       vi.mocked(listOutlookLinks).mockResolvedValue([
         {
@@ -196,7 +207,8 @@ describe('UsersPage', () => {
 
       await userEvent.click(screen.getByRole('button', { name: 'Sincronizar Outlook' }))
       expect(syncOutlookNow).toHaveBeenCalled()
-      expect(await screen.findByText('Outlook sincronizado: 1 calendario revisado.')).toBeInTheDocument()
+      expect(await screen.findByText(/volverá a leer todos los calendarios en menos de un minuto/)).toBeInTheDocument()
+      expect(screen.getByText(/Programa de la oficina conectado \(hace 1 min\)/)).toBeInTheDocument()
     })
   })
 })

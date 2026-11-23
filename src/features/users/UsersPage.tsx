@@ -4,7 +4,15 @@ import { generateTemporaryPassword, ROLE_LABELS } from '../../lib/auth'
 import { toSpanishMessage } from '../../lib/errors'
 import { useAuth, type Profile } from '../auth/AuthContext'
 import { listUsers, resetUserPassword, setUserActive } from './api'
-import { describeOutlookStatus, listOutlookLinks, syncOutlookNow, type OutlookLink } from './outlook'
+import {
+  describeAgent,
+  describeOutlookStatus,
+  getAgentStatus,
+  listOutlookLinks,
+  syncOutlookNow,
+  type AgentStatus,
+  type OutlookLink,
+} from './outlook'
 import { CreateUserForm, type Credentials } from './CreateUserForm'
 import { EditUserForm } from './EditUserForm'
 import styles from './UsersPage.module.css'
@@ -18,6 +26,7 @@ export function UsersPage() {
   const [users, setUsers] = useState<Profile[] | null>(null)
   const [outlookLinks, setOutlookLinks] = useState<Map<string, OutlookLink>>(new Map())
   const [syncing, setSyncing] = useState(false)
+  const [agent, setAgent] = useState<AgentStatus | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [message, setMessage] = useState<Message | null>(null)
   const [creating, setCreating] = useState(false)
@@ -29,11 +38,12 @@ export function UsersPage() {
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([listUsers(), listOutlookLinks()]).then(
-      ([data, links]) => {
+    Promise.all([listUsers(), listOutlookLinks(), getAgentStatus().catch(() => null)]).then(
+      ([data, links, agentStatus]) => {
         if (cancelled) return
         setUsers(data)
         setOutlookLinks(new Map(links.map((link) => [link.user_id, link])))
+        setAgent(agentStatus)
         setLoadError(null)
       },
       (err) => {
@@ -92,10 +102,11 @@ export function UsersPage() {
     setMessage(null)
     setSyncing(true)
     try {
-      const summary = await syncOutlookNow()
-      const parts = [`${summary.usuarios} calendario${summary.usuarios === 1 ? '' : 's'} revisado${summary.usuarios === 1 ? '' : 's'}`]
-      if (summary.error > 0) parts.push(`${summary.error} con problemas (vea el estado de cada usuario)`)
-      setMessage({ type: summary.error > 0 ? 'error' : 'success', text: `Outlook sincronizado: ${parts.join(', ')}.` })
+      await syncOutlookNow()
+      setMessage({
+        type: 'success',
+        text: 'Listo. El programa de la oficina volverá a leer todos los calendarios en menos de un minuto. Recargue esta página para ver el resultado.',
+      })
       reload()
     } catch (err) {
       setMessage({ type: 'error', text: toSpanishMessage(err) })
@@ -138,6 +149,12 @@ export function UsersPage() {
           </div>
         )}
       </div>
+
+      {outlookLinks.size > 0 && agent && (
+        <p className={describeAgent(agent).ok ? `muted ${styles.agent}` : 'alert alert-warning'} role="status">
+          <span className="outlook-mark" aria-hidden="true" /> {describeAgent(agent).label}
+        </p>
+      )}
 
       {message && (
         <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-error'}`} role="status">

@@ -70,3 +70,9 @@
   margin: 0;
   font-size: var(--text-sm);
 }
+
+/* Estado del programa de la oficina que lee Outlook. */
+.agent {
+  margin: 0;
+  font-size: var(--text-sm);
+}

@@ -427,7 +427,7 @@ enabled = true
 [functions.admin-users]
 verify_jwt = false
 
-# Sincronización de Outlook. La llama pg_cron con un token propio (x-sync-token)
-# o el admin con su sesión; ambos se validan dentro de la función.
-[functions.outlook-sync]
+# Recibe las reuniones de Outlook desde el script de la oficina (VM de Exchange).
+# Se valida con su propio token (x-agent-token) dentro de la función.
+[functions.outlook-agent]
 verify_jwt = false

@@ -69,22 +69,25 @@ Las reuniones del calendario de Outlook de cada persona se ven en el Calendario 
 
 **Cómo funciona**
 - El admin pone el **correo de Outlook** de cada usuario en **Usuarios** (al crearlo o al editarlo). Sin correo, ese usuario no se sincroniza.
-- La Edge Function `outlook-sync` lee los calendarios por **EWS** (`https://neptune.gemconsulting.inc/EWS/Exchange.asmx`) con la cuenta de servicio `svccalendario@gemconsulting.inc`. Esa cuenta tiene permiso de **Revisor** (solo lectura) sobre la carpeta Calendario de cada persona. La guía para TI está en el artifact "Alta de svccalendario".
-- **pg_cron** la llama **cada minuto** (tarea `outlook-sync`, función `private.request_outlook_sync()`, por `pg_net`). En cada llamada pregunta a Exchange qué cambió (`SyncFolderItems`, liviano). Si cambió algo, vuelve a leer las reuniones de **un mes atrás a tres meses adelante** (`FindItem` con `CalendarView` y luego `GetItem`) y las reemplaza. Además hace una lectura completa al día.
+- La lectura la hace un **script de PowerShell dentro de la empresa** (`agente/sincronizar-calendario.ps1`), en la VM de Exchange, como tarea programada **cada minuto**. Corre con la cuenta de servicio `svccalendario` (permiso de **Revisor** sobre la carpeta Calendario de cada persona) y se conecta a EWS por la red interna con la sesión de Windows de la tarea: **no guarda contraseñas**.
+- El script envía las reuniones a la Edge Function `outlook-agent` por HTTPS (solo conexiones de salida; el firewall de Exchange no se abre). Se autentica con el token `OUTLOOK_AGENT_TOKEN`, que solo permite pedir la lista de usuarios a sincronizar y guardar sus reuniones.
+- En cada pasada pregunta a Exchange qué cambió (`SyncFolderItems`, liviano). Si cambió algo, vuelve a leer las reuniones de **un mes atrás a tres meses adelante** (`FindItem` con `CalendarView` y luego `GetItem`) y las reemplaza. Además hace una lectura completa al día.
 - Se guardan en `outlook_events` (cada repetición por separado). Cada persona ve las suyas y el admin, las de los calendarios que elige. Se **omiten las reuniones privadas**. No generan avisos previos ni notificaciones, y no aparecen en el calendario general.
 - En el calendario se ven con fondo azul y borde punteado, con la marca "Outlook". El detalle muestra organizador, asistentes, respuesta y el botón **Unirse a la reunión** (Teams, Zoom o Meet, si la invitación trae el enlace).
-- En **Usuarios** se ve el estado de cada persona: sincronizado, pendiente, **sin permiso en Exchange**, buzón no encontrado o error. El botón **Sincronizar Outlook** lee todo de inmediato.
+- En **Usuarios** se ve si el programa de la oficina está conectado y el estado de cada persona: sincronizado, pendiente, **sin permiso en Exchange**, buzón no encontrado o error. **Sincronizar Outlook** pide releer todo en la próxima pasada.
 - Para sumar a alguien: (1) TI le da a la cuenta de servicio permiso de Revisor sobre su calendario; (2) se pone su correo de Outlook en Usuarios.
 
-**Configuración (una sola vez, en el proyecto real)**
-1. Secretos de la función (Supabase > Edge Functions > Secrets): `EWS_USER` (`svccalendario@gemconsulting.inc`), `EWS_PASSWORD` (la contraseña de la cuenta de servicio, **solo aquí**, nunca en el código ni en archivos) y `OUTLOOK_SYNC_TOKEN` (un valor aleatorio largo). Opcional: `EWS_URL` si cambia la dirección de EWS.
-2. Dos secretos en **Vault** para que pg_cron llame a la función: `outlook_sync_url` (`https://kpufmrodkwkvaljxhewj.supabase.co/functions/v1/outlook-sync`) y `outlook_sync_token` (el mismo valor de `OUTLOOK_SYNC_TOKEN`). Mientras falten, la tarea no llama a la función.
-3. Publicar la función: `npm run remoto -- functions deploy outlook-sync --use-api`.
+**Por qué corre en la oficina:** la primera versión leía Exchange desde Supabase (Estados Unidos), pero el firewall de Exchange no acepta esas conexiones. Correrlo adentro evita abrir el firewall y deja la contraseña de la cuenta de servicio solo en el Programador de tareas de la VM.
+
+**Instalación (TI, una sola vez):** guía "Programa de Outlook para el Calendario GEM" (artifact). En resumen: copiar `sincronizar-calendario.ps1` y `configuracion.json` a `C:\CalendarioGEM`, dar a `svccalendario` el derecho "Iniciar sesión como proceso por lotes" en esa VM y crear la tarea programada que corre cada minuto como `svccalendario`.
+- `agente/configuracion.json` lleva el token y **no se sube a Git** (hay una plantilla: `configuracion.ejemplo.json`). Se entrega a TI en persona o por una carpeta interna, nunca por correo.
+- Pruebas del script (sin Exchange ni Supabase, simulados): `npm run test:agente` (Windows PowerShell 5.1, como en el servidor).
+- Registro: `C:\CalendarioGEM\registro.log` en la VM (se rota a los 2 MB).
 
 **Si algo falla**
-- "Sin permiso en Exchange": falta el permiso de Revisor de esa persona (ver la guía de TI).
-- "Exchange rechazó el usuario o la contraseña": revisar `EWS_USER` / `EWS_PASSWORD`, o si la cuenta de servicio está bloqueada o se desactivó la autenticación básica de EWS.
-- Registros: Supabase > Edge Functions > `outlook-sync` > Logs, y la tabla `cron.job_run_details`.
+- Usuarios dice "El programa de la oficina no se conecta desde…": revisar la tarea programada en la VM (`Get-ScheduledTaskInfo 'Calendario GEM - Outlook'`) y el registro.
+- "Sin permiso en Exchange": falta el permiso de Revisor de esa persona.
+- "Exchange no aceptó la cuenta de la tarea": la tarea no está corriendo como `svccalendario`, o cambió su contraseña (actualizarla en la tarea programada).
 
 ## Instalar la app (teléfono o computadora)
 

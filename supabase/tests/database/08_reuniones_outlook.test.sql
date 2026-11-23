@@ -2,7 +2,7 @@
 -- reuniones, y cómo guarda la sincronización (solo service_role).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(24);
+select plan(27);
 
 insert into auth.users (id, email, aud, role) values
   ('11111111-1111-1111-1111-111111111111', 'test.admin@calendariogem.local', 'authenticated', 'authenticated'),
@@ -70,10 +70,7 @@ select throws_ok(
 reset role;
 set local role service_role;
 
-select is((select public.outlook_claim_run()), true, 'La primera ejecución toma el turno');
-select is((select public.outlook_claim_run()), null, 'Una segunda ejecución no puede tomarlo mientras dure');
-select public.outlook_release_run();
-select is((select public.outlook_claim_run()), true, 'Al liberarlo, se puede volver a tomar');
+select lives_ok($$select public.outlook_agent_checkin('1.0', 'NEPTUNE')$$, 'El script de la oficina avisa que está vivo');
 
 select is(
   (select count(*)::int from public.outlook_sync_targets() where needs_full),
@@ -131,6 +128,10 @@ select is(
   (select count(*)::int from public.search_outlook_events(array['22222222-2222-2222-2222-222222222222']::uuid[], 'comite cambio')),
   1, 'La búsqueda ignora tildes y exige todas las palabras'
 );
+select throws_ok($$select * from public.outlook_agent_status()$$, '42501', null,
+  'Un usuario no ve el estado del script de la oficina');
+select throws_ok($$select public.admin_request_outlook_sync()$$, '42501', null,
+  'Un usuario no puede pedir una sincronización');
 
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
 select is(
@@ -139,6 +140,15 @@ select is(
      '2026-11-01', '2027-01-01')),
   2, 'El admin ve las reuniones de los calendarios que elige'
 );
+select is((select version from public.outlook_agent_status()), '1.0', 'El admin ve cuándo se conectó el script');
+select lives_ok($$select public.admin_request_outlook_sync('22222222-2222-2222-2222-222222222222')$$,
+  'El admin pide volver a leer el calendario de Luis');
+reset role;
+select is(
+  (select needs_full from public.outlook_sync_targets('22222222-2222-2222-2222-222222222222')), true,
+  'En la próxima pasada se lee todo el calendario de Luis'
+);
+set local role authenticated;
 
 -- ---------------------------------------------------------------------------
 -- Sin permiso en Exchange y quitar el correo

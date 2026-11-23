@@ -603,6 +603,13 @@ Pedido del usuario: que las reuniones que se agendan en Outlook se vean en el Ca
 - Capturas en local con reuniones de ejemplo: Semana, Mes, detalle, Usuarios, edición y celular (sin desbordes a 390px), en claro y oscuro.
 - Pendiente: la prueba real con el calendario de Luis (12.3), cuando estén los secretos de la cuenta de servicio.
 
+**Cambio del 23/11/2026: la lectura corre dentro de la empresa** (`supabase/migrations/20261126120000_outlook_agente.sql`)
+- En la prueba real, Supabase no logró conectarse con Exchange: el firewall de neptune no acepta conexiones desde Estados Unidos (desde Costa Rica sí responde). En vez de abrir el firewall, se acordó correr la lectura en la **VM de Exchange**.
+- **Script de PowerShell** `agente/sincronizar-calendario.ps1` (compatible con Windows PowerShell 5.1, sin instalar nada): tarea programada cada minuto como `svccalendario`, se conecta a EWS con la sesión de Windows de la tarea (sin contraseñas guardadas) y envía las reuniones a la nueva Edge Function `outlook-agent` por HTTPS (solo salida), con su propio token.
+- Se quitaron la función `outlook-sync`, la tarea de pg_cron, los secretos de Vault y **la contraseña de la cuenta de servicio de Supabase**.
+- Usuarios muestra si el programa de la oficina está conectado (avisa si pasan más de 5 minutos sin conectarse). "Sincronizar Outlook" ahora pide releer todo en la próxima pasada (`admin_request_outlook_sync`).
+- Pruebas: base de datos 232 (la 08 tiene 27); `npm run check` 186; script 28 (`npm run test:agente`, en PowerShell 5.1 y 7). Se probó la Edge Function con el token real y con uno falso (rechazado). Desde la computadora de Luis por el hotspot el script llegó a Exchange, pero Exchange no acepta la sesión de Windows desde fuera de la red: la prueba real se hace con el script instalado en la VM.
+
 ## Lista de verificación de la entrega
 
 - [x] Fases 0 a 8 aprobadas: proyecto entregado (2026-11-17).

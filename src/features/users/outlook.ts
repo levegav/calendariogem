@@ -1,5 +1,3 @@
-import { FunctionsHttpError } from '@supabase/supabase-js'
-import { AppError } from '../../lib/errors'
 import { supabase } from '../../lib/supabase'
 
 export type OutlookStatus = 'pendiente' | 'ok' | 'sin_permiso' | 'no_encontrado' | 'error'
@@ -47,25 +45,42 @@ export async function setOutlookEmail(userId: string, email: string): Promise<vo
   if (error) throw error
 }
 
-export interface SyncSummary {
-  usuarios: number
-  sin_cambios: number
-  actualizado: number
-  en_espera: number
-  error: number
+/**
+ * Pide volver a leer todas las reuniones (o las de un usuario). Lo hace el
+ * script de la oficina en su próxima pasada (menos de un minuto).
+ */
+export async function syncOutlookNow(userId?: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_request_outlook_sync', userId ? { p_user_id: userId } : {})
+  if (error) throw error
 }
 
-/** Lee ya mismo todas las reuniones (o las de un usuario) desde Outlook. */
-export async function syncOutlookNow(userId?: string): Promise<SyncSummary> {
-  const { data, error } = await supabase.functions.invoke<SyncSummary>('outlook-sync', {
-    body: userId ? { user_id: userId } : {},
-  })
-  if (error instanceof FunctionsHttpError) {
-    const payload = await (error.context as Response).json().catch(() => null)
-    throw new AppError(payload?.error ?? 'No se pudo sincronizar con Outlook. Intente de nuevo.')
-  }
+/** Script de la oficina que lee Outlook: cuándo se conectó por última vez. */
+export interface AgentStatus {
+  seen_at: string | null
+  version: string | null
+}
+
+export async function getAgentStatus(): Promise<AgentStatus> {
+  const { data, error } = await supabase.rpc('outlook_agent_status')
   if (error) throw error
-  return data as SyncSummary
+  return data[0] ?? { seen_at: null, version: null }
+}
+
+/** Si no se conecta en este tiempo, se considera detenido (corre cada minuto). */
+export const AGENT_STALE_MS = 5 * 60_000
+
+/** "Conectado (hace 1 min)", "Sin conexión desde…" o "Todavía no se ha conectado". */
+export function describeAgent(status: AgentStatus, now: Date = new Date()): { label: string; ok: boolean } {
+  if (!status.seen_at) return { label: 'El programa de la oficina todavía no se ha conectado.', ok: false }
+  const seen = new Date(status.seen_at)
+  const minutes = Math.max(0, Math.round((now.getTime() - seen.getTime()) / 60_000))
+  if (now.getTime() - seen.getTime() > AGENT_STALE_MS) {
+    return {
+      label: `El programa de la oficina no se conecta desde el ${seen.toLocaleString('es-CR', { dateStyle: 'short', timeStyle: 'short' })}. Revise la tarea programada en el servidor de Exchange.`,
+      ok: false,
+    }
+  }
+  return { label: `Programa de la oficina conectado (${minutes <= 1 ? 'hace 1 min' : `hace ${minutes} min`}).`, ok: true }
 }
 
 /** Texto y estilo del estado, para la lista de usuarios. */

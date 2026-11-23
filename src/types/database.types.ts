@@ -277,6 +277,9 @@ isOneToOne: false
 "admin_flag_password_reset":
 { Args: { "p_user_id": string }; Returns: undefined
                            },
+"admin_request_outlook_sync":
+{ Args: { "p_user_id"?: string }; Returns: undefined
+                           },
 "admin_set_outlook_email":
 { Args: { "p_email": string,"p_user_id": string }; Returns: undefined
                            },
@@ -333,11 +336,13 @@ isOneToOne: false
 "complete_password_change":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
-"outlook_claim_run":
-{ Args: { "p_seconds"?: number }; Returns: boolean
+"outlook_agent_checkin":
+{ Args: { "p_host": string,"p_version": string }; Returns: undefined
                            },
-"outlook_release_run":
-{ Args: Record<PropertyKey, never>; Returns: undefined
+"outlook_agent_status":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "seen_at": string,"version": string
+            }[]
                            },
 "outlook_save_result":
 { Args: { "p_detail"?: string,"p_events"?: Json,"p_full"?: boolean,"p_status": string,"p_sync_state"?: string,"p_user_id": string }; Returns: undefined

@@ -32,3 +32,7 @@ supabase/.temp
 *.njsproj
 *.sln
 *.sw?
+
+# Configuración real del script de Outlook (lleva el token): nunca se sube
+agente/configuracion.json
+agente/registro.log*
