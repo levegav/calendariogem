@@ -5,7 +5,7 @@ import { fakeAuth, fakeProfile, renderWithAuth } from '../../test/fakeAuth'
 import { listCategories } from '../categories/api'
 import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder, searchReminders, setMyAlerts } from './api'
 import { CalendarPage } from './CalendarPage'
-import { listOutlookEvents, outlookToEvent, searchOutlookEvents } from './outlook'
+import { listOutlookEvents, outlookToEvent, searchOutlookEvents, subscribeToOutlookChanges } from './outlook'
 import { fakeEvent } from './testEvents'
 
 vi.mock('./api', () => ({
@@ -22,6 +22,7 @@ vi.mock('./outlook', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./outlook')>()),
   listOutlookEvents: vi.fn(),
   searchOutlookEvents: vi.fn(),
+  subscribeToOutlookChanges: vi.fn(() => () => {}),
 }))
 
 const me = fakeProfile({ id: 'yo', full_name: 'Luis Vega', color: '#2563eb' })
@@ -506,6 +507,23 @@ describe('CalendarPage', () => {
       await userEvent.click(screen.getByRole('checkbox', { name: 'Reunión de Outlook' }))
       expect(screen.queryByRole('button', { name: /Comité de proyecto/ })).not.toBeInTheDocument()
       expect(screen.getByRole('button', { name: /Reunión de equipo/ })).toBeInTheDocument()
+    })
+
+    it('cuando llegan cambios de Outlook del calendario que se ve, se recarga solo', async () => {
+      let notify: (userId: string | null) => void = () => {}
+      vi.mocked(subscribeToOutlookChanges).mockImplementation((onChange) => {
+        notify = onChange
+        return () => {}
+      })
+      renderAt('/')
+      await screen.findByRole('button', { name: /Reunión de equipo/ })
+      expect(screen.queryByRole('button', { name: /Comité de proyecto/ })).not.toBeInTheDocument()
+
+      vi.mocked(listOutlookEvents).mockResolvedValue([comite])
+      notify('otra-persona') // un calendario que no se está viendo: no recarga
+      notify('yo')
+      expect(await screen.findByRole('button', { name: /Comité de proyecto/ }, { timeout: 3000 })).toBeInTheDocument()
+      expect(listOutlookEvents).toHaveBeenCalledTimes(2)
     })
 
     it('si fallan las reuniones de Outlook, los recordatorios se muestran igual', async () => {

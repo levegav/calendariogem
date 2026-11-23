@@ -605,6 +605,11 @@ Pedido del usuario: que las reuniones que se agendan en Outlook se vean en el Ca
 
 **Prueba real (23/11/2026):** TI instaló el script en la VM de Exchange (GC-NEPTUNE). Primero Exchange respondió 401: el *loopback check* de Windows rechaza la autenticación del servidor contra sí mismo con el nombre `neptune.gemconsulting.inc`. Se agregó ese nombre a `BackConnectionHostNames` (documentado en la guía de TI) y la primera lectura completa trajo las reuniones de Luis (estado "ok", programa conectado cada minuto).
 
+**Ajuste tras la aprobación (23/11/2026): sin recargar la página** (`supabase/migrations/20261127120000_outlook_tiempo_real.sql`)
+- Pedido de Luis: los cambios de Outlook llegaban cada minuto, pero solo se veían al refrescar la página.
+- `outlook_links` entra a Realtime y el calendario se recarga solo cuando llegan cambios de un calendario que se está viendo (también al reconectarse). `outlook_save_result` ya no actualiza la fila en las pasadas sin cambios, para no recargar cada minuto sin motivo; "Último cambio" reemplaza a "Última consulta" en Usuarios.
+- Pruebas: base de datos 234 (la 08 tiene 29); `npm run check` 187.
+
 **Cambio del 23/11/2026: la lectura corre dentro de la empresa** (`supabase/migrations/20261126120000_outlook_agente.sql`)
 - En la prueba real, Supabase no logró conectarse con Exchange: el firewall de neptune no acepta conexiones desde Estados Unidos (desde Costa Rica sí responde). En vez de abrir el firewall, se acordó correr la lectura en la **VM de Exchange**.
 - **Script de PowerShell** `agente/sincronizar-calendario.ps1` (compatible con Windows PowerShell 5.1, sin instalar nada): tarea programada cada minuto como `svccalendario`, se conecta a EWS con la sesión de Windows de la tarea (sin contraseñas guardadas) y envía las reuniones a la nueva Edge Function `outlook-agent` por HTTPS (solo salida), con su propio token.

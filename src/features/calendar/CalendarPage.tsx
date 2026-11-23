@@ -37,7 +37,13 @@ import { visibleRange } from './layout'
 import { MonthView } from './MonthView'
 import { ReminderFormDialog } from './ReminderFormDialog'
 import { SearchResults } from './SearchResults'
-import { listOutlookEvents, OUTLOOK_CATEGORY, OUTLOOK_SEARCH_LIMIT, searchOutlookEvents } from './outlook'
+import {
+  listOutlookEvents,
+  OUTLOOK_CATEGORY,
+  OUTLOOK_SEARCH_LIMIT,
+  searchOutlookEvents,
+  subscribeToOutlookChanges,
+} from './outlook'
 import { OutlookDetailsDialog } from './OutlookDetailsDialog'
 import { newReminderValues, valuesFromEvent, type ReminderFormValues } from './reminderForm'
 import { TimeGridView } from './TimeGridView'
@@ -48,6 +54,8 @@ const VIEW_STORAGE_KEY = 'vista-calendario'
 /** Se busca al dejar de escribir por este tiempo, y desde esta cantidad de letras. */
 const SEARCH_DELAY_MS = 300
 const MIN_SEARCH_LENGTH = 2
+/** Si llegan varios cambios de Outlook seguidos, se recarga una sola vez. */
+const OUTLOOK_RELOAD_DELAY_MS = 800
 
 function readSavedView(): CalendarView {
   try {
@@ -234,6 +242,23 @@ export function CalendarPage() {
       cancelled = true
     }
   }, [userId, visibleKey, range.from, range.to, requestKey])
+
+  // Reuniones de Outlook: cuando llegan cambios de un calendario que se está
+  // viendo, se recarga sola (sin refrescar la página).
+  useEffect(() => {
+    if (!userId) return
+    const visible = new Set(visibleKey.split(','))
+    let timer: number | undefined
+    const unsubscribe = subscribeToOutlookChanges((changedUserId) => {
+      if (changedUserId && !visible.has(changedUserId)) return
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => setReloadKey((key) => key + 1), OUTLOOK_RELOAD_DELAY_MS)
+    })
+    return () => {
+      window.clearTimeout(timer)
+      unsubscribe()
+    }
+  }, [userId, visibleKey])
 
   useEffect(() => {
     const timer = window.setTimeout(() => setQuery(searchText.trim()), SEARCH_DELAY_MS)

@@ -26,6 +26,7 @@ vi.mock('../features/users/outlook', async (importOriginal) => ({
 vi.mock('../features/calendar/outlook', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../features/calendar/outlook')>()),
   listOutlookEvents: vi.fn(() => Promise.resolve([])),
+  subscribeToOutlookChanges: vi.fn(() => () => {}),
 }))
 
 const listedUsers = [

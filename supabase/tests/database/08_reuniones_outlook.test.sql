@@ -2,7 +2,7 @@
 -- reuniones, y cómo guarda la sincronización (solo service_role).
 begin;
 create extension if not exists pgtap with schema extensions;
-select plan(27);
+select plan(29);
 
 insert into auth.users (id, email, aud, role) values
   ('11111111-1111-1111-1111-111111111111', 'test.admin@calendariogem.local', 'authenticated', 'authenticated'),
@@ -17,6 +17,11 @@ create function pg_temp.events_of(p_user uuid) returns int language sql security
   select count(*)::int from public.outlook_events where user_id = p_user;
 $$;
 grant execute on function pg_temp.events_of(uuid) to service_role, authenticated;
+-- Posición física de la fila: cambia si la fila se actualiza.
+create function pg_temp.link_row(p_user uuid) returns text language sql security definer as $$
+  select ctid::text from public.outlook_links where user_id = p_user;
+$$;
+grant execute on function pg_temp.link_row(uuid) to service_role, authenticated;
 
 -- La base local puede tener datos de demostración.
 delete from public.outlook_links;
@@ -93,9 +98,16 @@ select is(
   1, 'Ya no necesita lectura completa y conserva el estado de EWS'
 );
 
+select set_config('test.fila', pg_temp.link_row('22222222-2222-2222-2222-222222222222'), true);
 select public.outlook_save_result('22222222-2222-2222-2222-222222222222', 'ok', null, 'estado-2', null, false);
 select is(pg_temp.events_of('22222222-2222-2222-2222-222222222222'),
   2, 'Sin cambios, las reuniones se conservan');
+select is(pg_temp.link_row('22222222-2222-2222-2222-222222222222'), current_setting('test.fila'),
+  'Sin cambios no se toca su fila (Realtime no avisa a las páginas abiertas)');
+select is(
+  (select sync_state from public.outlook_sync_targets('22222222-2222-2222-2222-222222222222')), 'estado-2',
+  'Sin cambios igual se guarda el estado nuevo de EWS'
+);
 
 select public.outlook_save_result('22222222-2222-2222-2222-222222222222', 'ok', null, 'estado-3', '[
   {"item_id":"A","subject":"Comité (cambió)","start_at":"2026-12-01T15:00:00Z","end_at":"2026-12-01T17:00:00Z"}

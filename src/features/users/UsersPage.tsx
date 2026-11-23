@@ -234,7 +234,7 @@ export function UsersPage() {
                     {outlook && outlookStatus && (
                       <span
                         className={`badge badge-${outlookStatus.tone}`}
-                        title={outlook.checked_at ? `Última consulta: ${new Date(outlook.checked_at).toLocaleString('es-CR')}` : undefined}
+                        title={outlook.checked_at ? `Último cambio: ${new Date(outlook.checked_at).toLocaleString('es-CR')}` : undefined}
                       >
                         {outlookStatus.label}
                       </span>

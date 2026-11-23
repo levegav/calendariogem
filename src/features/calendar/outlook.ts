@@ -96,6 +96,31 @@ export async function searchOutlookEvents(userIds: string[], query: string, limi
   return data.map(outlookToEvent)
 }
 
+/**
+ * Avisa cuando llegaron reuniones nuevas de Outlook de alguien (o cambió su
+ * estado), para recargar el calendario sin que la persona refresque la página.
+ * RLS decide qué cambios recibe cada quien. Al (re)conectarse también avisa con
+ * null, por si algo cambió mientras no había conexión.
+ */
+export function subscribeToOutlookChanges(onChange: (userId: string | null) => void): () => void {
+  let connected = false
+  const channel = supabase
+    .channel('reuniones-outlook')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'outlook_links' }, (payload) => {
+      const row = (payload.new && 'user_id' in payload.new ? payload.new : payload.old) as { user_id?: string }
+      onChange(row?.user_id ?? null)
+    })
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        if (connected) onChange(null) // reconexión
+        connected = true
+      }
+    })
+  return () => {
+    void supabase.removeChannel(channel)
+  }
+}
+
 /** Respuesta de un asistente, en español. */
 export const RESPONSE_LABELS: Record<string, string> = {
   Organizer: 'Organizador',
