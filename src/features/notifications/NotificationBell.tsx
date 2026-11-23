@@ -110,6 +110,10 @@ export function NotificationBell({ align = 'start' }: { align?: 'start' | 'end' 
                         >
                           {n.actor ? (
                             <UserAvatar name={n.actor.full_name} color={n.actor.color} size={32} />
+                          ) : n.kind === 'outlook' ? (
+                            <span className={`${styles.alertIcon} ${styles.outlookIcon}`} aria-hidden="true">
+                              <span className="outlook-mark" />
+                            </span>
                           ) : (
                             <span className={styles.alertIcon} aria-hidden="true">
                               <Icon name="bell" size={16} />

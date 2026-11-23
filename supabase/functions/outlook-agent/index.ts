@@ -98,6 +98,8 @@ Deno.serve(async (req) => {
         p_sync_state: optionalText(body.sync_state, 20000),
         p_events: events,
         p_full: body.full === true,
+        // Fin de la ventana leída (script 1.1+): una reunión que falta y empezaba después no se da por borrada.
+        p_window_to: typeof body.window_to === 'string' && !Number.isNaN(Date.parse(body.window_to)) ? body.window_to : null,
       })
       if (error) throw error
       return json(200, { ok: true })

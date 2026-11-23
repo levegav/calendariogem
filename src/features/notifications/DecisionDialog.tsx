@@ -23,6 +23,7 @@ export function DecisionDialog({
   const [error, setError] = useState<string | null>(null)
   const owner = decision.former_owner?.full_name ?? 'El creador'
   const general = decision.reason === 'general_eliminado'
+  const outlook = decision.reason === 'outlook_cancelada'
   const deleted = decision.reason === 'eliminado' || general
 
   async function resolve(keep: boolean) {
@@ -38,9 +39,9 @@ export function DecisionDialog({
 
   return (
     <Modal
-      title={deleted ? 'Recordatorio eliminado' : 'Creador desactivado'}
+      title={outlook ? 'Reunión cancelada en Outlook' : deleted ? 'Recordatorio eliminado' : 'Creador desactivado'}
       dismissible={false}
-      accentColor={general ? 'var(--rainbow)' : decision.former_owner?.color}
+      accentColor={outlook ? 'var(--outlook)' : general ? 'var(--rainbow)' : decision.former_owner?.color}
       onClose={() => {}}
       footer={
         <>
@@ -66,7 +67,12 @@ export function DecisionDialog({
           </p>
         )}
         <p>
-          {general ? (
+          {outlook ? (
+            <>
+              {decision.outlook_organizer ? <strong>{decision.outlook_organizer}</strong> : 'Quien la organizaba'} canceló o
+              quitó de Outlook una reunión a la que le invitaron.
+            </>
+          ) : general ? (
             <>
               <strong>{owner}</strong> eliminó un recordatorio del calendario general.
             </>
@@ -86,7 +92,9 @@ export function DecisionDialog({
           {decision.location && <span className="muted">{decision.location}</span>}
         </div>
         <p>
-          {general
+          {outlook
+            ? '¿Quiere conservarla como recordatorio en su calendario? Será suyo: podrá modificarlo o eliminarlo.'
+            : general
             ? '¿Quiere conservar una copia en su calendario personal? La copia será suya: podrá modificarla o eliminarla.'
             : '¿Quiere conservar una copia en su calendario? La copia será suya: podrá modificarla o eliminarla.'}
         </p>

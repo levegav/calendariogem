@@ -7,7 +7,7 @@ import type { Person } from '../calendar/types'
  */
 export interface PendingDecision {
   id: number
-  reason: 'eliminado' | 'creador_desactivado' | 'general_eliminado'
+  reason: 'eliminado' | 'creador_desactivado' | 'general_eliminado' | 'outlook_cancelada'
   title: string
   start_at: string
   end_at: string | null
@@ -15,10 +15,12 @@ export interface PendingDecision {
   location: string | null
   created_at: string
   former_owner: Person | null
+  /** Quién organizaba la reunión de Outlook cancelada. */
+  outlook_organizer: string | null
 }
 
 const COLUMNS =
-  'id, reason, title, start_at, end_at, all_day, location, created_at, ' +
+  'id, reason, title, start_at, end_at, all_day, location, created_at, outlook_organizer, ' +
   'former_owner:profiles!reminder_decisions_former_owner_id_fkey(id, full_name, color)'
 
 /** Pendientes, de la más vieja a la más nueva (se presentan una por una). */

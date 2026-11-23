@@ -5,7 +5,13 @@ import { fakeAuth, fakeProfile, renderWithAuth } from '../../test/fakeAuth'
 import { listCategories } from '../categories/api'
 import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder, searchReminders, setMyAlerts } from './api'
 import { CalendarPage } from './CalendarPage'
-import { listOutlookEvents, outlookToEvent, searchOutlookEvents, subscribeToOutlookChanges } from './outlook'
+import {
+  listOutlookEvents,
+  outlookToEvent,
+  searchOutlookEvents,
+  setOutlookAlerts,
+  subscribeToOutlookChanges,
+} from './outlook'
 import { fakeEvent } from './testEvents'
 
 vi.mock('./api', () => ({
@@ -23,6 +29,7 @@ vi.mock('./outlook', async (importOriginal) => ({
   listOutlookEvents: vi.fn(),
   searchOutlookEvents: vi.fn(),
   subscribeToOutlookChanges: vi.fn(() => () => {}),
+  setOutlookAlerts: vi.fn(),
 }))
 
 const me = fakeProfile({ id: 'yo', full_name: 'Luis Vega', color: '#2563eb' })
@@ -67,6 +74,7 @@ beforeEach(() => {
 /** Reunión de Outlook de ejemplo (en el calendario de Luis). */
 const comite = outlookToEvent({
   id: 7,
+  event_key: 'UID-7|',
   subject: 'Comité de proyecto',
   start_at: '2026-11-17T15:00:00Z',
   end_at: '2026-11-17T16:00:00Z',
@@ -524,6 +532,28 @@ describe('CalendarPage', () => {
       notify('yo')
       expect(await screen.findByRole('button', { name: /Comité de proyecto/ }, { timeout: 3000 })).toBeInTheDocument()
       expect(listOutlookEvents).toHaveBeenCalledTimes(2)
+    })
+
+    it('en mis reuniones muestra los avisos copiados de Outlook y se pueden cambiar', async () => {
+      vi.mocked(setOutlookAlerts).mockResolvedValue(undefined)
+      vi.mocked(listOutlookEvents).mockResolvedValue([{ ...comite, my_alerts: [15] }])
+      renderAt('/')
+      await userEvent.click(await screen.findByRole('button', { name: /Comité de proyecto/ }))
+      const dialog = screen.getByRole('dialog', { name: 'Comité de proyecto' })
+      expect(within(dialog).getByRole('checkbox', { name: '15 min antes' })).toBeChecked()
+      expect(within(dialog).getByText(/Copiados del recordatorio de Outlook/)).toBeInTheDocument()
+
+      await userEvent.click(within(dialog).getByRole('checkbox', { name: '1 hora antes' }))
+      expect(setOutlookAlerts).toHaveBeenCalledWith('UID-7|', [15, 60])
+      expect(await within(dialog).findByText(/Ya no cambian aunque cambie el recordatorio en Outlook/)).toBeInTheDocument()
+    })
+
+    it('en reuniones de otro calendario (admin) no hay avisos propios', async () => {
+      vi.mocked(listOutlookEvents).mockResolvedValue([{ ...comite, owner: carlos }])
+      renderAt('/')
+      await userEvent.click(await screen.findByRole('button', { name: /Comité de proyecto/ }))
+      const dialog = screen.getByRole('dialog', { name: 'Comité de proyecto' })
+      expect(within(dialog).queryByText('Mis avisos')).not.toBeInTheDocument()
     })
 
     it('si fallan las reuniones de Outlook, los recordatorios se muestran igual', async () => {

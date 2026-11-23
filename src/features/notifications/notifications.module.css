@@ -303,3 +303,8 @@
   display: block;
   margin-top: var(--space-1);
 }
+
+/* Notificaciones de reuniones de Outlook: marca azul en vez de la campana. */
+.outlookIcon {
+  background: color-mix(in srgb, var(--outlook) 14%, var(--color-surface));
+}

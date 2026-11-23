@@ -1,9 +1,12 @@
 import type { Person } from '../calendar/types'
 
-export type NotificationKind = 'etiquetado' | 'quitado' | 'salida' | 'modificado' | 'aviso' | 'general'
+export type NotificationKind = 'etiquetado' | 'quitado' | 'salida' | 'modificado' | 'aviso' | 'general' | 'outlook'
 
 /** Qué pasó en el calendario general. */
 export type GeneralAction = 'publicado' | 'modificado' | 'retirado' | 'eliminado'
+
+/** Qué pasó con una reunión de Outlook (de otra persona). */
+export type OutlookAction = 'nueva' | 'modificada'
 
 /** Campos que puede indicar una notificación de modificación. */
 export type ChangedField = 'titulo' | 'horario' | 'categoria' | 'ubicacion' | 'descripcion' | 'nota'
@@ -17,8 +20,12 @@ export interface NotificationData {
   before?: { title: string; start_at: string; end_at: string | null; all_day: boolean }
   /** "aviso": cuánto antes era el aviso. */
   minutes_before?: number
-  /** "general": qué pasó en el calendario general. */
-  accion?: GeneralAction
+  /** "general": qué pasó en el calendario general; "outlook": qué pasó con la reunión. */
+  accion?: GeneralAction | OutlookAction
+  /** "outlook": quién organiza la reunión. */
+  organizer?: string | null
+  /** "aviso": es de una reunión de Outlook. */
+  outlook?: boolean
 }
 
 export interface AppNotification {

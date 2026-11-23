@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Modal } from '../../components/Modal'
+import { AlertsPicker } from '../notifications/AlertsPicker'
 import { describeWhen } from './eventText'
 import styles from './EventDetailsDialog.module.css'
 import { OUTLOOK_COLOR, RESPONSE_LABELS, SHOW_AS_LABELS } from './outlook'
@@ -9,17 +11,39 @@ import type { CalendarEvent } from './types'
 export function OutlookDetailsDialog({
   event,
   currentUserId,
+  onAlertsChange,
   onClose,
 }: {
   event: CalendarEvent
   currentUserId: string
+  /** Guarda los avisos propios (solo en las reuniones del calendario de quien la ve). */
+  onAlertsChange: (minutes: number[]) => Promise<void>
   onClose: () => void
 }) {
+  const [alerts, setAlerts] = useState(event.my_alerts)
+  const [fromOutlook, setFromOutlook] = useState(event.outlook!.alerts_from_outlook)
+  const [alertsStatus, setAlertsStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const info = event.outlook!
   const locationLink = event.location ? asLink(event.location) : null
   const required = info.attendees.filter((a) => !a.optional)
   const optional = info.attendees.filter((a) => a.optional)
   const mine = event.owner.id === currentUserId
+
+  /** Los avisos se guardan al marcarlos; si falla, se vuelve a lo anterior. */
+  async function changeAlerts(minutes: number[]) {
+    const previous = alerts
+    setAlerts(minutes)
+    setAlertsStatus('saving')
+    try {
+      await onAlertsChange(minutes)
+      setFromOutlook(false)
+      setAlertsStatus('saved')
+    } catch {
+      setAlerts(previous)
+      setAlertsStatus('error')
+    }
+  }
+
   const myResponse = info.my_response && info.my_response !== 'Organizer' ? RESPONSE_LABELS[info.my_response] : null
 
   return (
@@ -110,6 +134,31 @@ export function OutlookDetailsDialog({
             </>
           )}
         </dl>
+
+        {mine && !info.is_cancelled && (
+          <div>
+            <AlertsPicker
+              allDay={event.all_day}
+              selected={alerts}
+              onChange={(minutes) => void changeAlerts(minutes)}
+              legend="Mis avisos"
+              disabled={alertsStatus === 'saving'}
+            />
+            <p className={styles.alertsStatus} role="status">
+              {alertsStatus === 'saving' && 'Guardando…'}
+              {alertsStatus === 'saved' && 'Avisos guardados. Ya no cambian aunque cambie el recordatorio en Outlook.'}
+              {alertsStatus === 'error' && (
+                <span className={styles.alertsError}>No se pudieron guardar los avisos. Intente de nuevo.</span>
+              )}
+              {alertsStatus === 'idle' &&
+                (fromOutlook
+                  ? alerts.length > 0
+                    ? 'Copiados del recordatorio de Outlook. Si los cambia aquí, se mantienen los suyos.'
+                    : 'La reunión no tiene recordatorio en Outlook. Puede agregar avisos aquí.'
+                  : 'Avisos elegidos en la app.')}
+            </p>
+          </div>
+        )}
 
         <p className="muted">Viene de Outlook y se actualiza solo. Para cambiarla, hágalo en Outlook.</p>
       </div>

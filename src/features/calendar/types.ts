@@ -52,6 +52,10 @@ export interface OutlookAttendee {
 
 /** Datos propios de una reunión de Outlook. */
 export interface OutlookInfo {
+  /** Identificador permanente de la reunión (sirve para sus avisos). */
+  event_key: string
+  /** Los avisos siguen al recordatorio de Outlook (false = la persona los cambió en la app). */
+  alerts_from_outlook: boolean
   organizer_name: string | null
   organizer_email: string | null
   attendees: OutlookAttendee[]

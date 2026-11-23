@@ -82,6 +82,11 @@ export function notificationText(n: AppNotification): NotificationText {
         default:
           return { text: `${who} publicó ${title} en el calendario general.`, detail: when }
       }
+    case 'outlook': {
+      const organizer = n.data.organizer ? ` (organiza ${n.data.organizer})` : ''
+      if (n.data.accion === 'modificada') return changeText(n, `Cambió la reunión de Outlook ${title}`, when)
+      return { text: `Nueva reunión de Outlook: ${title}${organizer}.`, detail: when }
+    }
     case 'aviso': {
       const moment = alertMoment(n.data.minutes_before ?? 0, Boolean(n.data.all_day))
       return { text: `${moment}: ${title}`, detail: when }

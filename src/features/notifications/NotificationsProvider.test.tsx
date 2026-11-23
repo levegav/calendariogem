@@ -160,6 +160,7 @@ describe('NotificationsProvider y campana', () => {
     const decision = (overrides: Partial<PendingDecision>): PendingDecision => ({
       id: 1,
       reason: 'eliminado',
+      outlook_organizer: null,
       title: 'Comité de compras',
       start_at: '2026-11-20T14:00:00-06:00',
       end_at: null,
@@ -196,6 +197,19 @@ describe('NotificationsProvider y campana', () => {
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
       // Las que encontró al entrar suenan una sola vez.
       expect(playChime).toHaveBeenCalledTimes(1)
+    })
+
+    it('una reunión de Outlook cancelada se puede conservar como recordatorio', async () => {
+      vi.mocked(listNotifications).mockResolvedValue([])
+      vi.mocked(listPendingDecisions).mockResolvedValue([
+        decision({ id: 5, reason: 'outlook_cancelada', title: 'Visita al cliente', former_owner: null, outlook_organizer: 'Ana Mora' }),
+      ])
+      renderApp()
+      const dialog = await screen.findByRole('dialog', { name: 'Reunión cancelada en Outlook' })
+      expect(within(dialog).getByText('Ana Mora')).toBeInTheDocument()
+      expect(within(dialog).getByText(/conservarla como recordatorio/)).toBeInTheDocument()
+      await userEvent.click(within(dialog).getByRole('button', { name: 'Conservar una copia' }))
+      expect(resolveDecision).toHaveBeenCalledWith(5, true)
     })
 
     it('si no se puede guardar la decisión, lo indica y la ventana sigue', async () => {

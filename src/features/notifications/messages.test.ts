@@ -20,6 +20,42 @@ function fake(overrides: Partial<AppNotification>): AppNotification {
 }
 
 describe('notificationText', () => {
+  it('reuniones de Outlook: nueva y modificada', () => {
+    const nueva = fake({
+      kind: 'outlook',
+      actor: null,
+      reminder_id: null,
+      reminder_title: 'Comité de proyecto',
+      data: { start_at: '2026-11-18T14:00:00-06:00', all_day: false, accion: 'nueva', organizer: 'Ana Mora' },
+    })
+    expect(notificationText(nueva)).toEqual({
+      text: 'Nueva reunión de Outlook: «Comité de proyecto» (organiza Ana Mora).',
+      detail: 'mié 18 nov, 2:00 p. m.',
+    })
+    const cambio = fake({
+      kind: 'outlook',
+      actor: null,
+      reminder_title: 'Comité de proyecto',
+      data: {
+        start_at: '2026-11-18T15:00:00-06:00',
+        all_day: false,
+        accion: 'modificada',
+        changes: ['horario'],
+        before: { title: 'Comité de proyecto', start_at: '2026-11-18T14:00:00-06:00', end_at: null, all_day: false },
+      },
+    })
+    expect(notificationText(cambio)).toEqual({
+      text: 'Cambió la reunión de Outlook «Comité de proyecto»: cambió la fecha y hora.',
+      detail: 'Ahora: mié 18 nov, 3:00 p. m. (antes: mié 18 nov, 2:00 p. m.)',
+    })
+  })
+
+  it('avisos con minutos que no son horas exactas (copiados de Outlook)', () => {
+    expect(alertMoment(10, false)).toBe('Empieza en 10 min')
+    expect(alertMoment(90, false)).toBe('Empieza en 1 h 30 min')
+    expect(alertMoment(180, false)).toBe('Empieza en 3 horas')
+  })
+
   it('calendario general: publicado, modificado, quitado y eliminado', () => {
     const general = (accion: 'publicado' | 'modificado' | 'retirado' | 'eliminado') =>
       notificationText(fake({ kind: 'general', data: { start_at: '2026-11-18T14:00:00-06:00', all_day: false, accion } })).text

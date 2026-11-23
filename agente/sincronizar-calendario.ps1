@@ -27,7 +27,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 if (-not $Configuracion) { $Configuracion = Join-Path $PSScriptRoot 'configuracion.json' }
-$script:Version = '1.0'
+$script:Version = '1.1'
+# Fin de la última ventana leída (se envía con las reuniones).
+$script:VentanaHasta = $null
 $script:DiasAtras = 31
 $script:DiasAdelante = 92
 $script:MaxLotesCambios = 20
@@ -112,7 +114,8 @@ function New-SolicitudVista([string]$Correo, [string]$Inicio, [string]$Fin) {
 $script:CamposReunion = @(
   'item:Subject', 'item:Sensitivity', 'item:Body', 'calendar:Start', 'calendar:End', 'calendar:IsAllDayEvent',
   'calendar:Location', 'calendar:Organizer', 'calendar:RequiredAttendees', 'calendar:OptionalAttendees',
-  'calendar:IsCancelled', 'calendar:LegacyFreeBusyStatus', 'calendar:MyResponseType', 'calendar:IsRecurring'
+  'calendar:IsCancelled', 'calendar:LegacyFreeBusyStatus', 'calendar:MyResponseType', 'calendar:IsRecurring',
+  'item:ReminderIsSet', 'item:ReminderMinutesBeforeStart', 'calendar:UID', 'calendar:RecurrenceId'
 )
 
 function New-SolicitudDetalles([string[]]$Ids) {
@@ -255,8 +258,20 @@ function Read-Reuniones([string]$Xml) {
       $ubicacion = Get-TextoONulo $item 'Location'
       $organizador = Get-Hijo (Get-Hijo $item 'Organizer') 'Mailbox'
       $asistentes = @(Get-Asistentes (Get-Hijo $item 'RequiredAttendees') $false) + @(Get-Asistentes (Get-Hijo $item 'OptionalAttendees') $true)
+      # Identificador permanente (no cambia al mover una serie): UID + repetición.
+      $itemId = $idNodo.GetAttribute('Id')
+      $uid = Get-Texto $item 'UID'
+      $clave = $itemId
+      if ($uid) { $clave = "$uid|$(Get-Texto $item 'RecurrenceId')" }
+      # Recordatorio que tiene en Outlook (minutos antes), si está activado.
+      $recordatorio = $null
+      $minutos = 0
+      if ((Get-Texto $item 'ReminderIsSet') -eq 'true' -and [int]::TryParse((Get-Texto $item 'ReminderMinutesBeforeStart'), [ref]$minutos)) {
+        $recordatorio = $minutos
+      }
       $reuniones.Add([ordered]@{
-          item_id         = $idNodo.GetAttribute('Id')
+          event_key       = $clave
+          item_id         = $itemId
           subject         = Get-Texto $item 'Subject'
           start_at        = $inicio
           end_at          = $fin
@@ -270,6 +285,7 @@ function Read-Reuniones([string]$Xml) {
           is_cancelled    = (Get-Texto $item 'IsCancelled') -eq 'true'
           show_as         = Get-TextoONulo $item 'LegacyFreeBusyStatus'
           my_response     = Get-TextoONulo $item 'MyResponseType'
+          reminder_minutes = $recordatorio
         })
     }
   }
@@ -364,6 +380,7 @@ function Save-Resultado([string]$UsuarioId, [string]$Estado, $Detalle, $EstadoEw
       sync_state = $EstadoEws
       events     = $eventos
       full       = $Completa
+      window_to  = $script:VentanaHasta
     })
 }
 
@@ -375,6 +392,7 @@ function Read-Ventana([string]$Correo) {
   $ahora = (Get-Date).ToUniversalTime()
   $inicio = $ahora.AddDays(-$script:DiasAtras).ToString('yyyy-MM-ddTHH:mm:ssZ')
   $fin = $ahora.AddDays($script:DiasAdelante).ToString('yyyy-MM-ddTHH:mm:ssZ')
+  $script:VentanaHasta = $fin
   $ids = @(Read-IdsVista (Invoke-Ews (New-SolicitudVista $Correo $inicio $fin)))
   $reuniones = New-Object System.Collections.Generic.List[object]
   for ($i = 0; $i -lt $ids.Count; $i += $script:LoteDetalles) {

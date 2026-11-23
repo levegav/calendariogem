@@ -100,6 +100,7 @@ $detalles = New-Respuesta ("<m:GetItemResponse $M><m:ResponseMessages>" +
 $reuniones = @(Read-Reuniones $detalles)
 Test-Igual @($reuniones | ForEach-Object { $_.item_id }) @('R1', 'R3') 'omite las privadas y las que Exchange no entregó'
 Test-Igual $reuniones[0] ([ordered]@{
+    event_key       = 'R1'
     item_id         = 'R1'
     subject         = 'Comité de proyecto'
     start_at        = '2026-12-01T15:00:00Z'
@@ -117,11 +118,24 @@ Test-Igual $reuniones[0] ([ordered]@{
     is_cancelled    = $false
     show_as         = 'Busy'
     my_response     = 'Accept'
+    reminder_minutes = $null
   }) 'lee todos los detalles de una reunión'
 Test-Igual @($reuniones[1].all_day, $reuniones[1].attendees.Count, $reuniones[1].join_url, $reuniones[1].organizer_name) @($true, 0, $null, $null) 'reunión de todo el día sin asistentes'
 Test-Igual (ConvertTo-Json -InputObject ([ordered]@{ attendees = $reuniones[1].attendees }) -Compress) '{"attendees":[]}' 'sin asistentes se envía una lista vacía'
 $uno = @(Read-Reuniones (New-Respuesta ("<m:GetItemResponse $M><m:ResponseMessages>" + (New-Item 'U' '<t:Subject>Uno</t:Subject><t:Start>2026-12-01T15:00:00Z</t:Start><t:RequiredAttendees><t:Attendee><t:Mailbox><t:Name>Ana</t:Name></t:Mailbox></t:Attendee></t:RequiredAttendees>') + '</m:ResponseMessages></m:GetItemResponse>')))
-Test-Igual (ConvertTo-Json -InputObject ([ordered]@{ events = [object[]]$uno }) -Depth 8 -Compress) '{"events":[{"item_id":"U","subject":"Uno","start_at":"2026-12-01T15:00:00Z","end_at":"2026-12-01T15:00:00Z","all_day":false,"location":null,"organizer_name":null,"organizer_email":null,"attendees":[{"name":"Ana","email":null,"response":null,"optional":false}],"join_url":null,"is_recurring":false,"is_cancelled":false,"show_as":null,"my_response":null}]}' 'una sola reunión con un asistente se envía como lista'
+Test-Igual (ConvertTo-Json -InputObject ([ordered]@{ events = [object[]]$uno }) -Depth 8 -Compress) '{"events":[{"event_key":"U","item_id":"U","subject":"Uno","start_at":"2026-12-01T15:00:00Z","end_at":"2026-12-01T15:00:00Z","all_day":false,"location":null,"organizer_name":null,"organizer_email":null,"attendees":[{"name":"Ana","email":null,"response":null,"optional":false}],"join_url":null,"is_recurring":false,"is_cancelled":false,"show_as":null,"my_response":null,"reminder_minutes":null}]}' 'una sola reunión con un asistente se envía como lista'
+
+$serie = @(Read-Reuniones (New-Respuesta ("<m:GetItemResponse $M><m:ResponseMessages>" +
+  (New-Item 'OCC1' ('<t:Subject>Daily</t:Subject><t:Start>2026-12-01T14:30:00Z</t:Start><t:End>2026-12-01T14:45:00Z</t:End>' +
+    '<t:ReminderIsSet>true</t:ReminderIsSet><t:ReminderMinutesBeforeStart>10</t:ReminderMinutesBeforeStart>' +
+    '<t:UID>040000008200E00074C5B7101A82E008</t:UID><t:RecurrenceId>2026-12-01T14:30:00Z</t:RecurrenceId>')) +
+  (New-Item 'S1' ('<t:Subject>Sin aviso</t:Subject><t:Start>2026-12-02T14:30:00Z</t:Start>' +
+    '<t:ReminderIsSet>false</t:ReminderIsSet><t:ReminderMinutesBeforeStart>15</t:ReminderMinutesBeforeStart>' +
+    '<t:UID>ABC</t:UID>')) +
+  '</m:ResponseMessages></m:GetItemResponse>')))
+Test-Igual @($serie[0].event_key, $serie[0].item_id, $serie[0].reminder_minutes) @('040000008200E00074C5B7101A82E008|2026-12-01T14:30:00Z', 'OCC1', 10) 'una repetición se identifica por UID + fecha original y trae su recordatorio'
+Test-Igual @($serie[1].event_key, $serie[1].reminder_minutes) @('ABC|', $null) 'una reunión única usa su UID; con el recordatorio apagado no hay aviso'
+Test-Igual ((New-SolicitudDetalles @('A')) -like '*FieldURI="item:ReminderMinutesBeforeStart"*FieldURI="calendar:UID"*FieldURI="calendar:RecurrenceId"*') $true 'pide el recordatorio y el identificador permanente'
 
 Test-Igual (Get-EnlaceReunion @('https://us02web.zoom.us/j/123?pwd=x')) 'https://us02web.zoom.us/j/123?pwd=x' 'enlace de Zoom en la ubicación'
 Test-Igual (Get-EnlaceReunion @('Sala 2', 'Enlace: https://meet.google.com/abc-defg-hij.')) 'https://meet.google.com/abc-defg-hij' 'enlace de Meet en el texto, sin el punto final'
@@ -153,6 +167,7 @@ $script:RespuestasEws.SyncFolderItems = New-RespuestaCambios 'S3' '<t:Update><t:
 $script:Llamadas.Clear()
 $res = Sync-Usuario ([pscustomobject]@{ user_id = 'u1'; email = 'ana@gem.com'; sync_state = 'S2'; needs_full = $false })
 Test-Igual @($res, ($script:Llamadas -join ','), $script:Guardado.sync_state, @($script:Guardado.events).Count, $script:Guardado.full) @('actualizado', 'SyncFolderItems,FindItem,GetItem', 'S3', 2, $false) 'con cambios vuelve a leer la ventana'
+Test-Igual ([bool]($script:Guardado.window_to -match '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$')) $true 'envía hasta dónde llegó la ventana leída'
 
 $script:RespuestasEws.SyncFolderItems = New-RespuestaCambios 'S0' '<t:Create><t:CalendarItem><t:ItemId Id="R1"/></t:CalendarItem></t:Create>'
 $res = Sync-Usuario ([pscustomobject]@{ user_id = 'u1'; email = 'ana@gem.com'; sync_state = $null; needs_full = $true })

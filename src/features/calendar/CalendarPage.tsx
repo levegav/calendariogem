@@ -42,6 +42,7 @@ import {
   OUTLOOK_CATEGORY,
   OUTLOOK_SEARCH_LIMIT,
   searchOutlookEvents,
+  setOutlookAlerts,
   subscribeToOutlookChanges,
 } from './outlook'
 import { OutlookDetailsDialog } from './OutlookDetailsDialog'
@@ -478,7 +479,20 @@ export function CalendarPage() {
       )}
 
       {dialog?.type === 'details' && dialog.event.outlook && (
-        <OutlookDetailsDialog event={dialog.event} currentUserId={userId} onClose={() => setDialog(null)} />
+        <OutlookDetailsDialog
+          event={dialog.event}
+          currentUserId={userId}
+          onClose={() => setDialog(null)}
+          onAlertsChange={async (minutes) => {
+            await setOutlookAlerts(dialog.event.outlook!.event_key, minutes)
+            const updated = {
+              ...dialog.event,
+              my_alerts: minutes,
+              outlook: { ...dialog.event.outlook!, alerts_from_outlook: false },
+            }
+            setEvents((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
+          }}
+        />
       )}
 
       {dialog?.type === 'details' && !dialog.event.outlook && (

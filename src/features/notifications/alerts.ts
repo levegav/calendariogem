@@ -50,7 +50,8 @@ export function alertMoment(minutes: number, allDay: boolean): string {
   if (minutes === 0) return 'Empieza ahora'
   if (minutes < 60) return `Empieza en ${minutes} min`
   if (minutes === 60) return 'Empieza en 1 hora'
-  if (minutes < 1440) return `Empieza en ${minutes / 60} horas`
+  if (minutes < 1440 && minutes % 60 === 0) return `Empieza en ${minutes / 60} horas`
+  if (minutes < 1440) return `Empieza en ${Math.floor(minutes / 60)} h ${minutes % 60} min`
   if (minutes === 1440) return 'Es mañana'
   if (minutes === 2880) return 'Es pasado mañana'
   if (minutes === 10080) return 'Es en 1 semana'

@@ -18,6 +18,7 @@
 | 9 | Estilo visual "Bento" | Terminada (aprobada) |
 | 11 | Calendario general compartido entre usuarios con acceso | Terminada (aprobada) |
 | 12 | Reuniones de Outlook (un solo sentido, solo lectura) | Terminada (aprobada) |
+| 13 | Avisos y notificaciones de las reuniones de Outlook | En prueba con el calendario de Luis |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización con Google | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
@@ -616,6 +617,30 @@ Pedido del usuario: que las reuniones que se agendan en Outlook se vean en el Ca
 - Se quitaron la función `outlook-sync`, la tarea de pg_cron, los secretos de Vault y **la contraseña de la cuenta de servicio de Supabase**.
 - Usuarios muestra si el programa de la oficina está conectado (avisa si pasan más de 5 minutos sin conectarse). "Sincronizar Outlook" ahora pide releer todo en la próxima pasada (`admin_request_outlook_sync`).
 - Pruebas: base de datos 232 (la 08 tiene 27); `npm run check` 186; script 28 (`npm run test:agente`, en PowerShell 5.1 y 7). Se probó la Edge Function con el token real y con uno falso (rechazado). Desde la computadora de Luis por el hotspot el script llegó a Exchange, pero Exchange no acepta la sesión de Windows desde fuera de la red: la prueba real se hace con el script instalado en la VM.
+
+## Fase 13: avisos y notificaciones de las reuniones de Outlook (23/11/2026)
+
+Pedido de Luis: que las reuniones de Outlook avisen y notifiquen como los recordatorios, copiando el aviso de Outlook; y que, si se cancela una reunión a la que lo invitaron, pueda conservarla como recordatorio.
+
+**Decisiones**
+- **Avisos previos copiados de Outlook:** el script trae el recordatorio de cada reunión (minutos antes). Si la persona los cambia en "Mis avisos", se respetan los suyos y Outlook ya no los pisa. Solo en las reuniones del propio calendario.
+- **Notificaciones** "nueva" y "modificada" (fecha y hora, asunto o lugar) solo de reuniones que organizó otra persona; no en la primera lectura de alguien ni en las que ya pasaron.
+- **Cancelada o borrada** (de otra persona, todavía no pasa): ventana Conservar / Eliminar. Conservar crea un recordatorio propio (categoría Reunión, organizador en la descripción, enlace en la nota, sus avisos).
+- Cada reunión se identifica por su **UID de Exchange + fecha original** de la repetición, para que mover una serie no aparezca como "cancelada + nueva". Durante el cambio del script viejo al nuevo, las reuniones se reconocen también por `item_id`, sin avisos falsos.
+
+**Base de datos** (`supabase/migrations/20261128120000_outlook_avisos.sql`)
+- `outlook_events.event_key` y `reminder_minutes`; `outlook_alerts` y `outlook_alert_overrides` (RLS: cada quien ve lo suyo); `set_outlook_alerts`.
+- `outlook_save_result` compara lo recibido con lo guardado y crea las notificaciones (`kind = 'outlook'`) y las decisiones (`outlook_cancelada`, con `outlook_organizer`). Recibe `p_window_to` (fin de la ventana leída).
+- `private.fire_due_outlook_alerts()` y la tarea de pg_cron `avisos-outlook` cada 30 s (notificación "aviso" con `outlook = true`).
+
+**Script de la oficina 1.1:** pide `ReminderIsSet`, `ReminderMinutesBeforeStart`, `UID` y `RecurrenceId`, y envía `window_to`. TI solo reemplaza el archivo en `C:\CalendarioGEM`.
+
+**App:** "Mis avisos" en el detalle de la reunión (con "Copiados del recordatorio de Outlook"); textos de las notificaciones de Outlook con su marca azul en la campana; ventana "Reunión cancelada en Outlook"; avisos con minutos que no son horas exactas ("Empieza en 1 h 30 min").
+
+**Pruebas (23/11/2026)**
+- Base de datos: `09_outlook_avisos.test.sql`, 26 pruebas (primera lectura sin avisos, nueva, modificada, mía, borrada, cancelada, fuera de la ventana, cambio de identificador, avisos copiados y cambiados, disparo, Conservar). Todas: 260.
+- `npm run check`: 192 pruebas, lint, tipos y build. Script: 32 pruebas en PowerShell 5.1 y 7.
+- Capturas en local: ventana de reunión cancelada (claro y oscuro), "Mis avisos" y la campana con notificaciones de Outlook.
 
 ## Lista de verificación de la entrega
 
