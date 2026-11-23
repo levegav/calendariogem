@@ -89,6 +89,46 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"outlook_events": {
+                  Row: {
+                    "all_day": boolean,"attendees": NonNullable<Json>,"end_at": string,"id": number,"is_cancelled": boolean,"is_recurring": boolean,"item_id": string,"join_url": string | null,"location": string | null,"my_response": string | null,"organizer_email": string | null,"organizer_name": string | null,"show_as": string | null,"start_at": string,"subject": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "all_day"?: boolean,"attendees"?: NonNullable<Json>,"end_at": string,"id"?: never,"is_cancelled"?: boolean,"is_recurring"?: boolean,"item_id": string,"join_url"?: string | null,"location"?: string | null,"my_response"?: string | null,"organizer_email"?: string | null,"organizer_name"?: string | null,"show_as"?: string | null,"start_at": string,"subject"?: string,"user_id": string
+                  }
+                  Update: {
+                    "all_day"?: boolean,"attendees"?: NonNullable<Json>,"end_at"?: string,"id"?: never,"is_cancelled"?: boolean,"is_recurring"?: boolean,"item_id"?: string,"join_url"?: string | null,"location"?: string | null,"my_response"?: string | null,"organizer_email"?: string | null,"organizer_name"?: string | null,"show_as"?: string | null,"start_at"?: string,"subject"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "outlook_events_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"outlook_links": {
+                  Row: {
+                    "checked_at": string | null,"created_at": string,"email": string,"refreshed_at": string | null,"status": string,"status_detail": string | null,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "checked_at"?: string | null,"created_at"?: string,"email": string,"refreshed_at"?: string | null,"status"?: string,"status_detail"?: string | null,"user_id": string
+                  }
+                  Update: {
+                    "checked_at"?: string | null,"created_at"?: string,"email"?: string,"refreshed_at"?: string | null,"status"?: string,"status_detail"?: string | null,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "outlook_links_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: true
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profiles": {
                   Row: {
                     "active": boolean,"color": string,"created_at": string,"full_name": string,"general_access": boolean,"id": string,"must_change_password": boolean,"role": Database["public"]['Enums']["user_role"],"theme": string,"updated_at": string,"username": string
@@ -237,9 +277,37 @@ isOneToOne: false
 "admin_flag_password_reset":
 { Args: { "p_user_id": string }; Returns: undefined
                            },
+"admin_set_outlook_email":
+{ Args: { "p_email": string,"p_user_id": string }; Returns: undefined
+                           },
 "admin_update_user":
 { Args: { "p_active": boolean,"p_color": string,"p_full_name": string,"p_general_access"?: boolean,"p_role": Database["public"]['Enums']["user_role"],"p_user_id": string }; Returns: undefined
                            },
+"calendar_outlook_events":
+{ Args: { "p_from": string,"p_to": string,"p_user_ids": (string)[] }; Returns: {
+              "all_day": boolean,
+"attendees": NonNullable<Json>,
+"end_at": string,
+"id": number,
+"is_cancelled": boolean,
+"is_recurring": boolean,
+"item_id": string,
+"join_url": string | null,
+"location": string | null,
+"my_response": string | null,
+"organizer_email": string | null,
+"organizer_name": string | null,
+"show_as": string | null,
+"start_at": string,
+"subject": string,
+"user_id": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "outlook_events"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "calendar_reminders":
 { Args: { "p_from": string,"p_to": string,"p_user_ids": (string)[] }; Returns: {
               "all_day": boolean,
@@ -265,12 +333,51 @@ isOneToOne: false
 "complete_password_change":
 { Args: Record<PropertyKey, never>; Returns: undefined
                            },
+"outlook_claim_run":
+{ Args: { "p_seconds"?: number }; Returns: boolean
+                           },
+"outlook_release_run":
+{ Args: Record<PropertyKey, never>; Returns: undefined
+                           },
+"outlook_save_result":
+{ Args: { "p_detail"?: string,"p_events"?: Json,"p_full"?: boolean,"p_status": string,"p_sync_state"?: string,"p_user_id": string }; Returns: undefined
+                           },
+"outlook_sync_targets":
+{ Args: { "p_user_id"?: string }; Returns: {
+              "email": string,"needs_full": boolean,"sync_state": string,"user_id": string
+            }[]
+                           },
 "resolve_reminder_decision":
 { Args: { "p_id": number,"p_keep": boolean }; Returns: number
                            },
 "save_reminder":
 { Args: { "p_alerts"?: (number)[],"p_all_day": boolean,"p_category_id": number,"p_description": string,"p_end_at": string,"p_id": number,"p_is_general"?: boolean,"p_location": string,"p_note": string,"p_participants": (string)[],"p_start_at": string,"p_title": string }; Returns: number
                            },
+"search_outlook_events":
+{ Args: { "p_limit"?: number,"p_query": string,"p_user_ids": (string)[] }; Returns: {
+              "all_day": boolean,
+"attendees": NonNullable<Json>,
+"end_at": string,
+"id": number,
+"is_cancelled": boolean,
+"is_recurring": boolean,
+"item_id": string,
+"join_url": string | null,
+"location": string | null,
+"my_response": string | null,
+"organizer_email": string | null,
+"organizer_name": string | null,
+"show_as": string | null,
+"start_at": string,
+"subject": string,
+"user_id": string
+            }[]
+                          SetofOptions: {
+        from: "*"
+        to: "outlook_events"
+        isOneToOne: false
+        isSetofReturn: true
+      } },
 "search_reminders":
 { Args: { "p_limit"?: number,"p_query": string,"p_user_ids": (string)[] }; Returns: {
               "all_day": boolean,

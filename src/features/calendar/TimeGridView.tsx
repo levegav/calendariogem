@@ -3,7 +3,7 @@ import { formatTime, toCostaRica, WEEKDAY_SHORT, weekday, type DateKey } from '.
 import styles from './calendar.module.css'
 import { EventChip } from './EventChip'
 import { shortTime } from './eventText'
-import { eventOrigin, eventStyle } from './general'
+import { eventKind, eventOrigin, eventStyle } from './general'
 import { eventsOnDay, isBanner, layoutTimedEvents } from './layout'
 import type { CalendarEvent } from './types'
 
@@ -156,7 +156,7 @@ export function TimeGridView({
                         ...eventStyle(event),
                       } as CSSProperties
                     }
-                    data-general={event.is_general || undefined}
+                    {...eventKind(event)}
                     title={`${event.title} · ${event.category.name} · ${eventOrigin(event, ' · ')}`}
                     aria-label={`${event.title}, ${shortTime(event)}, ${event.category.name}, ${eventOrigin(event)}`}
                     onClick={() => onOpen(event)}
@@ -169,10 +169,13 @@ export function TimeGridView({
                       <span className={styles.blockTime}>
                         {shortTime(event)}
                         {event.is_general && <span className="general-tag">General</span>}
+                        {event.outlook && <span className="outlook-tag">Outlook</span>}
                       </span>
                     )}
                     {single && height >= 56 && (
-                      <span className={styles.blockCreator}>Creado por: {event.owner.full_name}</span>
+                      <span className={styles.blockCreator}>
+                        {event.outlook ? 'Calendario de' : 'Creado por'}: {event.owner.full_name}
+                      </span>
                     )}
                   </button>
                 )

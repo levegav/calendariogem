@@ -63,6 +63,29 @@ Los puertos son `5642x`, distintos de los de `nacente` (`5532x`), para poder cor
 - **Sonido:** un timbre corto al llegar una notificación (se silencia desde la campana). Al entrar, si llegaron notificaciones mientras la persona no estaba, suena una sola vez; cada navegador anota lo último que ya anunció para no repetir.
 - Para revisar la tarea en el proyecto real: Supabase > Integrations > Cron (o la tabla `cron.job_run_details`).
 
+## Reuniones de Outlook (Fase 12)
+
+Las reuniones del calendario de Outlook de cada persona se ven en el Calendario GEM, **en un solo sentido** (de Outlook hacia la app) y **de solo lectura**.
+
+**Cómo funciona**
+- El admin pone el **correo de Outlook** de cada usuario en **Usuarios** (al crearlo o al editarlo). Sin correo, ese usuario no se sincroniza.
+- La Edge Function `outlook-sync` lee los calendarios por **EWS** (`https://neptune.gemconsulting.inc/EWS/Exchange.asmx`) con la cuenta de servicio `svccalendario@gemconsulting.inc`. Esa cuenta tiene permiso de **Revisor** (solo lectura) sobre la carpeta Calendario de cada persona. La guía para TI está en el artifact "Alta de svccalendario".
+- **pg_cron** la llama **cada minuto** (tarea `outlook-sync`, función `private.request_outlook_sync()`, por `pg_net`). En cada llamada pregunta a Exchange qué cambió (`SyncFolderItems`, liviano). Si cambió algo, vuelve a leer las reuniones de **un mes atrás a tres meses adelante** (`FindItem` con `CalendarView` y luego `GetItem`) y las reemplaza. Además hace una lectura completa al día.
+- Se guardan en `outlook_events` (cada repetición por separado). Cada persona ve las suyas y el admin, las de los calendarios que elige. Se **omiten las reuniones privadas**. No generan avisos previos ni notificaciones, y no aparecen en el calendario general.
+- En el calendario se ven con fondo azul y borde punteado, con la marca "Outlook". El detalle muestra organizador, asistentes, respuesta y el botón **Unirse a la reunión** (Teams, Zoom o Meet, si la invitación trae el enlace).
+- En **Usuarios** se ve el estado de cada persona: sincronizado, pendiente, **sin permiso en Exchange**, buzón no encontrado o error. El botón **Sincronizar Outlook** lee todo de inmediato.
+- Para sumar a alguien: (1) TI le da a la cuenta de servicio permiso de Revisor sobre su calendario; (2) se pone su correo de Outlook en Usuarios.
+
+**Configuración (una sola vez, en el proyecto real)**
+1. Secretos de la función (Supabase > Edge Functions > Secrets): `EWS_USER` (`svccalendario@gemconsulting.inc`), `EWS_PASSWORD` (la contraseña de la cuenta de servicio, **solo aquí**, nunca en el código ni en archivos) y `OUTLOOK_SYNC_TOKEN` (un valor aleatorio largo). Opcional: `EWS_URL` si cambia la dirección de EWS.
+2. Dos secretos en **Vault** para que pg_cron llame a la función: `outlook_sync_url` (`https://kpufmrodkwkvaljxhewj.supabase.co/functions/v1/outlook-sync`) y `outlook_sync_token` (el mismo valor de `OUTLOOK_SYNC_TOKEN`). Mientras falten, la tarea no llama a la función.
+3. Publicar la función: `npm run remoto -- functions deploy outlook-sync --use-api`.
+
+**Si algo falla**
+- "Sin permiso en Exchange": falta el permiso de Revisor de esa persona (ver la guía de TI).
+- "Exchange rechazó el usuario o la contraseña": revisar `EWS_USER` / `EWS_PASSWORD`, o si la cuenta de servicio está bloqueada o se desactivó la autenticación básica de EWS.
+- Registros: Supabase > Edge Functions > `outlook-sync` > Logs, y la tabla `cron.job_run_details`.
+
 ## Instalar la app (teléfono o computadora)
 
 La app es una PWA: se puede instalar y abre en su propia ventana, con su ícono.

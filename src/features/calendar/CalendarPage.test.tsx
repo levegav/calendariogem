@@ -5,6 +5,7 @@ import { fakeAuth, fakeProfile, renderWithAuth } from '../../test/fakeAuth'
 import { listCategories } from '../categories/api'
 import { deleteReminder, leaveReminder, listCalendarReminders, listPeople, saveReminder, searchReminders, setMyAlerts } from './api'
 import { CalendarPage } from './CalendarPage'
+import { listOutlookEvents, outlookToEvent, searchOutlookEvents } from './outlook'
 import { fakeEvent } from './testEvents'
 
 vi.mock('./api', () => ({
@@ -17,6 +18,11 @@ vi.mock('./api', () => ({
   searchReminders: vi.fn(),
 }))
 vi.mock('../categories/api', () => ({ listCategories: vi.fn() }))
+vi.mock('./outlook', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./outlook')>()),
+  listOutlookEvents: vi.fn(),
+  searchOutlookEvents: vi.fn(),
+}))
 
 const me = fakeProfile({ id: 'yo', full_name: 'Luis Vega', color: '#2563eb' })
 const carlos = { id: 'carlos', full_name: 'Carlos Mora', color: '#16a34a' }
@@ -52,7 +58,31 @@ beforeEach(() => {
   vi.mocked(deleteReminder).mockResolvedValue(undefined)
   vi.mocked(leaveReminder).mockResolvedValue(undefined)
   vi.mocked(setMyAlerts).mockResolvedValue(undefined)
+  vi.mocked(listOutlookEvents).mockResolvedValue([])
+  vi.mocked(searchOutlookEvents).mockResolvedValue([])
   vi.spyOn(window, 'confirm').mockReturnValue(true)
+})
+
+/** Reunión de Outlook de ejemplo (en el calendario de Luis). */
+const comite = outlookToEvent({
+  id: 7,
+  subject: 'Comité de proyecto',
+  start_at: '2026-11-17T15:00:00Z',
+  end_at: '2026-11-17T16:00:00Z',
+  all_day: false,
+  location: 'Microsoft Teams Meeting',
+  organizer_name: 'Ana Rodríguez',
+  organizer_email: 'ana@empresa.com',
+  attendees: [
+    { name: 'Luis Vega', email: null, response: 'Accept', optional: false },
+    { name: 'Carlos Mora', email: null, response: 'Decline', optional: true },
+  ],
+  join_url: 'https://teams.microsoft.com/l/meetup-join/abc',
+  is_recurring: true,
+  is_cancelled: false,
+  show_as: 'Busy',
+  my_response: 'Accept',
+  owner: { id: 'yo', full_name: 'Luis Vega', color: '#2563eb' },
 })
 
 afterEach(() => {
@@ -440,6 +470,58 @@ describe('CalendarPage', () => {
       expect(screen.queryByRole('button', { name: /Reunión de equipo/ })).not.toBeInTheDocument()
       expect(screen.getByRole('button', { name: /Visita de Carlos/ })).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Filtros (1 activo)' })).toBeInTheDocument()
+    })
+  })
+
+  describe('reuniones de Outlook', () => {
+    it('se ven junto a los recordatorios y su detalle es de solo lectura', async () => {
+      vi.mocked(listOutlookEvents).mockResolvedValue([comite])
+      renderAt('/')
+      expect(await screen.findByRole('button', { name: /Reunión de equipo/ })).toBeInTheDocument()
+      const chip = screen.getByRole('button', { name: /Comité de proyecto, 9:00 a\. m\., Reunión de Outlook/ })
+      expect(chip).toHaveAttribute('data-outlook', 'true')
+      expect(listOutlookEvents).toHaveBeenCalledWith(['yo'], '2026-10-26T06:00:00.000Z', '2026-12-07T06:00:00.000Z')
+
+      await userEvent.click(chip)
+      const dialog = screen.getByRole('dialog', { name: 'Comité de proyecto' })
+      expect(within(dialog).getByText('Ana Rodríguez')).toBeInTheDocument()
+      expect(within(dialog).getByText('Se repite')).toBeInTheDocument()
+      expect(within(dialog).getByText('Aceptó · Ocupado')).toBeInTheDocument()
+      expect(within(dialog).getByRole('link', { name: 'Unirse a la reunión' })).toHaveAttribute(
+        'href',
+        'https://teams.microsoft.com/l/meetup-join/abc',
+      )
+      expect(within(dialog).queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument()
+      expect(within(dialog).queryByRole('button', { name: 'Eliminar' })).not.toBeInTheDocument()
+    })
+
+    it('se pueden ocultar con el filtro de categorías y no cuentan como "Creados por mí"', async () => {
+      vi.mocked(listOutlookEvents).mockResolvedValue([comite])
+      renderAt('/')
+      await screen.findByRole('button', { name: /Comité de proyecto/ })
+      await userEvent.click(screen.getByRole('button', { name: /^Filtros/ }))
+      await userEvent.click(screen.getByRole('radio', { name: 'Creados por mí' }))
+      expect(screen.queryByRole('button', { name: /Comité de proyecto/ })).not.toBeInTheDocument()
+      await userEvent.click(screen.getByRole('radio', { name: 'Todos' }))
+      await userEvent.click(screen.getByRole('checkbox', { name: 'Reunión de Outlook' }))
+      expect(screen.queryByRole('button', { name: /Comité de proyecto/ })).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Reunión de equipo/ })).toBeInTheDocument()
+    })
+
+    it('si fallan las reuniones de Outlook, los recordatorios se muestran igual', async () => {
+      vi.mocked(listOutlookEvents).mockRejectedValue(new Error('sin conexión'))
+      renderAt('/')
+      expect(await screen.findByRole('button', { name: /Reunión de equipo/ })).toBeInTheDocument()
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
+
+    it('la búsqueda también encuentra reuniones de Outlook', async () => {
+      vi.mocked(searchReminders).mockResolvedValue({ results: [], truncated: false })
+      vi.mocked(searchOutlookEvents).mockResolvedValue([comite])
+      renderAt('/')
+      fireEvent.change(screen.getByRole('searchbox', { name: 'Buscar recordatorios' }), { target: { value: 'comite' } })
+      expect(await screen.findByRole('button', { name: /Comité de proyecto/ })).toBeInTheDocument()
+      expect(searchOutlookEvents).toHaveBeenCalledWith(['yo'], 'comite', 101)
     })
   })
 })

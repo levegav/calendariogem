@@ -1,6 +1,6 @@
 import styles from './calendar.module.css'
 import { shortTime } from './eventText'
-import { eventOrigin, eventStyle } from './general'
+import { eventKind, eventOrigin, eventStyle } from './general'
 import type { CalendarEvent } from './types'
 
 /**
@@ -25,7 +25,7 @@ export function EventChip({
       type="button"
       className={styles.chip}
       style={eventStyle(event)}
-      data-general={event.is_general || undefined}
+      {...eventKind(event)}
       title={`${event.title} · ${event.category.name} · ${eventOrigin(event, ' · ')}`}
       aria-label={`${event.title}, ${time}, ${event.category.name}, ${eventOrigin(event)}`}
       onClick={(e) => {
@@ -36,7 +36,11 @@ export function EventChip({
       <span className={styles.chipDot} aria-hidden="true" />
       {showTime && !event.all_day && <span className={styles.chipTime}>{time}</span>}
       <span className={styles.chipTitle}>{event.title}</span>
-      {showCreator && <span className={styles.chipCreator}>Creado por: {event.owner.full_name}</span>}
+      {showCreator && (
+        <span className={styles.chipCreator}>
+          {event.outlook ? 'Calendario de' : 'Creado por'}: {event.owner.full_name}
+        </span>
+      )}
     </button>
   )
 }

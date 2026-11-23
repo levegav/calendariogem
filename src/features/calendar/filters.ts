@@ -53,7 +53,7 @@ export function applyFilters(
   const hidden = new Set(filters.hiddenCategories)
   return events.filter((event) => {
     if (hidden.has(event.category.id)) return false
-    if (filters.relation === 'creados' && event.owner.id !== userId) return false
+    if (filters.relation === 'creados' && (event.owner.id !== userId || event.outlook)) return false
     if (filters.relation === 'etiquetado' && !event.participants.some((p) => p.id === userId)) return false
     if (filters.hidePast && eventEndsAt(event) <= now) return false
     if (filters.withLocation && !event.location?.trim()) return false

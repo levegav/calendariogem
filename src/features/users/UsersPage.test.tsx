@@ -3,8 +3,15 @@ import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeAuth, fakeProfile, renderWithAuth } from '../../test/fakeAuth'
 import { createUser, listUsers, resetUserPassword, setUserActive, updateUser } from './api'
+import { listOutlookLinks, setOutlookEmail, syncOutlookNow } from './outlook'
 import { UsersPage } from './UsersPage'
 
+vi.mock('./outlook', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./outlook')>()),
+  listOutlookLinks: vi.fn(),
+  setOutlookEmail: vi.fn(),
+  syncOutlookNow: vi.fn(),
+}))
 vi.mock('./api', () => ({
   listUsers: vi.fn(),
   createUser: vi.fn(),
@@ -27,6 +34,9 @@ beforeEach(() => {
   vi.mocked(updateUser).mockResolvedValue(undefined)
   vi.mocked(setUserActive).mockResolvedValue(undefined)
   vi.mocked(resetUserPassword).mockResolvedValue(undefined)
+  vi.mocked(listOutlookLinks).mockResolvedValue([])
+  vi.mocked(setOutlookEmail).mockResolvedValue(undefined)
+  vi.mocked(syncOutlookNow).mockResolvedValue({ usuarios: 1, sin_cambios: 0, actualizado: 1, en_espera: 0, error: 0 })
   vi.spyOn(window, 'confirm').mockReturnValue(true)
 })
 
@@ -129,5 +139,64 @@ describe('UsersPage', () => {
     const card = (await screen.findByText('Luis Vega')).closest('li')!
     expect(within(card).queryByRole('button', { name: 'Desactivar' })).not.toBeInTheDocument()
     expect(within(card).queryByRole('button', { name: 'Restablecer contraseña' })).not.toBeInTheDocument()
+  })
+
+  describe('Outlook', () => {
+    it('al crear un usuario se le puede poner su correo de Outlook (y se valida)', async () => {
+      renderPage()
+      await userEvent.click(await screen.findByRole('button', { name: 'Nuevo usuario' }))
+      await userEvent.type(screen.getByLabelText('Usuario'), 'maria')
+      await userEvent.type(screen.getByLabelText('Nombre completo'), 'María Pérez')
+      const email = screen.getByRole('textbox', { name: /Correo de Outlook/ })
+      await userEvent.type(email, 'maria-empresa')
+      await userEvent.click(screen.getByRole('button', { name: 'Crear usuario' }))
+      expect(screen.getByRole('alert')).toHaveTextContent('El correo de Outlook no es válido.')
+      expect(createUser).not.toHaveBeenCalled()
+
+      await userEvent.clear(email)
+      await userEvent.type(email, ' Maria.Perez@Empresa.com ')
+      await userEvent.click(screen.getByRole('button', { name: 'Crear usuario' }))
+      expect(createUser).toHaveBeenCalledWith(expect.objectContaining({ outlook_email: 'maria.perez@empresa.com' }))
+    })
+
+    it('muestra el estado de la sincronización y el problema si lo hay', async () => {
+      vi.mocked(listOutlookLinks).mockResolvedValue([
+        {
+          user_id: 'carlos',
+          email: 'carlos@empresa.com',
+          status: 'sin_permiso',
+          status_detail: 'La cuenta de servicio no tiene permiso de Revisor sobre este calendario.',
+          checked_at: '2026-11-16T16:00:00Z',
+          refreshed_at: null,
+        },
+      ])
+      renderPage()
+      const card = (await screen.findByText('Carlos Mora')).closest('li')!
+      expect(within(card).getByText(/carlos@empresa\.com/)).toBeInTheDocument()
+      expect(within(card).getByText('Outlook: sin permiso en Exchange')).toBeInTheDocument()
+      expect(within(card).getByText(/no tiene permiso de Revisor/)).toBeInTheDocument()
+    })
+
+    it('al editar cambia el correo solo si es distinto, y se puede sincronizar ahora', async () => {
+      vi.mocked(listOutlookLinks).mockResolvedValue([
+        { user_id: 'carlos', email: 'carlos@empresa.com', status: 'ok', status_detail: null, checked_at: null, refreshed_at: null },
+      ])
+      renderPage()
+      const card = (await screen.findByText('Carlos Mora')).closest('li')!
+      await userEvent.click(within(card).getByRole('button', { name: 'Editar' }))
+      const email = within(card).getByRole('textbox', { name: /Correo de Outlook/ })
+      expect(email).toHaveValue('carlos@empresa.com')
+      await userEvent.click(within(card).getByRole('button', { name: 'Guardar' }))
+      expect(setOutlookEmail).not.toHaveBeenCalled()
+
+      await userEvent.click(within(card).getByRole('button', { name: 'Editar' }))
+      await userEvent.clear(within(card).getByRole('textbox', { name: /Correo de Outlook/ }))
+      await userEvent.click(within(card).getByRole('button', { name: 'Guardar' }))
+      expect(setOutlookEmail).toHaveBeenCalledWith('carlos', '')
+
+      await userEvent.click(screen.getByRole('button', { name: 'Sincronizar Outlook' }))
+      expect(syncOutlookNow).toHaveBeenCalled()
+      expect(await screen.findByText('Outlook sincronizado: 1 calendario revisado.')).toBeInTheDocument()
+    })
   })
 })

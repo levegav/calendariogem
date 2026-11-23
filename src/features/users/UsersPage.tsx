@@ -4,6 +4,7 @@ import { generateTemporaryPassword, ROLE_LABELS } from '../../lib/auth'
 import { toSpanishMessage } from '../../lib/errors'
 import { useAuth, type Profile } from '../auth/AuthContext'
 import { listUsers, resetUserPassword, setUserActive } from './api'
+import { describeOutlookStatus, listOutlookLinks, syncOutlookNow, type OutlookLink } from './outlook'
 import { CreateUserForm, type Credentials } from './CreateUserForm'
 import { EditUserForm } from './EditUserForm'
 import styles from './UsersPage.module.css'
@@ -15,6 +16,8 @@ export function UsersPage() {
   const currentUserId = state.status === 'signedIn' ? state.profile.id : null
 
   const [users, setUsers] = useState<Profile[] | null>(null)
+  const [outlookLinks, setOutlookLinks] = useState<Map<string, OutlookLink>>(new Map())
+  const [syncing, setSyncing] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [message, setMessage] = useState<Message | null>(null)
   const [creating, setCreating] = useState(false)
@@ -26,10 +29,11 @@ export function UsersPage() {
 
   useEffect(() => {
     let cancelled = false
-    listUsers().then(
-      (data) => {
+    Promise.all([listUsers(), listOutlookLinks()]).then(
+      ([data, links]) => {
         if (cancelled) return
         setUsers(data)
+        setOutlookLinks(new Map(links.map((link) => [link.user_id, link])))
         setLoadError(null)
       },
       (err) => {
@@ -84,6 +88,22 @@ export function UsersPage() {
     })
   }
 
+  async function syncOutlook() {
+    setMessage(null)
+    setSyncing(true)
+    try {
+      const summary = await syncOutlookNow()
+      const parts = [`${summary.usuarios} calendario${summary.usuarios === 1 ? '' : 's'} revisado${summary.usuarios === 1 ? '' : 's'}`]
+      if (summary.error > 0) parts.push(`${summary.error} con problemas (vea el estado de cada usuario)`)
+      setMessage({ type: summary.error > 0 ? 'error' : 'success', text: `Outlook sincronizado: ${parts.join(', ')}.` })
+      reload()
+    } catch (err) {
+      setMessage({ type: 'error', text: toSpanishMessage(err) })
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const activeCount = users?.filter((u) => u.active).length ?? 0
 
   return (
@@ -98,16 +118,24 @@ export function UsersPage() {
           )}
         </div>
         {!creating && users && (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => {
-              setMessage(null)
-              setCreating(true)
-            }}
-          >
-            Nuevo usuario
-          </button>
+          <div className="actions">
+            {outlookLinks.size > 0 && (
+              <button type="button" className="btn btn-secondary" disabled={syncing} onClick={() => void syncOutlook()}>
+                <span className="outlook-mark" aria-hidden="true" />
+                {syncing ? 'Sincronizando…' : 'Sincronizar Outlook'}
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                setMessage(null)
+                setCreating(true)
+              }}
+            >
+              Nuevo usuario
+            </button>
+          </div>
         )}
       </div>
 
@@ -152,6 +180,8 @@ export function UsersPage() {
           {users.map((user) => {
             const isSelf = user.id === currentUserId
             const busy = busyId === user.id
+            const outlook = outlookLinks.get(user.id)
+            const outlookStatus = outlook ? describeOutlookStatus(outlook) : null
             return (
               <li
                 key={user.id}
@@ -166,6 +196,7 @@ export function UsersPage() {
                       {isSelf && <span className="muted"> (usted)</span>}
                       <div className="muted">
                         {user.username} · <span className={styles.hex}>{user.color.toUpperCase()}</span>
+                        {outlook && <> · {outlook.email}</>}
                       </div>
                     </div>
                   </div>
@@ -183,13 +214,25 @@ export function UsersPage() {
                     {user.active && user.must_change_password && (
                       <span className="badge badge-warning">Contraseña temporal</span>
                     )}
+                    {outlook && outlookStatus && (
+                      <span
+                        className={`badge badge-${outlookStatus.tone}`}
+                        title={outlook.checked_at ? `Última consulta: ${new Date(outlook.checked_at).toLocaleString('es-CR')}` : undefined}
+                      >
+                        {outlookStatus.label}
+                      </span>
+                    )}
                   </div>
                 </div>
+                {outlook?.status_detail && outlook.status !== 'ok' && (
+                  <p className={`muted ${styles.outlookDetail}`}>{outlook.status_detail}</p>
+                )}
 
                 {editingId === user.id ? (
                   <EditUserForm
                     user={user}
                     users={users}
+                    outlookEmail={outlook?.email ?? ''}
                     isSelf={isSelf}
                     onCancel={() => setEditingId(null)}
                     onSaved={() => {

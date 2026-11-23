@@ -37,6 +37,8 @@ import { visibleRange } from './layout'
 import { MonthView } from './MonthView'
 import { ReminderFormDialog } from './ReminderFormDialog'
 import { SearchResults } from './SearchResults'
+import { listOutlookEvents, OUTLOOK_CATEGORY, OUTLOOK_SEARCH_LIMIT, searchOutlookEvents } from './outlook'
+import { OutlookDetailsDialog } from './OutlookDetailsDialog'
 import { newReminderValues, valuesFromEvent, type ReminderFormValues } from './reminderForm'
 import { TimeGridView } from './TimeGridView'
 import { isCalendarView, VIEW_LABELS, VIEWS, type CalendarEvent, type CalendarView, type Person } from './types'
@@ -208,10 +210,17 @@ export function CalendarPage() {
   useEffect(() => {
     if (!userId) return
     let cancelled = false
-    listCalendarReminders(visibleKey.split(','), fromCostaRica(range.from), fromCostaRica(range.to)).then(
-      (data) => {
+    const ids = visibleKey.split(',')
+    const from = fromCostaRica(range.from)
+    const to = fromCostaRica(range.to)
+    Promise.all([
+      listCalendarReminders(ids, from, to),
+      // Si fallan las reuniones de Outlook, los recordatorios se muestran igual.
+      listOutlookEvents(ids, from, to).catch(() => []),
+    ]).then(
+      ([reminders, meetings]) => {
         if (cancelled) return
-        setEvents(data)
+        setEvents([...reminders, ...meetings])
         setError(null)
         setLoadedKey(requestKey)
       },
@@ -237,10 +246,16 @@ export function CalendarPage() {
   useEffect(() => {
     if (!userId || query.length < MIN_SEARCH_LENGTH) return
     let cancelled = false
-    searchReminders(visibleKey.split(','), query).then(
-      ({ results, truncated }) => {
+    const ids = visibleKey.split(',')
+    Promise.all([searchReminders(ids, query), searchOutlookEvents(ids, query, OUTLOOK_SEARCH_LIMIT + 1).catch(() => [])]).then(
+      ([{ results, truncated }, meetings]) => {
         if (cancelled) return
-        setSearch({ key: searchKey, query, results, truncated })
+        setSearch({
+          key: searchKey,
+          query,
+          results: [...results, ...meetings.slice(0, OUTLOOK_SEARCH_LIMIT)],
+          truncated: truncated || meetings.length > OUTLOOK_SEARCH_LIMIT,
+        })
         setError(null)
       },
       (err) => {
@@ -273,6 +288,9 @@ export function CalendarPage() {
   const hiddenByFilters = events.length - shownEvents.length
   const searchResults = search ? applyFilters(search.results, filters, userId) : []
   const activeCategories = categories.filter((c) => c.active)
+  // "Reunión de Outlook" aparece en los filtros cuando hay reuniones (o está oculta).
+  const hasOutlook = events.some((e) => e.outlook) || filters.hiddenCategories.includes(OUTLOOK_CATEGORY.id)
+  const filterCategories = hasOutlook ? [...categories, OUTLOOK_CATEGORY] : categories
   const taggable = people.filter((p) => p.id !== userId)
   const showingOnlyMine = visibleIds.length === 1 && visibleIds[0] === userId
 
@@ -331,7 +349,7 @@ export function CalendarPage() {
               }}
             />
           </label>
-          <FiltersMenu categories={categories} filters={filters} onChange={setFilters} />
+          <FiltersMenu categories={filterCategories} filters={filters} onChange={setFilters} />
           {userId && canViewOthers && <CalendarSelector me={me} people={people} selected={visibleIds} onChange={changeVisible} />}
           <fieldset className={`segmented ${styles.views}`}>
             <legend className="sr-only">Vista</legend>
@@ -363,7 +381,7 @@ export function CalendarPage() {
       {filterCount > 0 && (
         <p className={styles.filterBanner} role="status">
           <span>
-            <strong>Filtros:</strong> {describeFilters(filters, categories).join(' · ')}
+            <strong>Filtros:</strong> {describeFilters(filters, filterCategories).join(' · ')}
             {!searchActive && hiddenByFilters > 0 && (
               <> ({hiddenByFilters === 1 ? '1 recordatorio oculto' : `${hiddenByFilters} recordatorios ocultos`})</>
             )}
@@ -434,7 +452,11 @@ export function CalendarPage() {
         />
       )}
 
-      {dialog?.type === 'details' && (
+      {dialog?.type === 'details' && dialog.event.outlook && (
+        <OutlookDetailsDialog event={dialog.event} currentUserId={userId} onClose={() => setDialog(null)} />
+      )}
+
+      {dialog?.type === 'details' && !dialog.event.outlook && (
         <EventDetailsDialog
           event={dialog.event}
           currentUserId={userId}

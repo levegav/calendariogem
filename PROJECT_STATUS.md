@@ -17,7 +17,8 @@
 | 8 | Estilo visual "Corporativo GEM" | Terminada (aprobada) |
 | 9 | Estilo visual "Bento" | Terminada (aprobada) |
 | 11 | Calendario general compartido entre usuarios con acceso | Terminada (aprobada) |
-| Posteriores | Recurrencia, exportar a Excel, feriados, sincronización Google/Outlook | — |
+| 12 | Reuniones de Outlook (un solo sentido, solo lectura) | En prueba con el calendario de Luis |
+| Posteriores | Recurrencia, exportar a Excel, feriados, sincronización con Google | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
 
@@ -570,6 +571,38 @@ Pedido del usuario: unos pocos usuarios "especiales" comparten un calendario gen
 - Lo mismo se agregó a los inventarios de oficina y del equipo de carreras.
 - Pruebas: `NotificationsProvider.test.tsx` actualizado (178 pruebas en `npm run check`).
 
+## Fase 12: reuniones de Outlook (23/11/2026)
+
+Pedido del usuario: que las reuniones que se agendan en Outlook se vean en el Calendario GEM, **en un solo sentido** (de Outlook a la app; el doble sentido se descartó por complejo).
+
+**Decisiones**
+- Exchange Server 2019 propio, con EWS publicado en internet y autenticación básica. Se lee con una **cuenta de servicio** de solo lectura (`svccalendario`, permiso de Revisor sobre los calendarios), sin servidores adicionales: todo corre en Supabase.
+- **Cada minuto** se pregunta qué cambió; si cambió algo, se vuelve a leer la ventana de un mes atrás a tres meses adelante. Una lectura completa al día.
+- El admin pone el **correo de Outlook** de cada persona en Usuarios, también **al crear** el usuario. Por ahora solo se sincroniza Luis, para probar; el resto se suma cuando él lo verifique.
+- Las reuniones **privadas se omiten**. Las de Outlook no generan avisos ni notificaciones, no van al calendario general y no se pueden modificar desde la app.
+- La contraseña de la cuenta de servicio vive solo en los secretos de la función, nunca en el código, archivos ni chat.
+
+**Base de datos** (`supabase/migrations/20261125120000_reuniones_outlook.sql`)
+- `outlook_links` (correo y estado por usuario), `outlook_events` (reuniones) y, en `private`, el estado de EWS y un turno para que no se pisen dos ejecuciones.
+- RLS: cada quien ve lo suyo y el admin, todo. La app solo lee; escribe la función (service_role) con `outlook_save_result`.
+- `admin_set_outlook_email` (solo admin; correo único; al quitarlo o cambiarlo se borran sus reuniones), `calendar_outlook_events` y `search_outlook_events`.
+- Tarea de pg_cron `outlook-sync` cada minuto, que llama a la función con `pg_net` usando la dirección y el token guardados en Vault.
+
+**Edge Function `outlook-sync`**
+- `ews.ts`: arma las solicitudes SOAP e interpreta las respuestas (sin depender de Deno; se prueba con Vitest). `index.ts`: la ejecución (token de pg_cron o sesión de admin), hasta 4 usuarios a la vez y hasta 4 lecturas completas por minuto.
+- Errores por usuario: sin permiso, buzón no encontrado u otro error, visibles en Usuarios. Si Exchange rechaza la contraseña, se marca en todos sin borrar sus reuniones.
+
+**App**
+- Calendario: las reuniones se ven en todas las vistas, la búsqueda y los filtros (categoría "Reunión de Outlook"; no cuentan como "Creados por mí"). Fondo azul con borde punteado y marca "Outlook". Detalle de solo lectura con organizador, asistentes, respuesta y "Unirse a la reunión".
+- Usuarios: campo "Correo de Outlook" al crear y editar, estado de la sincronización y botón "Sincronizar Outlook".
+- La Edge Function `admin-users` recibe `outlook_email` al crear.
+
+**Pruebas (23/11/2026)**
+- Base de datos: `08_reuniones_outlook.test.sql`, 24 pruebas (quién asigna el correo, quién ve qué, cómo guarda la sincronización, sin permiso). Todas: 229.
+- `npm run check`: 195 pruebas (10 nuevas de EWS con respuestas reales de ejemplo, 4 del calendario y 3 de Usuarios), lint, tipos y build.
+- Capturas en local con reuniones de ejemplo: Semana, Mes, detalle, Usuarios, edición y celular (sin desbordes a 390px), en claro y oscuro.
+- Pendiente: la prueba real con el calendario de Luis (12.3), cuando estén los secretos de la cuenta de servicio.
+
 ## Lista de verificación de la entrega
 
 - [x] Fases 0 a 8 aprobadas: proyecto entregado (2026-11-17).
@@ -581,4 +614,4 @@ Pedido del usuario: unos pocos usuarios "especiales" comparten un calendario gen
 - [x] Instalable en teléfono y computadora.
 - [x] README (configuración, scripts, Supabase local y remoto, despliegue, notificaciones, PWA, seguridad) y este documento al día.
 - [ ] Opcional: protección contra contraseñas filtradas (plan de pago de Supabase).
-- [ ] Posteriores (fuera del alcance acordado): recurrencia, exportar a Excel, feriados, sincronización con Google u Outlook.
+- [ ] Posteriores (fuera del alcance acordado): recurrencia, exportar a Excel, feriados, sincronización con Google (Outlook se hizo en la fase 12).

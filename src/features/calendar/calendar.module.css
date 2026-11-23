@@ -1292,3 +1292,39 @@ button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
       padding-box,
     var(--rainbow) border-box;
 }
+
+/* =============================================================================
+   Reuniones de Outlook (Fase 12): fondo azul suave con borde punteado (son de
+   solo lectura); la barrita conserva el color de la persona dueña del calendario.
+   ========================================================================== */
+.chip[data-outlook='true'],
+.block[data-outlook='true'] {
+  border: 1px dashed color-mix(in srgb, var(--outlook) 60%, transparent);
+  background: color-mix(in srgb, var(--outlook) 9%, var(--color-surface));
+}
+
+.chip[data-outlook='true']:hover,
+.block[data-outlook='true']:hover {
+  background: color-mix(in srgb, var(--outlook) 17%, var(--color-surface));
+}
+
+.chip[data-outlook='true'] .chipDot,
+.block[data-outlook='true'] .chipDot {
+  border-radius: 2px;
+}
+
+.blockTime :global(.outlook-tag) {
+  font-size: 0.64rem;
+  line-height: 1.35;
+}
+
+.monthCell:has(.monthDay[data-today='true']) .chip[data-outlook='true'] {
+  border-color: rgb(255 255 255 / 0.7);
+  background: rgb(255 255 255 / 0.2);
+}
+
+.result[data-outlook='true'] {
+  border-top-style: dashed;
+  border-right-style: dashed;
+  border-bottom-style: dashed;
+}

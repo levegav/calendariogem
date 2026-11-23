@@ -6,17 +6,22 @@ import { toSpanishMessage } from '../../lib/errors'
 import type { Profile } from '../auth/AuthContext'
 import { updateUser } from './api'
 import { GeneralAccessField } from './GeneralAccessField'
+import { normalizeOutlookEmail, outlookEmailProblem, setOutlookEmail } from './outlook'
+import { OutlookEmailField } from './OutlookEmailField'
 import { RoleSelect } from './RoleSelect'
 
 export function EditUserForm({
   user,
   users,
+  outlookEmail: savedOutlookEmail,
   isSelf,
   onSaved,
   onCancel,
 }: {
   user: Profile
   users: Profile[]
+  /** Correo de Outlook actual ('' si no tiene). */
+  outlookEmail: string
   isSelf: boolean
   onSaved: () => void
   onCancel: () => void
@@ -25,6 +30,7 @@ export function EditUserForm({
   const [role, setRole] = useState<UserRole>(user.role)
   const [color, setColor] = useState(user.color)
   const [generalAccess, setGeneralAccess] = useState(user.general_access)
+  const [outlookEmail, setOutlookEmailValue] = useState(savedOutlookEmail)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -39,6 +45,11 @@ export function EditUserForm({
       setError('Elija un color que no use otro usuario.')
       return
     }
+    const emailProblem = outlookEmailProblem(outlookEmail)
+    if (emailProblem) {
+      setError(emailProblem)
+      return
+    }
     setSubmitting(true)
     try {
       await updateUser({
@@ -49,6 +60,9 @@ export function EditUserForm({
         color,
         general_access: generalAccess,
       })
+      if (normalizeOutlookEmail(outlookEmail) !== savedOutlookEmail) {
+        await setOutlookEmail(user.id, outlookEmail)
+      }
       onSaved()
     } catch (err) {
       setError(toSpanishMessage(err))
@@ -70,6 +84,7 @@ export function EditUserForm({
       <RoleSelect value={role} onChange={setRole} disabled={isSelf} />
       {isSelf && <small className="muted">No puede cambiar su propio rol.</small>}
       <GeneralAccessField checked={generalAccess} onChange={setGeneralAccess} />
+      <OutlookEmailField value={outlookEmail} onChange={setOutlookEmailValue} />
       <ColorPicker value={color} onChange={setColor} users={users} excludeId={user.id} />
       <div className="actions">
         <button type="submit" className="btn btn-primary" disabled={submitting}>

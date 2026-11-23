@@ -2,7 +2,7 @@ import { formatLongDate, todayKey } from '../../lib/dates'
 import styles from './calendar.module.css'
 import { shortTime } from './eventText'
 import { groupResults, type DateGroup } from './filters'
-import { eventStyle, GENERAL_NAME } from './general'
+import { eventKind, eventStyle, GENERAL_NAME } from './general'
 import type { CalendarEvent } from './types'
 
 function Group({ group, today, onOpen }: { group: DateGroup; today: string; onOpen: (event: CalendarEvent) => void }) {
@@ -19,7 +19,7 @@ function Group({ group, today, onOpen }: { group: DateGroup; today: string; onOp
               type="button"
               className={styles.result}
               style={eventStyle(event)}
-              data-general={event.is_general || undefined}
+              {...eventKind(event)}
               onClick={() => onOpen(event)}
             >
               <span className={styles.resultTime}>{shortTime(event)}</span>
@@ -27,8 +27,8 @@ function Group({ group, today, onOpen }: { group: DateGroup; today: string; onOp
                 <strong>{event.title}</strong>
                 <small className="muted">
                   <span className={styles.chipDot} aria-hidden="true" /> {event.category.name} ·{' '}
-                  {event.is_general && <>{GENERAL_NAME} · </>}Creado por:{' '}
-                  {event.owner.full_name}
+                  {event.is_general && <>{GENERAL_NAME} · </>}
+                  {event.outlook ? 'Calendario de' : 'Creado por'}: {event.owner.full_name}
                   {event.location ? ` · ${event.location}` : ''}
                 </small>
               </span>

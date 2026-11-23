@@ -38,4 +38,26 @@ export interface CalendarEvent {
   participants: Person[]
   /** Avisos previos del usuario en sesión (minutos antes); vacío si no participa. */
   my_alerts: number[]
+  /** Solo en las reuniones traídas de Outlook (de solo lectura; owner = de quién es el calendario). */
+  outlook?: OutlookInfo
+}
+
+export interface OutlookAttendee {
+  name: string
+  email: string | null
+  /** Accept, Tentative, Decline, NoResponseReceived, Unknown, Organizer… */
+  response: string | null
+  optional: boolean
+}
+
+/** Datos propios de una reunión de Outlook. */
+export interface OutlookInfo {
+  organizer_name: string | null
+  organizer_email: string | null
+  attendees: OutlookAttendee[]
+  join_url: string | null
+  is_recurring: boolean
+  is_cancelled: boolean
+  show_as: string | null
+  my_response: string | null
 }

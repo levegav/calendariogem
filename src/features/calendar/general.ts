@@ -23,8 +23,15 @@ export function eventMark(event: CalendarEvent): string {
   return event.is_general ? GENERAL_COLOR : event.owner.color
 }
 
+/** Atributos que activan los estilos propios (calendario general o Outlook). */
+export function eventKind(event: CalendarEvent): { 'data-general'?: true; 'data-outlook'?: true } {
+  if (event.outlook) return { 'data-outlook': true }
+  return event.is_general ? { 'data-general': true } : {}
+}
+
 /** "Reunión, calendario general, creado por Ana" (para lectores de pantalla y la ayuda al pasar el mouse). */
 export function eventOrigin(event: CalendarEvent, separator = ', '): string {
+  if (event.outlook) return `calendario de Outlook de ${event.owner.full_name}`
   const creator = `creado por ${event.owner.full_name}`
   return event.is_general ? `${GENERAL_NAME.toLowerCase()}${separator}${creator}` : creator
 }

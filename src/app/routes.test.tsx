@@ -19,6 +19,14 @@ vi.mock('../features/notifications/decisions', () => ({
   resolveDecision: vi.fn(),
 }))
 vi.mock('../features/categories/api', () => ({ listCategories: vi.fn(() => Promise.resolve([])) }))
+vi.mock('../features/users/outlook', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../features/users/outlook')>()),
+  listOutlookLinks: vi.fn(() => Promise.resolve([])),
+}))
+vi.mock('../features/calendar/outlook', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../features/calendar/outlook')>()),
+  listOutlookEvents: vi.fn(() => Promise.resolve([])),
+}))
 
 const listedUsers = [
   fakeProfile(),

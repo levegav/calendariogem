@@ -12,6 +12,8 @@ import { toSpanishMessage } from '../../lib/errors'
 import type { Profile } from '../auth/AuthContext'
 import { createUser } from './api'
 import { GeneralAccessField } from './GeneralAccessField'
+import { normalizeOutlookEmail, outlookEmailProblem } from './outlook'
+import { OutlookEmailField } from './OutlookEmailField'
 import { RoleSelect } from './RoleSelect'
 
 export interface Credentials {
@@ -34,6 +36,7 @@ export function CreateUserForm({
   const [color, setColor] = useState(() => suggestColor(users.map((u) => u.color)))
   const [password, setPassword] = useState(generateTemporaryPassword)
   const [generalAccess, setGeneralAccess] = useState(false)
+  const [outlookEmail, setOutlookEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -54,6 +57,11 @@ export function CreateUserForm({
       setError('Elija un color que no use otro usuario.')
       return
     }
+    const emailProblem = outlookEmailProblem(outlookEmail)
+    if (emailProblem) {
+      setError(emailProblem)
+      return
+    }
     const passwordProblem = validatePassword(password)
     if (passwordProblem) {
       setError(passwordProblem)
@@ -69,6 +77,7 @@ export function CreateUserForm({
         color,
         password,
         general_access: generalAccess,
+        outlook_email: normalizeOutlookEmail(outlookEmail),
       })
       onCreated({ username: normalized, password })
     } catch (err) {
@@ -106,6 +115,7 @@ export function CreateUserForm({
       </label>
       <RoleSelect value={role} onChange={setRole} />
       <GeneralAccessField checked={generalAccess} onChange={setGeneralAccess} />
+      <OutlookEmailField value={outlookEmail} onChange={setOutlookEmail} />
       <ColorPicker value={color} onChange={setColor} users={users} />
       <div className="field">
         <div className="input-row">

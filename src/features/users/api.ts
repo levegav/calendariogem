@@ -44,6 +44,8 @@ export function createUser(input: {
   password: string
   /** Acceso al calendario general desde que se crea. */
   general_access: boolean
+  /** Correo de Outlook para traer sus reuniones (vacío = no se sincroniza). */
+  outlook_email: string
 }): Promise<{ id: string; username: string }> {
   return invokeAdminUsers({ action: 'create', ...input })
 }

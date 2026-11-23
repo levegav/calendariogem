@@ -1,6 +1,6 @@
 // Edge Function de administración de usuarios (solo admin).
 // Es la única pieza que usa la clave secreta, que nunca sale del servidor.
-// Acciones: create, set_active, reset_password.
+// Acciones: create (con correo de Outlook opcional), set_active, reset_password.
 //
 // Doble verificación: aquí se exige un admin activo, y además los cambios de
 // perfil se hacen con la sesión del llamador mediante funciones SQL que vuelven
@@ -12,6 +12,7 @@ const USERNAME_DOMAIN = 'calendariogem.local'
 const USERNAME_PATTERN = /^[a-z0-9._-]{3,30}$/
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const COLOR_PATTERN = /^#[0-9a-f]{6}$/
+const OUTLOOK_EMAIL_PATTERN = /^[a-z0-9._%+'-]+@[a-z0-9.-]+\.[a-z]{2,}$/
 const ROLES = ['admin', 'user']
 const BAN_FOREVER = '876000h' // ~100 años
 
@@ -106,6 +107,22 @@ async function createUser(ctx: Context, body: Record<string, unknown>) {
     throw new HttpError(400, 'El acceso al calendario general no es válido.')
   }
   const generalAccess = body.general_access === true
+  if (body.outlook_email !== undefined && typeof body.outlook_email !== 'string') {
+    throw new HttpError(400, 'El correo de Outlook no es válido.')
+  }
+  const outlookEmail = String(body.outlook_email ?? '').trim().toLowerCase()
+  if (outlookEmail && !OUTLOOK_EMAIL_PATTERN.test(outlookEmail)) {
+    throw new HttpError(400, 'El correo de Outlook no es válido.')
+  }
+  if (outlookEmail) {
+    const { data: emailOwner, error: emailError } = await ctx.caller
+      .from('outlook_links')
+      .select('user_id')
+      .eq('email', outlookEmail)
+      .maybeSingle()
+    if (emailError) throw emailError
+    if (emailOwner) throw new HttpError(409, 'Ese correo de Outlook ya está asignado a otro usuario.')
+  }
 
   // Validar el color antes de crear la cuenta evita dejar usuarios a medias.
   const { data: colorOwner, error: colorError } = await ctx.caller
@@ -146,6 +163,17 @@ async function createUser(ctx: Context, body: Record<string, unknown>) {
   if (updateError) {
     console.error('admin_update_user tras crear usuario', updateError)
     throw new HttpError(500, 'El usuario se creó, pero no se pudieron guardar sus datos. Edítelo desde la lista.')
+  }
+
+  if (outlookEmail) {
+    const { error: outlookError } = await ctx.caller.rpc('admin_set_outlook_email', {
+      p_user_id: data.user.id,
+      p_email: outlookEmail,
+    })
+    if (outlookError) {
+      console.error('admin_set_outlook_email tras crear usuario', outlookError)
+      throw new HttpError(500, 'El usuario se creó, pero no se pudo guardar su correo de Outlook. Agréguelo al editarlo.')
+    }
   }
 
   return { id: data.user.id, username }

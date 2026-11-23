@@ -426,3 +426,8 @@ enabled = true
 # (recomendado con las claves publishable/secret), por eso verify_jwt = false.
 [functions.admin-users]
 verify_jwt = false
+
+# Sincronización de Outlook. La llama pg_cron con un token propio (x-sync-token)
+# o el admin con su sesión; ambos se validan dentro de la función.
+[functions.outlook-sync]
+verify_jwt = false

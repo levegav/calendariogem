@@ -64,3 +64,9 @@
   font-size: var(--text-lg);
   user-select: all;
 }
+
+/* Explicación del problema de sincronización con Outlook. */
+.outlookDetail {
+  margin: 0;
+  font-size: var(--text-sm);
+}
