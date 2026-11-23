@@ -115,6 +115,22 @@ describe('CalendarPage', () => {
     expect(screen.getByRole('heading', { name: 'Noviembre 2026' })).toBeInTheDocument()
   })
 
+  it('muestra como máximo un año hacia atrás', async () => {
+    renderAt('/?vista=mes&fecha=2024-05-01')
+    // Una fecha más vieja se lleva al primer día que se muestra (hoy menos un año).
+    expect(screen.getByRole('heading', { name: 'Noviembre 2025' })).toBeInTheDocument()
+    expect(screen.getByText('Solo se muestra el último año: desde el 16 de noviembre de 2025.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Mes anterior' })).toBeDisabled()
+    await vi.waitFor(() =>
+      expect(listCalendarReminders).toHaveBeenLastCalledWith(['yo'], '2025-11-16T06:00:00.000Z', '2025-12-08T06:00:00.000Z'),
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: 'Mes siguiente' }))
+    expect(screen.getByRole('heading', { name: 'Diciembre 2025' })).toBeInTheDocument()
+    expect(screen.queryByText(/Solo se muestra el último año/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Mes anterior' })).toBeEnabled()
+  })
+
   it('cambia de vista y recuerda la elegida', async () => {
     renderAt('/')
     await userEvent.click(screen.getByRole('radio', { name: 'Semana' }))
@@ -434,6 +450,17 @@ describe('CalendarPage', () => {
       expect(router.state.location.search).toBe('?vista=dia&fecha=2027-03-10')
       expect(screen.getByRole('dialog', { name: 'Comité anual' })).toBeInTheDocument()
       expect(screen.queryByRole('region', { name: 'Resultados de la búsqueda' })).not.toBeInTheDocument()
+    })
+
+    it('no muestra resultados de hace más de un año', async () => {
+      const viejo = fakeEvent({ id: 5, title: 'Comité 2024', start_at: '2024-06-10T09:00:00-06:00' })
+      const reciente = fakeEvent({ id: 6, title: 'Comité de enero', start_at: '2026-01-12T09:00:00-06:00' })
+      vi.mocked(searchReminders).mockResolvedValue({ results: [reciente, viejo], truncated: false })
+      renderAt('/')
+      await userEvent.type(screen.getByRole('searchbox', { name: 'Buscar recordatorios' }), 'comite')
+      const results = await screen.findByRole('region', { name: 'Resultados de la búsqueda' })
+      expect(await within(results).findByRole('heading', { name: '1 resultado para «comite»' })).toBeInTheDocument()
+      expect(within(results).queryByText(/Comité 2024/)).not.toBeInTheDocument()
     })
 
     it('sin coincidencias lo indica, y "Volver al calendario" limpia la búsqueda', async () => {

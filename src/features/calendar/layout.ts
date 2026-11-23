@@ -10,6 +10,19 @@ import {
 } from '../../lib/dates'
 import type { CalendarEvent, CalendarView } from './types'
 
+/** El calendario muestra como máximo este tiempo hacia atrás (lo anterior sigue guardado, solo no se muestra). */
+export const HISTORY_YEARS = 1
+
+/** Primer día que se muestra: hoy menos HISTORY_YEARS (corre cada día). */
+export function oldestVisibleDate(today: DateKey): DateKey {
+  return addYears(today, -HISTORY_YEARS)
+}
+
+/** Si un recordatorio o reunión termina antes del primer día que se muestra, queda oculto. */
+export function isBeforeHistory(event: CalendarEvent, oldest: DateKey): boolean {
+  return eventSpan(event).endDate < oldest
+}
+
 /** Duración con la que se dibuja un recordatorio sin hora de fin. */
 export const DEFAULT_DURATION = 30
 /** Altura mínima (en minutos) de un bloque en la vista por horas, para que se pueda leer y tocar. */

@@ -63,6 +63,10 @@ Los puertos son `5642x`, distintos de los de `nacente` (`5532x`), para poder cor
 - **Sonido:** un timbre corto al llegar una notificación (se silencia desde la campana). Al entrar, si llegaron notificaciones mientras la persona no estaba, suena una sola vez; cada navegador anota lo último que ya anunció para no repetir.
 - Para revisar la tarea en el proyecto real: Supabase > Integrations > Cron (o la tabla `cron.job_run_details`).
 
+## Cuánto se muestra hacia atrás
+
+El calendario muestra como máximo **un año hacia atrás**, contado desde hoy (ventana móvil). Lo anterior **sigue guardado**, solo no se muestra: no se puede navegar antes de esa fecha (la flecha "atrás" se apaga) y la búsqueda no lo incluye. Hacia adelante no hay límite. Se cambia con `HISTORY_YEARS` en `src/features/calendar/layout.ts`. Las reuniones de Outlook tienen su propia ventana (31 días atrás y 92 adelante, en el script de la VM).
+
 ## Reuniones de Outlook (Fase 12)
 
 Las reuniones del calendario de Outlook de cada persona se ven en el Calendario GEM, **en un solo sentido** (de Outlook hacia la app) y **de solo lectura**.

@@ -1328,3 +1328,9 @@ button.dayHeader:hover .dayHeaderNumber[data-today='true'] {
   border-right-style: dashed;
   border-bottom-style: dashed;
 }
+
+/* Aviso de que el calendario muestra solo el último año. */
+.historyNote {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+}

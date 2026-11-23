@@ -5,6 +5,7 @@ import {
   addDays,
   addMonths,
   addYears,
+  formatDate,
   formatLongDate,
   formatMonthYear,
   formatWeekRange,
@@ -33,7 +34,7 @@ import { CalendarSelector } from './CalendarSelector'
 import { EventDetailsDialog } from './EventDetailsDialog'
 import { applyFilters, countFilters, describeFilters, NO_FILTERS, type CalendarFilters } from './filters'
 import { FiltersMenu } from './FiltersMenu'
-import { visibleRange } from './layout'
+import { isBeforeHistory, oldestVisibleDate, visibleRange } from './layout'
 import { MonthView } from './MonthView'
 import { ReminderFormDialog } from './ReminderFormDialog'
 import { SearchResults } from './SearchResults'
@@ -152,10 +153,13 @@ export function CalendarPage() {
   )
   const [params, setParams] = useSearchParams()
   const today = todayKey()
+  // Se muestra como máximo un año hacia atrás desde hoy.
+  const oldest = oldestVisibleDate(today)
 
   // La vista y la fecha viven en la dirección (?vista=semana&fecha=2026-11-16): se pueden guardar o compartir.
   const view: CalendarView = isCalendarView(params.get('vista')) ? (params.get('vista') as CalendarView) : readSavedView()
-  const date: DateKey = isDateKey(params.get('fecha')) ? params.get('fecha')! : today
+  const requestedDate: DateKey = isDateKey(params.get('fecha')) ? params.get('fecha')! : today
+  const date: DateKey = requestedDate < oldest ? oldest : requestedDate
 
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -176,7 +180,13 @@ export function CalendarPage() {
     null,
   )
 
-  const range = useMemo(() => visibleRange(view, date), [view, date])
+  const range = useMemo(() => {
+    const full = visibleRange(view, date)
+    return { from: full.from < oldest ? oldest : full.from, to: full.to }
+  }, [view, date, oldest])
+  const rangeStartsEarlier = visibleRange(view, date).from < oldest
+  // No se retrocede a un periodo que queda entero antes del primer día que se muestra.
+  const canGoBack = visibleRange(view, shift(view, date, -1)).to > oldest
 
   // Solo calendarios de usuarios activos; el propio siempre se puede elegir.
   const visibleIds = useMemo(() => {
@@ -279,7 +289,7 @@ export function CalendarPage() {
         setSearch({
           key: searchKey,
           query,
-          results: [...results, ...meetings.slice(0, OUTLOOK_SEARCH_LIMIT)],
+          results: [...results, ...meetings.slice(0, OUTLOOK_SEARCH_LIMIT)].filter((e) => !isBeforeHistory(e, oldest)),
           truncated: truncated || meetings.length > OUTLOOK_SEARCH_LIMIT,
         })
         setError(null)
@@ -293,7 +303,7 @@ export function CalendarPage() {
     return () => {
       cancelled = true
     }
-  }, [userId, query, visibleKey, searchKey])
+  }, [userId, query, visibleKey, searchKey, oldest])
 
   function clearSearch() {
     setSearchText('')
@@ -342,7 +352,8 @@ export function CalendarPage() {
             type="button"
             className="icon-btn"
             aria-label={PERIOD[view].prev}
-            title={PERIOD[view].prev}
+            title={canGoBack ? PERIOD[view].prev : 'Solo se muestra el último año'}
+            disabled={!canGoBack}
             onClick={() => go(view, shift(view, date, -1))}
           >
             <Icon name="chevronLeft" />
@@ -401,6 +412,12 @@ export function CalendarPage() {
       {error && (
         <p className="alert alert-error" role="alert">
           {error}
+        </p>
+      )}
+
+      {!searchActive && rangeStartsEarlier && (
+        <p className={`muted ${styles.historyNote}`} role="status">
+          Solo se muestra el último año: desde el {formatDate(oldest)}.
         </p>
       )}
 

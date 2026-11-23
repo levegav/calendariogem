@@ -430,7 +430,12 @@ textarea:focus-visible {
   cursor: pointer;
 }
 
-.icon-btn:hover,
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.icon-btn:hover:not(:disabled),
 .icon-btn[aria-expanded='true'] {
   background: var(--color-primary-soft);
   color: var(--color-primary);
