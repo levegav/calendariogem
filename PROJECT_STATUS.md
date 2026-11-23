@@ -1,6 +1,6 @@
 # Estado del proyecto: Calendario GEM
 
-**Estado general: entregado (2026-11-17).** Las fases 0 a 9 están terminadas y aprobadas (la fase 9, estilo Bento, se aprobó el 19/11/2026). La fase 11 (calendario general) se aprobó el 19/11/2026.
+**Estado general: entregado (2026-11-17).** Las fases 0 a 9 están terminadas y aprobadas (la fase 9, estilo Bento, se aprobó el 19/11/2026). La fase 11 (calendario general) se aprobó el 19/11/2026 y la fase 12 (reuniones de Outlook) el 23/11/2026.
 
 ## Fases
 
@@ -17,7 +17,7 @@
 | 8 | Estilo visual "Corporativo GEM" | Terminada (aprobada) |
 | 9 | Estilo visual "Bento" | Terminada (aprobada) |
 | 11 | Calendario general compartido entre usuarios con acceso | Terminada (aprobada) |
-| 12 | Reuniones de Outlook (un solo sentido, solo lectura) | Funcionando con el calendario de Luis; falta su aprobación |
+| 12 | Reuniones de Outlook (un solo sentido, solo lectura) | Terminada (aprobada) |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización con Google | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
@@ -571,7 +571,7 @@ Pedido del usuario: unos pocos usuarios "especiales" comparten un calendario gen
 - Lo mismo se agregó a los inventarios de oficina y del equipo de carreras.
 - Pruebas: `NotificationsProvider.test.tsx` actualizado (178 pruebas en `npm run check`).
 
-## Fase 12: reuniones de Outlook (23/11/2026)
+## Fase 12: reuniones de Outlook (23/11/2026, aprobada)
 
 Pedido del usuario: que las reuniones que se agendan en Outlook se vean en el Calendario GEM, **en un solo sentido** (de Outlook a la app; el doble sentido se descartó por complejo).
 
