@@ -643,7 +643,7 @@ Pedido de Luis: que las reuniones de Outlook avisen y notifiquen como los record
 - Capturas en local: ventana de reunión cancelada (claro y oscuro), "Mis avisos" y la campana con notificaciones de Outlook.
 - En producción, con el script 1.1 en la VM: las 7 reuniones de Luis pasaron al identificador permanente sin notificaciones ni decisiones falsas, y los avisos se copiaron del recordatorio de Outlook (15 min).
 
-## Ajuste del 23/11/2026: mostrar como máximo un año hacia atrás
+## Ajuste del 23/11/2026: mostrar como máximo un año hacia atrás (aprobado)
 
 - Pedido de Luis: que el calendario muestre como máximo un año hacia atrás desde hoy, **ocultando** lo anterior (no se borra).
 - `HISTORY_YEARS = 1`, `oldestVisibleDate()` e `isBeforeHistory()` en `src/features/calendar/layout.ts`. En `CalendarPage.tsx`: una fecha más vieja en la dirección se lleva al primer día que se muestra, la consulta empieza en ese día, la flecha "atrás" se apaga cuando el periodo anterior queda entero antes del límite, la búsqueda descarta lo que terminó antes, y se muestra el aviso "Solo se muestra el último año: desde el …".
