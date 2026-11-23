@@ -17,7 +17,7 @@
 | 8 | Estilo visual "Corporativo GEM" | Terminada (aprobada) |
 | 9 | Estilo visual "Bento" | Terminada (aprobada) |
 | 11 | Calendario general compartido entre usuarios con acceso | Terminada (aprobada) |
-| 12 | Reuniones de Outlook (un solo sentido, solo lectura) | En prueba con el calendario de Luis |
+| 12 | Reuniones de Outlook (un solo sentido, solo lectura) | Funcionando con el calendario de Luis; falta su aprobación |
 | Posteriores | Recurrencia, exportar a Excel, feriados, sincronización con Google | — |
 
 Regla: no se empieza una fase sin la autorización explícita del usuario.
@@ -602,6 +602,8 @@ Pedido del usuario: que las reuniones que se agendan en Outlook se vean en el Ca
 - `npm run check`: 195 pruebas (10 nuevas de EWS con respuestas reales de ejemplo, 4 del calendario y 3 de Usuarios), lint, tipos y build.
 - Capturas en local con reuniones de ejemplo: Semana, Mes, detalle, Usuarios, edición y celular (sin desbordes a 390px), en claro y oscuro.
 - Pendiente: la prueba real con el calendario de Luis (12.3), cuando estén los secretos de la cuenta de servicio.
+
+**Prueba real (23/11/2026):** TI instaló el script en la VM de Exchange (GC-NEPTUNE). Primero Exchange respondió 401: el *loopback check* de Windows rechaza la autenticación del servidor contra sí mismo con el nombre `neptune.gemconsulting.inc`. Se agregó ese nombre a `BackConnectionHostNames` (documentado en la guía de TI) y la primera lectura completa trajo las reuniones de Luis (estado "ok", programa conectado cada minuto).
 
 **Cambio del 23/11/2026: la lectura corre dentro de la empresa** (`supabase/migrations/20261126120000_outlook_agente.sql`)
 - En la prueba real, Supabase no logró conectarse con Exchange: el firewall de neptune no acepta conexiones desde Estados Unidos (desde Costa Rica sí responde). En vez de abrir el firewall, se acordó correr la lectura en la **VM de Exchange**.

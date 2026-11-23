@@ -79,7 +79,7 @@ Las reuniones del calendario de Outlook de cada persona se ven en el Calendario 
 
 **Por qué corre en la oficina:** la primera versión leía Exchange desde Supabase (Estados Unidos), pero el firewall de Exchange no acepta esas conexiones. Correrlo adentro evita abrir el firewall y deja la contraseña de la cuenta de servicio solo en el Programador de tareas de la VM.
 
-**Instalación (TI, una sola vez):** guía "Programa de Outlook para el Calendario GEM" (artifact). En resumen: copiar `sincronizar-calendario.ps1` y `configuracion.json` a `C:\CalendarioGEM`, dar a `svccalendario` el derecho "Iniciar sesión como proceso por lotes" en esa VM y crear la tarea programada que corre cada minuto como `svccalendario`.
+**Instalación (TI, una sola vez):** guía "Programa de Outlook para el Calendario GEM" (artifact). En resumen: copiar `sincronizar-calendario.ps1` y `configuracion.json` a `C:\CalendarioGEM`, dar a `svccalendario` el derecho "Iniciar sesión como proceso por lotes" en esa VM, agregar `neptune.gemconsulting.inc` a `BackConnectionHostNames` (sin eso, el *loopback check* de Windows rechaza con 401 la autenticación del servidor contra sí mismo) y crear la tarea programada que corre cada minuto como `svccalendario`.
 - `agente/configuracion.json` lleva el token y **no se sube a Git** (hay una plantilla: `configuracion.ejemplo.json`). Se entrega a TI en persona o por una carpeta interna, nunca por correo.
 - Pruebas del script (sin Exchange ni Supabase, simulados): `npm run test:agente` (Windows PowerShell 5.1, como en el servidor).
 - Registro: `C:\CalendarioGEM\registro.log` en la VM (se rota a los 2 MB).
@@ -87,7 +87,7 @@ Las reuniones del calendario de Outlook de cada persona se ven en el Calendario 
 **Si algo falla**
 - Usuarios dice "El programa de la oficina no se conecta desde…": revisar la tarea programada en la VM (`Get-ScheduledTaskInfo 'Calendario GEM - Outlook'`) y el registro.
 - "Sin permiso en Exchange": falta el permiso de Revisor de esa persona.
-- "Exchange no aceptó la cuenta de la tarea": la tarea no está corriendo como `svccalendario`, o cambió su contraseña (actualizarla en la tarea programada).
+- "Exchange no aceptó la cuenta de la tarea": falta `neptune.gemconsulting.inc` en `BackConnectionHostNames` (loopback check), la tarea no está corriendo como `svccalendario`, o cambió su contraseña (actualizarla en la tarea programada).
 
 ## Instalar la app (teléfono o computadora)
 
